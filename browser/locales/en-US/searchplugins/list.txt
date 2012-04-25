@@ -1,8 +1,7 @@
-amazondotcom
-bing
-eBay
-google
+disconnect
+youtube
 twitter
 wikipedia
+startpage
 yahoo
-yahoo-en-CA:hidden
+google
