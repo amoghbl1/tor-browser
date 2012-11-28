@@ -7,6 +7,7 @@
 interface nsIURI;
 interface nsIDOMWindow;
 interface nsIChannel;
+interface nsIDocument;
 
 /**
  * Utility functions for determining whether a given URI, channel, or window
@@ -140,6 +141,68 @@ interface mozIThirdPartyUtil : nsISupports
    * @return the base domain.
    */
   AUTF8String getBaseDomain(in nsIURI aHostURI);
+
+
+  /**
+   * getFirstPartyURI
+   *
+   * Obtain the top-level url bar URI for either a channel or a document.
+   * Either parameter may be null (but not both).
+   *
+   * @param aChannel
+   *        An arbitrary channel for some content element of a first party
+   *        load. Can be null.
+   *
+   * @param aDoc
+   *        An arbitrary third party document. Can be null.
+   *
+   * @return the first party url bar URI for the load.
+   *
+   * @throws if the URI cannot be obtained or the URI lacks a hostname and the
+   *         URI's scheme is not white listed.
+   */
+  [noscript] nsIURI getFirstPartyURI(in nsIChannel aChannel,
+                                     in nsIDocument aDoc);
+
+  /**
+   * getFirstPartyURIFromChannel
+   *
+   * Obtain the top-level url bar URI for a channel.
+   *
+   * @param aChannel
+   *        An arbitrary channel for some content element of a first party
+   *        load.
+   *
+   * @param aLogErrors
+   *        If true, log errors to the Error Console.
+   *
+   * @return the first party url bar URI for the load.
+   *
+   * @throws if the URI cannot be obtained or the URI lacks a hostname and the
+   *         URI's scheme is not white listed.
+   */
+  nsIURI getFirstPartyURIFromChannel(in nsIChannel aChannel,
+                                     in bool aLogErrors);
+
+  /**
+   * getFirstPartyHostForIsolation
+   *
+   * Obtain the host or pseudo-host for aFirstPartyURI.  Some examples:
+   *    aFirstPartyURI                        Return Value
+   *    --------------                        ------------
+   *    https://news.google.com/nwshp?hl=en   "news.google.com"
+   *    about:home                            "--NoFirstPartyHost-about-home--"
+   *    chrome://browser/content/browser.xul  "--NoFirstPartyHost-chrome-browser.xul--"
+   *
+   * @param aFirstPartyURI
+   *        The first party URI.
+   *
+   * @return host or pseudo host.
+   *
+   * @throws if the URI lacks a host and the scheme is not a whitelisted one
+   *         for which we generate a pseudo host.
+   */
+  AUTF8String getFirstPartyHostForIsolation(in nsIURI aFirstPartyURI);
 };
 
 %{ C++
