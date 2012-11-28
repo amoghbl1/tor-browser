@@ -11,7 +11,9 @@
 #include "nsString.h"
 #include "mozIThirdPartyUtil.h"
 #include "nsIEffectiveTLDService.h"
+#include "nsICookiePermission.h"
 #include "mozilla/Attributes.h"
+#include "nsIGlobalObject.h"
 
 class nsIURI;
 
@@ -23,13 +25,33 @@ public:
 
   nsresult Init();
 
+  static mozIThirdPartyUtil* gThirdPartyUtilService;
+
+  static nsresult GetFirstPartyHost(nsIChannel* aChannel, nsINode* aNode, nsACString& aResult);
+
+  static nsresult GetFirstPartyHost(nsIChannel* aChannel, nsACString& aResult) {
+    return GetFirstPartyHost(aChannel, nullptr, aResult);
+  }
+
+  static nsresult GetFirstPartyHost(nsINode* aNode, nsACString& aResult) {
+    return GetFirstPartyHost(nullptr, aNode, aResult);
+  }
+
+  static nsresult GetFirstPartyHost(nsIGlobalObject* aGlobalObject, nsACString& aResult);
+
 private:
   ~ThirdPartyUtil() {}
 
   nsresult IsThirdPartyInternal(const nsCString& aFirstDomain,
     nsIURI* aSecondURI, bool* aResult);
+  bool IsFirstPartyIsolationActive(nsIChannel* aChannel, nsIDocument* aDoc);
+  bool SchemeIsWhiteListed(nsIURI *aURI);
+  static nsresult GetOriginatingURI(nsIChannel  *aChannel, nsIURI **aURI);
+  nsresult GetFirstPartyURIInternal(nsIChannel *aChannel, nsINode *aNode,
+                                    bool aLogErrors, nsIURI **aOutput);
 
   nsCOMPtr<nsIEffectiveTLDService> mTLDService;
+  nsCOMPtr<nsICookiePermission> mCookiePermissions;
 };
 
 #endif
