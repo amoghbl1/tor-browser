@@ -7,12 +7,14 @@
 interface nsIURI;
 interface nsIDOMWindow;
 interface nsIChannel;
+interface nsIDocument;
+interface nsINode;
 
 /**
  * Utility functions for determining whether a given URI, channel, or window
  * hierarchy is third party with respect to a known URI.
  */
-[scriptable, uuid(b711bd7f-0674-49be-ae77-f221db5f7b6c)]
+[scriptable, uuid(b538074d-5e00-40b3-b5c4-e060ae010b83)]
 interface mozIThirdPartyUtil : nsISupports
 {
   /**
@@ -155,6 +157,111 @@ interface mozIThirdPartyUtil : nsISupports
    * Returns the top-level window associated with the given channel.
    */
   nsIDOMWindow getTopWindowForChannel(in nsIChannel aChannel);
+
+  /**
+   * getFirstPartyURI
+   *
+   * Obtain the top-level url bar URI for either a channel or a document.
+   * Either parameter may be null (but not both).
+   *
+   * @param aChannel
+   *        An arbitrary channel for some content element of a first party
+   *        load. Can be null.
+   *
+   * @param aNode
+   *        An arbitrary third party document or node. Can be null.
+   *
+   * @return the first party url bar URI for the load.
+   *
+   * @throws if the URI cannot be obtained or the URI lacks a hostname and the
+   *         URI's scheme is not white listed.
+   */
+  [noscript] nsIURI getFirstPartyURI(in nsIChannel aChannel,
+                                     in nsINode aNode);
+
+  /**
+   * isFirstPartyIsolationActive
+   *
+   * Determine if First Party Isolation is currently active for the given
+   * nsIChannel or nsIDocument.  Depends on preference setting and
+   * possibly the state of Private Browsing mode.
+   *
+   * @param aChannel
+   *        An arbitrary channel for some content element of a first party
+   *        load. Can be null.
+   *
+   * @param aDoc
+   *        An arbitrary third party document. Can be null.
+   *
+   * @return true if first party isolation is active.
+   */
+
+  [noscript] bool isFirstPartyIsolationActive(in nsIChannel aChannel,
+                                              in nsIDocument aDoc);
+
+  /**
+   * getFirstPartyIsolationURI
+   *
+   * If first-party isolation is active, then
+   * obtains the top-level url bar URI for either a channel or a document.
+   * Otherwise returns null.
+   * Either parameter may be null (but not both).
+   *
+   * @param aChannel
+   *        An arbitrary channel for some content element of a first party
+   *        load. Can be null.
+   *
+   * @param aDoc
+   *        An arbitrary third party document. Can be null.
+   *
+   * @return the first party url bar URI for the load.
+   *
+   * @throws if the URI cannot be obtained or the URI lacks a hostname and the
+   *         URI's scheme is not white listed.
+   */
+  [noscript] nsIURI getFirstPartyIsolationURI(in nsIChannel aChannel,
+                                     in nsINode aNode);
+
+  /**
+   * getFirstPartyURIFromChannel
+   *
+   * Obtain the top-level url bar URI for a channel.
+   *
+   * @param aChannel
+   *        An arbitrary channel for some content element of a first party
+   *        load.
+   *
+   * @param aLogErrors
+   *        If true, log errors to the Error Console.
+   *
+   * @return the first party url bar URI for the load.
+   *
+   * @throws if the URI cannot be obtained or the URI lacks a hostname and the
+   *         URI's scheme is not white listed.
+   */
+  nsIURI getFirstPartyURIFromChannel(in nsIChannel aChannel,
+                                     in bool aLogErrors);
+
+  /**
+   * getFirstPartyHostForIsolation
+   *
+   * Obtain the host or pseudo-host for aFirstPartyURI.  Some examples:
+   *    aFirstPartyURI                        Return Value
+   *    --------------                        ------------
+   *    https://news.google.com/nwshp?hl=en   "news.google.com"
+   *    about:home                            "--NoFirstPartyHost-about-home--"
+   *    chrome://browser/content/browser.xul  "--NoFirstPartyHost-chrome-browser.xul--"
+   *
+   * @param aFirstPartyURI
+   *        The first party URI.
+   *
+   * @return host or pseudo host.
+   *
+   * @throws if the URI lacks a host and the scheme is not a whitelisted one
+   *         for which we generate a pseudo host.
+   */
+  AUTF8String getFirstPartyHostForIsolation(in nsIURI aFirstPartyURI);
+
 };
 
 %{ C++
