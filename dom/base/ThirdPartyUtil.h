@@ -9,6 +9,7 @@
 #include "nsString.h"
 #include "mozIThirdPartyUtil.h"
 #include "nsIEffectiveTLDService.h"
+#include "nsICookiePermission.h"
 #include "mozilla/Attributes.h"
 
 class nsIURI;
@@ -28,8 +29,13 @@ private:
 
   nsresult IsThirdPartyInternal(const nsCString& aFirstDomain,
     nsIURI* aSecondURI, bool* aResult);
+  bool SchemeIsWhiteListed(nsIURI *aURI);
+  static nsresult GetOriginatingURI(nsIChannel  *aChannel, nsIURI **aURI);
+  nsresult GetFirstPartyURIInternal(nsIChannel *aChannel, nsIDocument *aDoc,
+                                    bool aLogErrors, nsIURI **aOutput);
 
   nsCOMPtr<nsIEffectiveTLDService> mTLDService;
+  nsCOMPtr<nsICookiePermission> mCookiePermissions;
 };
 
 #endif
