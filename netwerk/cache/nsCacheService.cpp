@@ -1526,7 +1526,22 @@ NS_IMETHODIMP nsCacheService::EvictEntries(nsCacheStoragePolicy storagePolicy)
             FireClearNetworkCacheStoredAnywhereNotification(); 
         }
     }
-    return EvictEntriesForClient(nullptr, storagePolicy);
+
+    NS_IMETHODIMP r;
+    r = EvictEntriesForClient(nullptr, storagePolicy);
+
+    // XXX: Bloody hack until we get this notifier in FF14.0:
+    // https://developer.mozilla.org/en/XPCOM_Interface_Reference/nsICacheListener#onCacheEntryDoomed%28%29
+    if (storagePolicy == nsICache::STORE_ANYWHERE &&
+            NS_IsMainThread() && gService && gService->mInitialized) {
+        nsCacheServiceAutoLock lock(LOCK_TELEM(NSCACHESERVICE_EVICTENTRIESFORCLIENT));
+        gService->mClearingEntries = true;
+        gService->DoomActiveEntries(nullptr);
+        gService->ClearDoomList();
+        (void) SyncWithCacheIOThread();
+        gService->mClearingEntries = false;
+    }
+    return r; 
 }
 
 NS_IMETHODIMP nsCacheService::GetCacheIOTarget(nsIEventTarget * *aCacheIOTarget)
