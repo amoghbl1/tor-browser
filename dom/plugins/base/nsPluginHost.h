@@ -242,6 +242,8 @@ private:
   // Loads all cached plugins info into mCachedPlugins
   nsresult ReadPluginInfo();
 
+  PRBool GhettoBlacklist(nsIFile *pluginFile);
+
   // Given a file path, returns the plugins info from our cache
   // and removes it from the cache.
   void RemoveCachedPluginsInfo(const char *filePath,
