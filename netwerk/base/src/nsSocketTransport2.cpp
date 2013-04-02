@@ -1793,9 +1793,25 @@ nsSocketTransport::OnSocketReady(PRFileDesc *fd, int16_t outFlags)
         // Update poll timeout in case it was changed
         mPollTimeout = mTimeouts[TIMEOUT_READ_WRITE];
     }
-    else if (mState == STATE_CONNECTING) {
+
+//STATE_SENDINGGET: handshake proceeded to state "sent connect"
+//one more poll to OnSocketReady will trigger the get request, and state STATE_SENTGET
+//STATE_SENTGET: continue and finish handshake
+    else if (mState == STATE_SENDINGGET) {
+        if ((mPollFlags & PR_POLL_WRITE) && (outFlags & ~PR_POLL_READ)) {
+            mOutput.OnSocketReady(NS_OK);
+        }
+        mPollTimeout = mTimeouts[TIMEOUT_READ_WRITE];
+        mState = STATE_SENTGET;
+    }
+
+    else if (mState == STATE_CONNECTING || mState == STATE_SENTGET) {
         PRStatus status = PR_ConnectContinue(fd, outFlags);
-        if (status == PR_SUCCESS) {
+        if (status == PR_SUCCESS && mState == STATE_CONNECTING) {
+            OnSocketConnected();
+            mState = STATE_SENDINGGET;
+        }
+        else if (status == PR_SUCCESS && mState == STATE_SENTGET) {
             //
             // we are connected!
             //

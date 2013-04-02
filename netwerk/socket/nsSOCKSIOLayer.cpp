@@ -80,7 +80,9 @@ public:
     void SetConnectTimeout(PRIntervalTime to);
     PRStatus DoHandshake(PRFileDesc *fd, int16_t oflags = -1);
     int16_t GetPollFlags() const;
-    bool IsConnected() const { return mState == SOCKS_CONNECTED; }
+    bool IsConnected() const { return (mState == SOCKS_CONNECTED ||
+                                       mState == SOCKS5_READ_CONNECT_RESPONSE_TOP); }
+ 
     void ForgetFD() { mFD = nullptr; }
 
 private:
