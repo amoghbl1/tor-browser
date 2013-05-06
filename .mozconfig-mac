@@ -1,0 +1,49 @@
+# ld needs libLTO.so from llvm
+mk_add_options "export LD_LIBRARY_PATH=$topsrcdir/clang/lib"
+
+CROSS_CCTOOLS_PATH=$topsrcdir/cctools
+CROSS_SYSROOT=$topsrcdir/MacOSX10.7.sdk
+CROSS_PRIVATE_FRAMEWORKS=$CROSS_SYSROOT/System/Library/PrivateFrameworks
+FLAGS="-target x86_64-apple-darwin10 -mlinker-version=136 -B $CROSS_CCTOOLS_PATH/bin -isysroot $CROSS_SYSROOT"
+
+export CC="$topsrcdir/clang/bin/clang $FLAGS"
+export CXX="$topsrcdir/clang/bin/clang++ $FLAGS"
+export CPP="$topsrcdir/clang/bin/clang $FLAGS -E"
+export LLVMCONFIG=$topsrcdir/clang/bin/llvm-config
+export LDFLAGS="-Wl,-syslibroot,$CROSS_SYSROOT -Wl,-dead_strip -Wl,-pie"
+export TOOLCHAIN_PREFIX=$CROSS_CCTOOLS_PATH/bin/x86_64-apple-darwin10-
+#TODO: bug 1184202 - would be nice if these could be detected with TOOLCHAIN_PREFIX automatically
+export AR=${TOOLCHAIN_PREFIX}ar
+export RANLIB=${TOOLCHAIN_PREFIX}ranlib
+export STRIP=${TOOLCHAIN_PREFIX}strip
+export OTOOL=${TOOLCHAIN_PREFIX}otool
+export DSYMUTIL=$topsrcdir/clang/bin/llvm-dsymutil
+
+export HOST_CC="$topsrcdir/clang/bin/clang"
+export HOST_CXX="$topsrcdir/clang/bin/clang++"
+export HOST_CPP="$topsrcdir/clang/bin/clang -E"
+export HOST_CFLAGS="-g"
+export HOST_CXXFLAGS="-g"
+export HOST_LDFLAGS="-g"
+
+ac_add_options --target=x86_64-apple-darwin
+ac_add_options --with-macos-private-frameworks=$CROSS_PRIVATE_FRAMEWORKS
+
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-macos
+mk_add_options MOZ_APP_DISPLAYNAME="Tor Browser"
+mk_add_options MOZILLA_OFFICIAL=1
+mk_add_options BUILD_OFFICIAL=1
+
+ac_add_options --enable-application=browser
+ac_add_options --enable-strip
+ac_add_options --enable-official-branding
+ac_add_options --enable-optimize
+ac_add_options --disable-debug
+
+ac_add_options --disable-crashreporter
+ac_add_options --disable-maintenance-service
+ac_add_options --disable-webrtc
+ac_add_options --disable-tests
+# Let's make sure no preference is enabling either Adobe's or Google's CDM.
+ac_add_options --disable-eme
+# ac_add_options --disable-ctypes
