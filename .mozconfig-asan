@@ -1,0 +1,32 @@
+. $topsrcdir/browser/config/mozconfig
+
+export CFLAGS="-fsanitize=address -Dxmalloc=myxmalloc -fwrapv"
+export CXXFLAGS="-fsanitize=address -Dxmalloc=myxmalloc -fwrapv"
+# We need to add -ldl explicitely due to bug 1213698
+export LDFLAGS="-fsanitize=address -ldl"
+
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-@CONFIG_GUESS@
+mk_add_options MOZ_APP_DISPLAYNAME="Tor Browser"
+mk_add_options MOZILLA_OFFICIAL=1
+mk_add_options BUILD_OFFICIAL=1
+
+ac_add_options --enable-address-sanitizer
+ac_add_options --disable-jemalloc
+ac_add_options --disable-elf-hack
+
+ac_add_options --enable-optimize
+#ac_add_options --disable-optimize
+ac_add_options --enable-official-branding
+ac_add_options --enable-signmar
+ac_add_options --enable-verify-mar
+ac_add_options --disable-strip
+ac_add_options --disable-install-strip
+ac_add_options --disable-tests
+ac_add_options --disable-debug
+ac_add_options --disable-maintenance-service
+ac_add_options --disable-updater
+ac_add_options --disable-crashreporter
+ac_add_options --disable-webrtc
+#ac_add_options --disable-ctypes
+ac_add_options --disable-eme
+ac_add_options --disable-loop
