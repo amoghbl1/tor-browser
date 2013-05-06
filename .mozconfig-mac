@@ -1,0 +1,30 @@
+CROSS_COMPILE=1
+
+SYSROOTDIR="$HOME/build/MacOSX10.7.sdk"
+CROSS_PRIVATE_FRAMEWORKS="$SYSROOTDIR/System/Library/PrivateFrameworks"
+ROOTDIR="$HOME/build/x-tools/x86_64-apple-darwin10/bin"
+TOOLCHAIN_PREFIX="$ROOTDIR/x86_64-apple-darwin10-"
+
+FLAGS="-arch x86_64 -isysroot $SYSROOTDIR"
+CC="$ROOTDIR/x86_64-apple-darwin10-clang $FLAGS"
+CXX="$ROOTDIR/x86_64-apple-darwin10-clang++ $FLAGS"
+
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-macos
+mk_add_options MOZ_APP_DISPLAYNAME="Tor Browser"
+mk_add_options MOZILLA_OFFICIAL=1
+mk_add_options BUILD_OFFICIAL=1
+
+ac_add_options --target=x86_64-apple-darwin10
+ac_add_options --enable-application=browser
+ac_add_options --enable-strip
+ac_add_options --enable-official-branding
+ac_add_options --enable-optimize
+ac_add_options --disable-debug
+
+ac_add_options --with-macos-private-frameworks="$CROSS_PRIVATE_FRAMEWORKS"
+
+ac_add_options --disable-crashreporter
+ac_add_options --disable-maintenance-service
+ac_add_options --disable-webrtc
+ac_add_options --disable-tests
+# ac_add_options --disable-ctypes
