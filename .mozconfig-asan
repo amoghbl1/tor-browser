@@ -1,0 +1,33 @@
+. $topsrcdir/browser/config/mozconfig
+
+export CFLAGS="-fsanitize=address -Dxmalloc=myxmalloc -fsanitize=undefined"
+# When compiling with GCC 4.9.0 we need the libstdc++ either shipped with the
+# bundles or link statically against it. We chose the latter as a) the
+# resulting size of the bundle is smaller and b) there would probably occur
+# issues with our Gitian setup as we compile GCC without LIBFAKETIME being set
+# due to bug 11459.
+export CXXFLAGS="-fsanitize=address -Dxmalloc=myxmalloc -fsanitize=undefined -static-libstdc++"
+export LDFLAGS="-fsanitize=address -fsanitize=undefined"
+
+mk_add_option sMOZ_OBJDIR=@TOPSRCDIR@/obj-@CONFIG_GUESS@
+mk_add_options MOZ_APP_DISPLAYNAME=TorBrowser
+mk_add_options MOZ_MAKE_FLAGS="-j4"
+mk_add_options MOZILLA_OFFICIAL=1
+mk_add_options BUILD_OFFICIAL=1
+
+ac_add_options --enable-address-sanitizer
+ac_add_options --disable-jemalloc
+ac_add_options --disable-elf-hack
+
+ac_add_options --enable-optimize
+#ac_add_options --disable-optimize
+ac_add_options --enable-official-branding
+ac_add_options --disable-strip
+ac_add_options --disable-install-strip
+ac_add_options --disable-tests
+ac_add_options --disable-debug
+ac_add_options --disable-maintenance-service
+ac_add_options --disable-updater
+ac_add_options --disable-crashreporter
+ac_add_options --disable-webrtc
+#ac_add_options --disable-ctypes

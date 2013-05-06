@@ -1,0 +1,24 @@
+#Specify the cross compile
+export CROSS_COMPILE=1
+
+ac_add_options --enable-application=browser
+ac_add_options --target=i686-apple-darwin11
+#ac_add_options --enable-default-toolkit=cairo-windows
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-macos
+mk_add_options MOZ_APP_DISPLAYNAME=TorBrowser
+mk_add_options MOZ_MAKE_FLAGS="-j4"
+mk_add_options MOZILLA_OFFICIAL=1
+mk_add_options BUILD_OFFICIAL=1
+
+ac_add_options --disable-debug
+ac_add_options --enable-optimize
+ac_add_options --enable-strip
+ac_add_options --enable-official-branding
+
+# ICU seems still to have cross-compiling issues:
+#ac_add_options --without-intl-api
+ac_add_options --disable-crashreporter
+ac_add_options --disable-maintenance-service
+ac_add_options --disable-webrtc
+ac_add_options --disable-tests
+#ac_add_options --disable-ctypes
