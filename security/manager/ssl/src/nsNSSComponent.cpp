@@ -996,6 +996,13 @@ void nsNSSComponent::setValidationOptions(bool isInitialSetting,
     }
   }
 
+  // Default pinning enforcement level is disabled.
+  CertVerifier::pinning_enforcement_config
+    pinningEnforcementLevel =
+      static_cast<CertVerifier::pinning_enforcement_config>
+        (Preferences::GetInt("security.cert_pinning.enforcement_level",
+                             CertVerifier::pinningDisabled));
+
   CertVerifier::ocsp_download_config odc;
   CertVerifier::ocsp_strict_config osc;
   CertVerifier::ocsp_get_config ogc;
@@ -1009,7 +1016,7 @@ void nsNSSComponent::setValidationOptions(bool isInitialSetting,
       crlDownloading ?
         CertVerifier::crl_download_allowed : CertVerifier::crl_local_only,
 #endif
-      odc, osc, ogc);
+      odc, osc, ogc, pinningEnforcementLevel);
 
   // mozilla::pkix has its own OCSP cache, so disable the NSS cache
   // if appropriate.
@@ -1643,7 +1650,8 @@ nsNSSComponent::Observe(nsISupports* aSubject, const char* aTopic,
                || prefName.Equals("security.OCSP.GET.enabled")
                || prefName.Equals("security.ssl.enable_ocsp_stapling")
                || prefName.Equals("security.use_mozillapkix_verification")
-               || prefName.Equals("security.use_libpkix_verification")) {
+               || prefName.Equals("security.use_libpkix_verification")
+               || prefName.Equals("security.cert_pinning.enforcement_level")) {
       MutexAutoLock lock(mutex);
       setValidationOptions(false, lock);
     } else if (prefName.Equals("network.ntlm.send-lm-response")) {
