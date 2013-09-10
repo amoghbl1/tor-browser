@@ -32,6 +32,10 @@
 #include "nsIEffectiveTLDService.h"
 #include "nsPIDOMWindow.h"
 #include "nsIDocument.h"
+#include "nsCOMPtr.h"
+#include "nsIPrefService.h"
+#include "nsIPrefBranch.h"
+#include "nsIPrefBranch2.h"
 #include "mozilla/net/NeckoMessageUtils.h"
 
 static nsPermissionManager *gPermissionManager = nullptr;
@@ -405,6 +409,12 @@ nsPermissionManager::Init()
     mObserverService->AddObserver(this, "profile-do-change", true);
   }
 
+
+  nsCOMPtr<nsIPrefBranch2> pbi = do_GetService(NS_PREFSERVICE_CONTRACTID);
+  if (pbi) {
+    pbi->AddObserver("permissions.", this, PR_FALSE);
+  }
+
   if (IsChildProcess()) {
     // Get the permissions from the parent process
     InfallibleTArray<IPC::Permission> perms;
@@ -460,8 +470,18 @@ nsPermissionManager::InitDB(bool aRemoveFile)
   if (!storage)
     return NS_ERROR_UNEXPECTED;
 
+  bool memory_db = false;
+  nsCOMPtr<nsIPrefBranch> prefs = do_GetService(NS_PREFSERVICE_CONTRACTID);
+  if (prefs) {
+    prefs->GetBoolPref("permissions.memory_only", &memory_db); 
+  }
+  
   // cache a connection to the hosts database
-  rv = storage->OpenDatabase(permissionsFile, getter_AddRefs(mDBConn));
+  if (memory_db) {
+    rv = storage->OpenSpecialDatabase("memory", getter_AddRefs(mDBConn));
+  } else {
+    rv = storage->OpenDatabase(permissionsFile, getter_AddRefs(mDBConn));
+  }
   NS_ENSURE_SUCCESS(rv, rv);
 
   bool ready;
@@ -471,7 +491,11 @@ nsPermissionManager::InitDB(bool aRemoveFile)
     rv = permissionsFile->Remove(false);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    rv = storage->OpenDatabase(permissionsFile, getter_AddRefs(mDBConn));
+    if (memory_db) {
+      rv = storage->OpenSpecialDatabase("memory", getter_AddRefs(mDBConn));
+    } else {
+      rv = storage->OpenDatabase(permissionsFile, getter_AddRefs(mDBConn));
+    }
     NS_ENSURE_SUCCESS(rv, rv);
 
     mDBConn->GetConnectionReady(&ready);
@@ -1285,7 +1309,12 @@ NS_IMETHODIMP nsPermissionManager::Observe(nsISupports *aSubject, const char *aT
 {
   ENSURE_NOT_CHILD_PROCESS;
 
-  if (!nsCRT::strcmp(aTopic, "profile-before-change")) {
+  if (nsCRT::strcmp(aTopic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID) == 0) {
+    if (!nsCRT::strcmp(someData, NS_LITERAL_STRING("permissions.memory_only").get())) {
+      // XXX: Should we remove the file? Probably not..
+      InitDB(PR_FALSE);
+    }
+  } else if (!nsCRT::strcmp(aTopic, "profile-before-change")) {
     // The profile is about to change,
     // or is going away because the application is shutting down.
     mIsShuttingDown = true;
