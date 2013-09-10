@@ -9,6 +9,7 @@
 #include "prlog.h"
 
 #include "gfxUserFontSet.h"
+#include "nsFont.h"
 #include "gfxPlatform.h"
 #include "nsUnicharUtils.h"
 #include "nsNetUtil.h"
@@ -537,6 +538,19 @@ gfxUserFontSet::LoadNext(gfxMixedFontFamily *aFamily,
         aProxyEntry->mSrcIndex++;
     }
 
+    /* If there are any urls, prefer them to local */
+    bool listHasURL = false; 
+    for (uint32_t i = aProxyEntry->mSrcIndex; i < numSrc; i++) {
+        const gfxFontFaceSrc& currSrc = aProxyEntry->mSrcList[i];
+        if (!currSrc.mIsLocal) {
+           listHasURL = true;
+           break;
+        }
+    }
+    nsPresContext *pres = GetPresContext();
+    /* If we have no pres context, simply fail this load */
+    if (!pres) listHasURL = true;
+
     // load each src entry in turn, until a local face is found
     // or a download begins successfully
     while (aProxyEntry->mSrcIndex < numSrc) {
@@ -544,12 +558,23 @@ gfxUserFontSet::LoadNext(gfxMixedFontFamily *aFamily,
 
         // src local ==> lookup and load immediately
 
-        if (currSrc.mIsLocal) {
+        if (!listHasURL && currSrc.mIsLocal) {
+            nsFont font;
+            font.name = currSrc.mLocalName;
             gfxFontEntry *fe =
                 gfxPlatform::GetPlatform()->LookupLocalFont(aProxyEntry,
-                                                            currSrc.mLocalName);
+                                                            currSrc.mLocalName);                                                            
+            pres->AddFontAttempt(font);
+
+            /* No more fonts for you */
+            if (pres->FontAttemptCountReached(font) || 
+                pres->FontUseCountReached(font)) {
+                break;
+            }
+
             mLocalRulesUsed = true;
             if (fe) {
+                pres->AddFontUse(font);
                 LOG(("userfonts (%p) [src %d] loaded local: (%s) for (%s) gen: %8.8x\n",
                      this, aProxyEntry->mSrcIndex,
                      NS_ConvertUTF16toUTF8(currSrc.mLocalName).get(),

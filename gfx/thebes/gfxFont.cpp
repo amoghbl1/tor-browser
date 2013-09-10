@@ -4681,6 +4681,7 @@ gfxFontGroup::FindPlatformFont(const nsAString& aName,
     }
 
     // Not known in the user font set ==> check system fonts
+    // XXX: Fallback is bad..
     if (!family) {
         gfxPlatformFontList *fontList = gfxPlatformFontList::PlatformFontList();
         family = fontList->FindFamily(aName);
@@ -4907,6 +4908,7 @@ gfxFontGroup::ForEachFontInternal(const nsAString& aFamilies,
                     }
                     if (!foundFamily) {
                         gfxPlatform *pf = gfxPlatform::GetPlatform();
+                        // XXX: Fallback is bad
                         rv = pf->ResolveFontName(family,
                                                  gfxFontGroup::FontResolverProc,
                                                  &data, aborted);

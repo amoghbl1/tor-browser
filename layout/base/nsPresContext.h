@@ -530,6 +530,13 @@ public:
     }
   }
 
+  nsTArray<nsFont> mFontsUsed; // currently for font-count limiting only
+  nsTArray<nsFont> mFontsTried; // currently for font-count limiting only
+  void AddFontUse(const nsFont &font);
+  void AddFontAttempt(const nsFont &font);
+  PRBool FontUseCountReached(const nsFont &font);
+  PRBool FontAttemptCountReached(const nsFont &font);
+
   /**
    * Get the minimum font size for the specified language. If aLanguage
    * is nullptr, then the document's language is used.  This combines
@@ -1255,6 +1262,8 @@ protected:
   uint32_t              mInterruptChecksToSkip;
 
   mozilla::TimeStamp    mReflowStartTime;
+  PRInt32               mMaxFontAttempts;
+  PRInt32               mMaxFonts;
 
   // last time animations styles were flushed to their primary frames
   mozilla::TimeStamp    mLastUpdateThrottledAnimationStyle;

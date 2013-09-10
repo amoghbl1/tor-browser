@@ -7,6 +7,7 @@
 #define GFX_USER_FONT_SET_H
 
 #include "gfxFont.h"
+#include "nsPresContext.h"
 #include "nsRefPtrHashtable.h"
 #include "nsAutoPtr.h"
 #include "nsCOMPtr.h"
@@ -244,6 +245,8 @@ public:
 
     // rebuild if local rules have been used
     void RebuildLocalRules();
+
+    virtual nsPresContext *GetPresContext() { return NULL; }
 
     class UserFontCache {
     public:

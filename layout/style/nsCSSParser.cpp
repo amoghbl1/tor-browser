@@ -11785,6 +11785,7 @@ CSSParserImpl::ParseFontSrc(nsCSSValue& aValue)
         return false;
       }
 
+      // XXX: Getting closer...
       // the style parameters to the nsFont constructor are ignored,
       // because it's only being used to call EnumerateFamilies
       nsFont font(family, 0, 0, 0, 0, 0, 0);

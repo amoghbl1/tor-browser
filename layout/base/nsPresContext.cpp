@@ -54,6 +54,8 @@
 #include "Layers.h"
 #include "nsIDOMEvent.h"
 #include "gfxPrefs.h"
+#include "nsString.h"
+#include "nsUnicharUtils.h"
 
 #include "nsContentUtils.h"
 #include "nsCxPusher.h"
@@ -761,6 +763,12 @@ nsPresContext::GetUserPreferences()
   mUseDocumentFonts =
     Preferences::GetInt("browser.display.use_document_fonts") != 0;
 
+  mMaxFonts =
+    Preferences::GetInt("browser.display.max_font_count", -1);
+
+  mMaxFontAttempts =
+    Preferences::GetInt("browser.display.max_font_attempts", -1);
+
   mPrefScrollbarSide = Preferences::GetInt("layout.scrollbar.side");
 
   ResetCachedFontPrefs();
@@ -1429,6 +1437,100 @@ nsPresContext::GetDefaultFont(uint8_t aFontID, nsIAtom *aLanguage) const
       break;
   }
   return font;
+}
+
+PRBool
+nsPresContext::FontUseCountReached(const nsFont &font) {
+  if (mMaxFonts < 0) {
+    return PR_FALSE;
+  }
+
+  for (PRUint32 i = 0; i < mFontsUsed.Length(); i++) {
+    if (mFontsUsed[i].name.Equals(font.name,
+                                  nsCaseInsensitiveStringComparator())
+        // XXX: Style is sometimes filled with garbage??
+        /*&& mFontsUsed[i].style == font.style*/) {
+      // seen it before: OK
+      return PR_FALSE;
+    }
+  }
+
+  if (mFontsUsed.Length() >= (unsigned)mMaxFonts) {
+    return PR_TRUE;
+  }
+
+  return PR_FALSE;
+}
+
+PRBool
+nsPresContext::FontAttemptCountReached(const nsFont &font) {
+  if (mMaxFontAttempts < 0) {
+    return PR_FALSE;
+  }
+
+  for (PRUint32 i = 0; i < mFontsTried.Length(); i++) {
+    if (mFontsTried[i].name.Equals(font.name,
+                                  nsCaseInsensitiveStringComparator())
+        // XXX: Style is sometimes filled with garbage??
+        /*&& mFontsTried[i].style == font.style*/) {
+      // seen it before: OK
+      return PR_FALSE;
+    }
+  }
+
+  if (mFontsTried.Length() >= (unsigned)mMaxFontAttempts) {
+    return PR_TRUE;
+  }
+
+  return PR_FALSE;
+}
+
+void
+nsPresContext::AddFontUse(const nsFont &font) {
+  if (mMaxFonts < 0) {
+    return;
+  }
+
+  for (PRUint32 i = 0; i < mFontsUsed.Length(); i++) {
+    if (mFontsUsed[i].name.Equals(font.name,
+                                  nsCaseInsensitiveStringComparator())
+        // XXX: Style is sometimes filled with garbage??
+        /*&& mFontsUsed[i].style == font.style*/) {
+      // seen it before: OK
+      return;
+    }
+  }
+
+  if (mFontsUsed.Length() >= (unsigned)mMaxFonts) {
+    return;
+  }
+   
+  mFontsUsed.AppendElement(font);
+  return;
+}
+
+void
+nsPresContext::AddFontAttempt(const nsFont &font) {
+  if (mMaxFontAttempts < 0) {
+    return;
+  }
+
+  for (PRUint32 i = 0; i < mFontsTried.Length(); i++) {
+    if (mFontsTried[i].name.Equals(font.name,
+                                  nsCaseInsensitiveStringComparator())
+        // XXX: Style is sometimes filled with garbage??
+        /*&& mFontsTried[i].style == font.style*/) {
+      // seen it before: OK
+      return;
+    }
+  }
+
+  if (mFontsTried.Length() >= (unsigned)mMaxFontAttempts) {
+    return;
+  }
+   
+  mFontsTried.AppendElement(font);
+  return;
 }
 
 void

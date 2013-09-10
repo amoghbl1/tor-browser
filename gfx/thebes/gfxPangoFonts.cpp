@@ -931,6 +931,7 @@ gfxFcFontSet::SortPreferredFonts(bool &aWaitForUserFont)
         const nsTArray< nsCountedRef<FcPattern> > *familyFonts = nullptr;
 
         // Is this an @font-face family?
+        // XXX: Make use of this + pass to nsFont??
         bool isUserFont = false;
         if (mUserFontSet) {
             // Have some @font-face definitions

@@ -95,9 +95,9 @@ nsFontFaceLoader::StartedLoading(nsIStreamLoader* aStreamLoader)
                                        loadTimeout,
                                        nsITimer::TYPE_ONE_SHOT);
     }
-  } else {
+  } else if (loadTimeout == 0) {
     mFontEntry->mLoadingState = gfxProxyFontEntry::LOADING_SLOWLY;
-  }
+  } // -1 disables fallback
   mStreamLoader = aStreamLoader;
 }
 
