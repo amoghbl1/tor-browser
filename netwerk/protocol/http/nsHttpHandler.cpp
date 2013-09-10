@@ -350,6 +350,7 @@ nsHttpHandler::Init()
         mObserverService->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, true);
         mObserverService->AddObserver(this, "net:clear-active-logins", true);
         mObserverService->AddObserver(this, "net:prune-dead-connections", true);
+        mObserverService->AddObserver(this, "net:prune-all-connections", true);
         mObserverService->AddObserver(this, "net:failed-to-process-uri-content", true);
         mObserverService->AddObserver(this, "last-pb-context-exited", true);
         mObserverService->AddObserver(this, "browser:purge-session-history", true);
@@ -1940,6 +1941,11 @@ nsHttpHandler::Observe(nsISupports *subject,
         mPrivateAuthCache.ClearAll();
     } else if (!strcmp(topic, "net:prune-dead-connections")) {
         if (mConnMgr) {
+            mConnMgr->PruneDeadConnections();
+        }
+    } else if (!strcmp(topic, "net:prune-all-connections")) {
+        if (mConnMgr) {
+            mConnMgr->DoShiftReloadConnectionCleanup(nullptr);
             mConnMgr->PruneDeadConnections();
         }
     } else if (!strcmp(topic, "net:failed-to-process-uri-content")) {
