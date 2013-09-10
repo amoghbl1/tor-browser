@@ -737,6 +737,7 @@ static const bool REQUIRE_SAFE_NEGOTIATION_DEFAULT = false;
 static const bool FALSE_START_ENABLED_DEFAULT = true;
 static const bool NPN_ENABLED_DEFAULT = true;
 static const bool ALPN_ENABLED_DEFAULT = false;
+static const bool SECURITY_NOCERTDB_DEFAULT = false;
 
 static void
 ConfigureTLSSessionIdentifiers()
@@ -999,7 +1000,9 @@ nsNSSComponent::InitializeNSS()
   }
 
   SECStatus init_rv = SECFailure;
-  if (!profileStr.IsEmpty()) {
+  bool nocertdb = Preferences::GetBool("security.nocertdb", SECURITY_NOCERTDB_DEFAULT);
+  
+  if (!nocertdb && !profileStr.IsEmpty()) {
     // First try to initialize the NSS DB in read/write mode.
     SECStatus init_rv = ::mozilla::psm::InitializeNSS(profileStr.get(), false);
     // If that fails, attempt read-only mode.
@@ -1012,9 +1015,9 @@ nsNSSComponent::InitializeNSS()
     }
   }
   // If we haven't succeeded in initializing the DB in our profile
-  // directory or we don't have a profile at all, attempt to initialize
-  // with no DB.
-  if (init_rv != SECSuccess) {
+  // directory or we don't have a profile at all, or the "security.nocertdb"
+  // pref has been set to "true", attempt to initialize with no DB.
+  if (nocertdb || init_rv != SECSuccess) {
     init_rv = NSS_NoDB_Init(nullptr);
   }
   if (init_rv != SECSuccess) {
