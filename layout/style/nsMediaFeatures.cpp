@@ -114,7 +114,7 @@ GetDeviceSize(nsPresContext* aPresContext)
 {
     nsSize size;
 
-    if (aPresContext->IsDeviceSizePageSize()) {
+    if (!aPresContext->IsChrome() || aPresContext->IsDeviceSizePageSize()) {
         size = GetSize(aPresContext);
     } else if (aPresContext->IsRootPaginatedDocument()) {
         // We want the page size, including unprintable areas and margins.
@@ -222,13 +222,17 @@ static nsresult
 GetColor(nsPresContext* aPresContext, const nsMediaFeature*,
          nsCSSValue& aResult)
 {
-    // FIXME:  This implementation is bogus.  nsDeviceContext
-    // doesn't provide reliable information (should be fixed in bug
-    // 424386).
-    // FIXME: On a monochrome device, return 0!
-    nsDeviceContext *dx = GetDeviceContextFor(aPresContext);
-    uint32_t depth;
-    dx->GetDepth(depth);
+    uint32_t depth = 24; // Always assume 24-bit depth for non-chrome callers.
+
+    if (aPresContext->IsChrome()) {
+        // FIXME:  This implementation is bogus.  nsDeviceContext
+        // doesn't provide reliable information (should be fixed in bug
+        // 424386).
+        // FIXME: On a monochrome device, return 0!
+        nsDeviceContext *dx = GetDeviceContextFor(aPresContext);
+        dx->GetDepth(depth);
+    }
+
     // The spec says to use bits *per color component*, so divide by 3,
     // and round down, since the spec says to use the smallest when the
     // color components differ.
@@ -266,10 +270,15 @@ static nsresult
 GetResolution(nsPresContext* aPresContext, const nsMediaFeature*,
               nsCSSValue& aResult)
 {
-    // Resolution measures device pixels per CSS (inch/cm/pixel).  We
-    // return it in device pixels per CSS inches.
-    float dpi = float(nsPresContext::AppUnitsPerCSSInch()) /
-                float(aPresContext->AppUnitsPerDevPixel());
+    float dpi = 96; // Always return 96 to non-chrome callers.
+
+    if (aPresContext->IsChrome()) {
+      // Resolution measures device pixels per CSS (inch/cm/pixel).  We
+      // return it in device pixels per CSS inches.
+      dpi = float(nsPresContext::AppUnitsPerCSSInch()) /
+            float(aPresContext->AppUnitsPerDevPixel());
+    }
+
     aResult.SetFloatValue(dpi, eCSSUnit_Inch);
     return NS_OK;
 }
@@ -298,20 +307,27 @@ static nsresult
 GetDevicePixelRatio(nsPresContext* aPresContext, const nsMediaFeature*,
                     nsCSSValue& aResult)
 {
-  float ratio = aPresContext->CSSPixelsToDevPixels(1.0f);
-  aResult.SetFloatValue(ratio, eCSSUnit_Number);
-  return NS_OK;
+    if (aPresContext->IsChrome()) {
+      float ratio = aPresContext->CSSPixelsToDevPixels(1.0f);
+      aResult.SetFloatValue(ratio, eCSSUnit_Number);
+    } else {
+      aResult.SetFloatValue(1.0, eCSSUnit_Number);
+    }
+    return NS_OK;
 }
 
 static nsresult
 GetSystemMetric(nsPresContext* aPresContext, const nsMediaFeature* aFeature,
                 nsCSSValue& aResult)
 {
-    MOZ_ASSERT(aFeature->mValueType == nsMediaFeature::eBoolInteger,
-               "unexpected type");
-    nsIAtom *metricAtom = *aFeature->mData.mMetric;
-    bool hasMetric = nsCSSRuleProcessor::HasSystemMetric(metricAtom);
-    aResult.SetIntValue(hasMetric ? 1 : 0, eCSSUnit_Integer);
+    aResult.Reset();
+    if (aPresContext->IsChrome()) {
+      MOZ_ASSERT(aFeature->mValueType == nsMediaFeature::eBoolInteger,
+                 "unexpected type");
+      nsIAtom *metricAtom = *aFeature->mData.mMetric;
+      bool hasMetric = nsCSSRuleProcessor::HasSystemMetric(metricAtom);
+      aResult.SetIntValue(hasMetric ? 1 : 0, eCSSUnit_Integer);
+    }
     return NS_OK;
 }
 
@@ -321,19 +337,21 @@ GetWindowsTheme(nsPresContext* aPresContext, const nsMediaFeature* aFeature,
 {
     aResult.Reset();
 #ifdef XP_WIN
-    uint8_t windowsThemeId =
-        nsCSSRuleProcessor::GetWindowsThemeIdentifier();
+    if (aPresContext->IsChrome()) {
+        uint8_t windowsThemeId =
+            nsCSSRuleProcessor::GetWindowsThemeIdentifier();
 
-    // Classic mode should fail to match.
-    if (windowsThemeId == LookAndFeel::eWindowsTheme_Classic)
-        return NS_OK;
+        // Classic mode should fail to match.
+        if (windowsThemeId == LookAndFeel::eWindowsTheme_Classic)
+            return NS_OK;
 
-    // Look up the appropriate theme string
-    for (size_t i = 0; i < ArrayLength(themeStrings); ++i) {
-        if (windowsThemeId == themeStrings[i].id) {
-            aResult.SetStringValue(nsDependentString(themeStrings[i].name),
-                                   eCSSUnit_Ident);
-            break;
+        // Look up the appropriate theme string
+        for (size_t i = 0; i < ArrayLength(themeStrings); ++i) {
+            if (windowsThemeId == themeStrings[i].id) {
+                aResult.SetStringValue(nsDependentString(themeStrings[i].name),
+                                       eCSSUnit_Ident);
+                break;
+            }
         }
     }
 #endif
@@ -345,6 +363,8 @@ GetOperatinSystemVersion(nsPresContext* aPresContext, const nsMediaFeature* aFea
                          nsCSSValue& aResult)
 {
     aResult.Reset();
+    if (!aPresContext->IsChrome()) return NS_OK;
+
 #ifdef XP_WIN
     int32_t metricResult;
     if (NS_SUCCEEDED(
