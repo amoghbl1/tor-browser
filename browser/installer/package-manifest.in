@@ -642,6 +642,7 @@
 @BINPATH@/defaults/autoconfig/platform.js
 @BINPATH@/defaults/autoconfig/prefcalls.js
 @BINPATH@/browser/defaults/profile/prefs.js
+@BINPATH@/browser/@PREF_DIR@/000-tor-browser.js
 
 #ifndef LIBXUL_SDK
 ; Warning: changing the path to channel-prefs.js can cause bugs (Bug 756325)
