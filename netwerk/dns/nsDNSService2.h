@@ -58,6 +58,7 @@ private:
     bool                                      mDisableIPv6;
     bool                                      mDisablePrefetch;
     bool                                      mFirstTime;
+    bool                                      mDisableDNS;
     bool                                      mOffline;
     bool                                      mNotifyResolution;
     nsMainThreadPtrHandle<nsIObserverService> mObserverService;
