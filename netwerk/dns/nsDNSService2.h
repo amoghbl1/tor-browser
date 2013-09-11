@@ -62,6 +62,7 @@ private:
     bool                                      mDisablePrefetch;
     bool                                      mBlockDotOnion;
     bool                                      mFirstTime;
+    bool                                      mDisableDNS;
     bool                                      mOffline;
     bool                                      mNotifyResolution;
     bool                                      mOfflineLocalhost;
