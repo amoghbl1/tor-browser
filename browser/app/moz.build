@@ -12,6 +12,7 @@ else:
     GeckoProgram(CONFIG['MOZ_APP_NAME'], msvcrt='static')
 
 JS_PREFERENCE_FILES += [
+    'profile/000-tor-browser.js',
     'profile/firefox.js',
 ]
 
