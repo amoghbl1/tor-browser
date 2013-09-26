@@ -2710,4 +2710,12 @@ notification[value="translation"] {
   overflow: hidden;
 }
 
+.popup-notification-icon[popupid="canvas-permissions-prompt"] {
+  list-style-image: url(chrome://browser/skin/canvas-popup.svg);
+}
+
+#canvas-notification-icon {
+  list-style-image: url(chrome://browser/skin/canvas-popup.svg);
+}
+
 %include ../shared/usercontext/usercontext.inc.css

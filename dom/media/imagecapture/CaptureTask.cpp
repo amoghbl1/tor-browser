@@ -145,6 +145,7 @@ CaptureTask::NotifyQueuedTrackChanges(MediaStreamGraph* aGraph, TrackID aID,
                                   options,
                                   false,
                                   image,
+                                  false,
                                   new EncodeComplete(this));
         if (NS_FAILED(rv)) {
           PostTrackEndEvent();
