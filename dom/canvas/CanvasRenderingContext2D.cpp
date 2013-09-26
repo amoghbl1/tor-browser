@@ -4948,6 +4948,22 @@ CanvasRenderingContext2D::GetImageDataArray(JSContext* aCx,
     srcStride = aWidth * 4;
   }
 
+  // Check for site-specific permission and return all-white, opaque pixel
+  // data if no permission.  This check is not needed if the canvas was
+  // created with a docshell (that is only done for special internal uses).
+  bool usePlaceholder = false;
+  if (mCanvasElement) {
+    nsCOMPtr<nsIDocument> ownerDoc = mCanvasElement->OwnerDoc();
+    usePlaceholder = !ownerDoc ||
+      !CanvasUtils::IsImageExtractionAllowed(ownerDoc, aCx);
+  }
+
+  if (usePlaceholder) {
+    memset(data, 0xFF, len.value());
+    *aRetval = darray;
+    return NS_OK;
+  }
+
   // NOTE! dst is the same as src, and this relies on reading
   // from src and advancing that ptr before writing to dst.
   // NOTE! I'm not sure that it is, I think this comment might have been
