@@ -3404,3 +3404,11 @@ menulist.translate-infobar-element > .menulist-dropmarker {
 .webextension-popup-browser {
   border-radius: inherit;
 }
+
+#canvas-notification-icon {
+  list-style-image: url(chrome://browser/skin/canvas-popup.svg);
+}
+
+.popup-notification-icon[popupid="canvas-permissions-prompt"] {
+  list-style-image: url(chrome://browser/skin/canvas-popup.svg);
+}

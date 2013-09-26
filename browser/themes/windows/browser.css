@@ -2709,3 +2709,12 @@ notification.pluginVulnerable > .notification-inner > .messageCloseButton {
   padding-top: .9167em;
   padding-bottom: .9167em;
 }
+
+.popup-notification-icon[popupid="canvas-permissions-prompt"] {
+  list-style-image: url(chrome://browser/skin/canvas-popup.svg);
+}
+
+#canvas-notification-icon {
+  list-style-image: url(chrome://browser/skin/canvas-popup.svg);
+}
+

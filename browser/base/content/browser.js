@@ -1222,6 +1222,7 @@ var gBrowserInit = {
 
     BrowserOffline.init();
     IndexedDBPromptHelper.init();
+    CanvasPermissionPromptHelper.init();
 
     if (AppConstants.E10S_TESTING_ONLY)
       gRemoteTabsUI.init();
@@ -1570,6 +1571,7 @@ var gBrowserInit = {
 
       BrowserOffline.uninit();
       IndexedDBPromptHelper.uninit();
+      CanvasPermissionPromptHelper.uninit();
       LightweightThemeListener.uninit();
       PanelUI.uninit();
       AutoShowBookmarksToolbar.uninit();
@@ -6255,6 +6257,133 @@ var IndexedDBPromptHelper = {
     // timeout value. If the user doesn't notice the popup after this amount of
     // time then it is most likely not visible and we want to alert the page.
     timeoutId = setTimeout(timeoutNotification, firstTimeoutDuration);
+  }
+};
+
+var CanvasPermissionPromptHelper = {
+  _permissionsPrompt: "canvas-permissions-prompt",
+  _notificationIcon: "canvas-notification-icon",
+
+  init:
+  function CanvasPermissionPromptHelper_init() {
+    if (document.styleSheets && (document.styleSheets.length > 0)) try {
+      let ruleText = "panel[popupid=canvas-permissions-prompt] description { white-space: pre-wrap; }";
+      let sheet = document.styleSheets[0];
+      sheet.insertRule(ruleText, sheet.cssRules.length);
+    } catch (e) {};
+
+    Services.obs.addObserver(this, this._permissionsPrompt, false);
+  },
+
+  uninit:
+  function CanvasPermissionPromptHelper_uninit() {
+    Services.obs.removeObserver(this, this._permissionsPrompt, false);
+  },
+
+  // aSubject is an nsIBrowser (e10s) or an nsIDOMWindow (non-e10s).
+  // aData is an URL string.
+  observe:
+  function CanvasPermissionPromptHelper_observe(aSubject, aTopic, aData) {
+    if (aTopic != this._permissionsPrompt) {
+      throw new Error("Unexpected topic");
+    }
+
+    let browser;
+    try {
+      browser = aSubject.QueryInterface(Ci.nsIBrowser);
+    } catch (e) {}
+
+    if (!browser) {
+      try {
+        let contentWindow = aSubject.QueryInterface(Ci.nsIDOMWindow);
+        browser = gBrowser.getBrowserForContentWindow(contentWindow);
+      } catch (e) {}
+
+      if (!browser) {
+        throw new Error("No browser");
+      }
+    }
+
+    if (!aData) {
+      throw new Error("Missing URL");
+    }
+
+    var uri = makeURI(aData);
+    if (gBrowser.selectedBrowser !== browser) {
+      // Must belong to some other window.
+      return;
+    }
+
+    // If canvas prompt is already displayed, just return.  This is OK (and
+    // more efficient) since this permission is associated with the top
+    // browser's URL.
+    if (PopupNotifications.getNotification(aTopic, browser))
+      return;
+
+    var bundleSvc = Cc["@mozilla.org/intl/stringbundle;1"].
+                        getService(Ci.nsIStringBundleService);
+    var torBtnBundle;
+    try {
+      torBtnBundle = bundleSvc.createBundle(
+                             "chrome://torbutton/locale/torbutton.properties");
+    } catch (e) {}
+
+    var message = getLocalizedString("canvas.siteprompt", [ uri.asciiHost ]);
+
+    var mainAction = {
+      label: getLocalizedString("canvas.notNow"),
+      accessKey: getLocalizedString("canvas.notNowAccessKey"),
+      callback: function() {
+        return null;
+      }
+    };
+
+    var secondaryActions = [
+      {
+        label: getLocalizedString("canvas.never"),
+        accessKey: getLocalizedString("canvas.neverAccessKey"),
+        callback: function() {
+          setCanvasPermission(uri, Ci.nsIPermissionManager.DENY_ACTION);
+        }
+      },
+      {
+        label: getLocalizedString("canvas.allow"),
+        accessKey: getLocalizedString("canvas.allowAccessKey"),
+        callback: function() {
+            setCanvasPermission(uri, Ci.nsIPermissionManager.ALLOW_ACTION);
+        }
+      }
+    ];
+
+    // Since we have a process in place to perform localization for the
+    // Torbutton extension, get our strings from the extension if possible.
+    function getLocalizedString(aID, aParams) {
+      var s;
+      if (torBtnBundle) try {
+        if (aParams)
+          s = torBtnBundle.formatStringFromName(aID, aParams, aParams.length);
+        else
+          s = torBtnBundle.GetStringFromName(aID);
+      } catch (e) {}
+
+      if (!s) {
+        if (aParams)
+          s = gNavigatorBundle.getFormattedString(aID, aParams);
+        else
+          s = gNavigatorBundle.getString(aID);
+      }
+
+      return s;
+    }
+
+    function setCanvasPermission(aURI, aPerm) {
+      Services.perms.add(aURI, "canvas/extractData", aPerm,
+                         Ci.nsIPermissionManager.EXPIRE_NEVER);
+    }
+
+    notification = PopupNotifications.show(browser, aTopic, message,
+                                           this._notificationIcon, mainAction,
+                                           secondaryActions, null);
   }
 };
 
