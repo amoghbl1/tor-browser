@@ -1,4 +1,4 @@
-   /* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -34,6 +34,7 @@
 #include "nsMathUtils.h"
 #include "nsNetUtil.h"
 #include "nsStreamUtils.h"
+#include "CanvasUtils.h"
 #include "ActiveLayerTracker.h"
 #include "WebGL1Context.h"
 #include "WebGL2Context.h"
@@ -373,7 +374,7 @@ HTMLCanvasElement::MozFetchAsStream(nsIInputStreamCallback *aCallback,
   nsCOMPtr<nsIInputStream> inputData;
 
   nsAutoString type(aType);
-  rv = ExtractData(type, EmptyString(), getter_AddRefs(inputData));
+  rv = ExtractData(nsContentUtils::GetCurrentJSContext(), type, EmptyString(), getter_AddRefs(inputData));
   NS_ENSURE_SUCCESS(rv, rv);
 
   nsCOMPtr<nsIAsyncInputStream> asyncData = do_QueryInterface(inputData, &rv);
@@ -405,13 +406,18 @@ HTMLCanvasElement::GetMozPrintCallback() const
 }
 
 nsresult
-HTMLCanvasElement::ExtractData(nsAString& aType,
+HTMLCanvasElement::ExtractData(JSContext* aCx,
+                               nsAString& aType,
                                const nsAString& aOptions,
                                nsIInputStream** aStream)
 {
+  // Check site-speciifc permission and display prompt if appropriate.
+  // If no permission, return all-white, opaque image data.
+  bool usePlaceholder = !CanvasUtils::IsImageExtractionAllowed(OwnerDoc(), aCx);
   return ImageEncoder::ExtractData(aType,
                                    aOptions,
                                    GetSize(),
+                                   usePlaceholder,
                                    mCurrentContext,
                                    aStream);
 }
@@ -482,12 +488,12 @@ HTMLCanvasElement::ToDataURLImpl(JSContext* aCx,
   }
 
   nsCOMPtr<nsIInputStream> stream;
-  rv = ExtractData(type, params, getter_AddRefs(stream));
+  rv = ExtractData(aCx, type, params, getter_AddRefs(stream));
 
   // If there are unrecognized custom parse options, we should fall back to
   // the default values for the encoder without any options at all.
   if (rv == NS_ERROR_INVALID_ARG && usingCustomParseOptions) {
-    rv = ExtractData(type, EmptyString(), getter_AddRefs(stream));
+    rv = ExtractData(aCx, type, EmptyString(), getter_AddRefs(stream));
   }
 
   NS_ENSURE_SUCCESS(rv, rv);
@@ -539,9 +545,13 @@ HTMLCanvasElement::ToBlob(JSContext* aCx,
   }
 #endif
 
+  // Check site-specific permission and display prompt if appropriate.
+  // If no permission, return all-white, opaque image data.
+  bool usePlaceholder = !CanvasUtils::IsImageExtractionAllowed(OwnerDoc(), aCx);
+ 
   uint8_t* imageBuffer = nullptr;
   int32_t format = 0;
-  if (mCurrentContext) {
+  if (mCurrentContext && !usePlaceholder) {
     mCurrentContext->GetImageBuffer(&imageBuffer, &format);
   }
 
@@ -589,6 +599,7 @@ HTMLCanvasElement::ToBlob(JSContext* aCx,
                                        imageBuffer,
                                        format,
                                        GetSize(),
+                                       usePlaceholder,
                                        callback);
 }
 
@@ -626,7 +637,8 @@ HTMLCanvasElement::MozGetAsFileImpl(const nsAString& aName,
 {
   nsCOMPtr<nsIInputStream> stream;
   nsAutoString type(aType);
-  nsresult rv = ExtractData(type, EmptyString(), getter_AddRefs(stream));
+  nsresult rv = ExtractData(nsContentUtils::GetCurrentJSContext(),
+                            type, EmptyString(), getter_AddRefs(stream));
   NS_ENSURE_SUCCESS(rv, rv);
 
   uint64_t imgSize;
