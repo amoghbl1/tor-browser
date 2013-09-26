@@ -4184,10 +4184,17 @@ CanvasRenderingContext2D::LineDashOffset() const {
 }
 
 bool
-CanvasRenderingContext2D::IsPointInPath(double x, double y, const CanvasWindingRule& winding)
+CanvasRenderingContext2D::IsPointInPath(JSContext* aCx, double x, double y, const CanvasWindingRule& winding)
 {
   if (!FloatValidate(x,y)) {
     return false;
+  }
+
+  // Check for site-specific permission and return false if no permission.
+  if (mCanvasElement) {
+    nsCOMPtr<nsIDocument> ownerDoc = mCanvasElement->OwnerDoc();
+    if (!ownerDoc || !CanvasUtils::IsImageExtractionAllowed(ownerDoc, aCx))
+      return false;
   }
 
   EnsureUserSpacePath(winding);
@@ -4202,10 +4209,17 @@ CanvasRenderingContext2D::IsPointInPath(double x, double y, const CanvasWindingR
   return mPath->ContainsPoint(Point(x, y), mTarget->GetTransform());
 }
 
-bool CanvasRenderingContext2D::IsPointInPath(const CanvasPath& mPath, double x, double y, const CanvasWindingRule& mWinding)
+bool CanvasRenderingContext2D::IsPointInPath(JSContext* aCx, const CanvasPath& mPath, double x, double y, const CanvasWindingRule& mWinding)
 {
   if (!FloatValidate(x,y)) {
     return false;
+  }
+
+  // Check for site-specific permission and return false if no permission.
+  if (mCanvasElement) {
+    nsCOMPtr<nsIDocument> ownerDoc = mCanvasElement->OwnerDoc();
+    if (!ownerDoc || !CanvasUtils::IsImageExtractionAllowed(ownerDoc, aCx))
+      return false;
   }
 
   EnsureTarget();
@@ -4215,10 +4229,17 @@ bool CanvasRenderingContext2D::IsPointInPath(const CanvasPath& mPath, double x, 
 }
 
 bool
-CanvasRenderingContext2D::IsPointInStroke(double x, double y)
+CanvasRenderingContext2D::IsPointInStroke(JSContext* aCx, double x, double y)
 {
   if (!FloatValidate(x,y)) {
     return false;
+  }
+
+  // Check for site-specific permission and return false if no permission.
+  if (mCanvasElement) {
+    nsCOMPtr<nsIDocument> ownerDoc = mCanvasElement->OwnerDoc();
+    if (!ownerDoc || !CanvasUtils::IsImageExtractionAllowed(ownerDoc, aCx))
+      return false;
   }
 
   EnsureUserSpacePath();
@@ -4242,10 +4263,17 @@ CanvasRenderingContext2D::IsPointInStroke(double x, double y)
   return mPath->StrokeContainsPoint(strokeOptions, Point(x, y), mTarget->GetTransform());
 }
 
-bool CanvasRenderingContext2D::IsPointInStroke(const CanvasPath& mPath, double x, double y)
+bool CanvasRenderingContext2D::IsPointInStroke(JSContext* aCx, const CanvasPath& mPath, double x, double y)
 {
   if (!FloatValidate(x,y)) {
     return false;
+  }
+
+  // Check for site-specific permission and return false if no permission.
+  if (mCanvasElement) {
+    nsCOMPtr<nsIDocument> ownerDoc = mCanvasElement->OwnerDoc();
+    if (!ownerDoc || !CanvasUtils::IsImageExtractionAllowed(ownerDoc, aCx))
+      return false;
   }
 
   EnsureTarget();
@@ -5235,6 +5263,26 @@ CanvasRenderingContext2D::GetImageDataArray(JSContext* aCx,
   if (!readback) {
     src = data;
     srcStride = aWidth * 4;
+  }
+
+  // Check for site-specific permission and return all-white, opaque pixel
+  // data if no permission.  This check is not needed if the canvas was
+  // created with a docshell (that is only done for special internal uses).
+  bool usePlaceholder = false;
+  if (mCanvasElement) {
+    nsCOMPtr<nsIDocument> ownerDoc = mCanvasElement->OwnerDoc();
+    usePlaceholder = !ownerDoc ||
+      !CanvasUtils::IsImageExtractionAllowed(ownerDoc, aCx);
+  }
+
+  if (usePlaceholder) {
+    if (readback) {
+      readback->Unmap();
+    }
+
+    memset(data, 0xFF, len.value());
+    *aRetval = darray;
+    return NS_OK;
   }
 
   uint8_t* dst = data + dstWriteRect.y * (aWidth * 4) + dstWriteRect.x * 4;

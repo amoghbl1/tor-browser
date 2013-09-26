@@ -24,6 +24,7 @@ CanvasRenderingContextHelper::ToBlob(JSContext* aCx,
                                      FileCallback& aCallback,
                                      const nsAString& aType,
                                      JS::Handle<JS::Value> aParams,
+                                     bool aUsePlaceholder,
                                      ErrorResult& aRv)
 {
   nsAutoString type;
@@ -103,6 +104,7 @@ CanvasRenderingContextHelper::ToBlob(JSContext* aCx,
                                        Move(imageBuffer),
                                        format,
                                        GetWidthHeight(),
+                                       aUsePlaceholder,
                                        callback);
 }
 

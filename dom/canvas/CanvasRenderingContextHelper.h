@@ -55,7 +55,7 @@ protected:
 
   void ToBlob(JSContext* aCx, nsIGlobalObject* global, FileCallback& aCallback,
               const nsAString& aType, JS::Handle<JS::Value> aParams,
-              ErrorResult& aRv);
+              bool usePlaceholder, ErrorResult& aRv);
 
   virtual already_AddRefed<nsICanvasRenderingContextInternal>
   CreateContext(CanvasContextType aContextType);
