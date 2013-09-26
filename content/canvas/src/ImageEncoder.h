@@ -33,6 +33,7 @@ public:
   static nsresult ExtractData(nsAString& aType,
                               const nsAString& aOptions,
                               const nsIntSize aSize,
+                              bool aUsePlaceholder,
                               nsICanvasRenderingContextInternal* aContext,
                               nsIInputStream** aStream);
 
@@ -49,6 +50,7 @@ public:
                                    uint8_t* aImageBuffer,
                                    int32_t aFormat,
                                    const nsIntSize aSize,
+                                   bool aUsePlaceholder,
                                    nsICanvasRenderingContextInternal* aContext,
                                    nsIScriptContext* aScriptContext,
                                    FileCallback& aCallback);
@@ -72,6 +74,7 @@ private:
                       uint8_t* aImageBuffer,
                       int32_t aFormat,
                       const nsIntSize aSize,
+                      bool aUsePlaceholder,
                       nsICanvasRenderingContextInternal* aContext,
                       nsIInputStream** aStream,
                       imgIEncoder* aEncoder);

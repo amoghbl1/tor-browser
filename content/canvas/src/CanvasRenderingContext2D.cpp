@@ -3845,6 +3845,22 @@ CanvasRenderingContext2D::GetImageDataArray(JSContext* aCx,
 
   uint8_t* data = JS_GetUint8ClampedArrayData(darray);
 
+  // Check for site-specific permission and return all-white, opaque pixel
+  // data if no permission.  This check is not needed if the canvas was
+  // created with a docshell (that is only done for special internal uses).
+  bool usePlaceholder = false;
+  if (mCanvasElement) {
+    nsCOMPtr<nsIDocument> ownerDoc = mCanvasElement->OwnerDoc();
+    usePlaceholder = !ownerDoc ||
+      !CanvasUtils::IsImageExtractionAllowed(ownerDoc, aCx);
+  }
+
+  if (usePlaceholder) {
+    memset(data, 0xFF, len.value());
+    *aRetval = darray;
+    return NS_OK;
+  }
+
   IntRect dstWriteRect = srcReadRect;
   dstWriteRect.MoveBy(-aX, -aY);
 

@@ -216,7 +216,8 @@ protected:
                        const JS::Value& aEncoderOptions,
                        nsAString& aParams,
                        bool* usingCustomParseOptions);
-  nsresult ExtractData(nsAString& aType,
+  nsresult ExtractData(JSContext* aCx,
+                       nsAString& aType,
                        const nsAString& aOptions,
                        nsIInputStream** aStream);
   nsresult ToDataURLImpl(JSContext* aCx,

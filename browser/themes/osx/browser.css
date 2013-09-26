@@ -3421,6 +3421,11 @@ toolbarbutton.chevron > .toolbarbutton-menu-dropmarker {
   }
 }
 
+
+#canvas-notification-icon {
+  list-style-image: url(chrome://browser/skin/canvas-popup.svg);
+}
+
 .indexedDB-notification-icon,
 #indexedDB-notification-icon {
   list-style-image: url(chrome://global/skin/icons/question-16.png);
@@ -3719,6 +3724,10 @@ toolbarbutton.chevron > .toolbarbutton-menu-dropmarker {
 
 .popup-progress-cancel:active {
   -moz-image-region: rect(0px, 48px, 16px, 32px);
+}
+
+.popup-notification-icon[popupid="canvas-permissions-prompt"] {
+  list-style-image: url(chrome://browser/skin/canvas-popup.svg);
 }
 
 .popup-notification-icon[popupid="indexedDB-permissions-prompt"],

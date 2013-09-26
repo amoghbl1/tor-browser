@@ -47,6 +47,8 @@ void DoDrawImageSecurityCheck(dom::HTMLCanvasElement *aCanvasElement,
                               bool forceWriteOnly,
                               bool CORSUsed);
 
+bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx);
+
 // Make a double out of |v|, treating undefined values as 0.0 (for
 // the sake of sparse arrays).  Return true iff coercion
 // succeeded.

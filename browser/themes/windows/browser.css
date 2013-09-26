@@ -2164,6 +2164,10 @@ toolbarbutton.bookmark-item[dragover="true"][open="true"] {
   -moz-image-region: rect(32px, 32px, 48px, 16px);
 }
 
+.popup-notification-icon[popupid="canvas-permissions-prompt"] {
+  list-style-image: url(chrome://browser/skin/canvas-popup.svg);
+}
+
 .popup-notification-icon[popupid="indexedDB-permissions-prompt"],
 .popup-notification-icon[popupid="indexedDB-quota-prompt"],
 .popup-notification-icon[popupid*="offline-app-requested"],
@@ -2249,6 +2253,10 @@ toolbarbutton.bookmark-item[dragover="true"][open="true"] {
 
 #addons-notification-icon {
   list-style-image: url(chrome://mozapps/skin/extensions/extensionGeneric-16.png);
+}
+
+#canvas-notification-icon {
+  list-style-image: url(chrome://browser/skin/canvas-popup.svg);
 }
 
 .indexedDB-notification-icon,

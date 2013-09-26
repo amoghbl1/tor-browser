@@ -95,6 +95,7 @@ public:
                    EncodingCompleteEvent* aEncodingCompleteEvent,
                    int32_t aFormat,
                    const nsIntSize aSize,
+                   bool aUsePlaceholder,
                    bool aUsingCustomOptions)
     : mType(aType)
     , mOptions(aOptions)
@@ -103,6 +104,7 @@ public:
     , mEncodingCompleteEvent(aEncodingCompleteEvent)
     , mFormat(aFormat)
     , mSize(aSize)
+    , mUsePlaceholder(aUsePlaceholder)
     , mUsingCustomOptions(aUsingCustomOptions)
   {}
   virtual ~EncodingRunnable() {}
@@ -115,6 +117,7 @@ public:
                                                     mImageBuffer,
                                                     mFormat,
                                                     mSize,
+                                                    mUsePlaceholder,
                                                     nullptr,
                                                     getter_AddRefs(stream),
                                                     mEncoder);
@@ -127,6 +130,7 @@ public:
                                              mImageBuffer,
                                              mFormat,
                                              mSize,
+                                             mUsePlaceholder,
                                              nullptr,
                                              getter_AddRefs(stream),
                                              mEncoder);
@@ -172,6 +176,7 @@ private:
   nsRefPtr<EncodingCompleteEvent> mEncodingCompleteEvent;
   int32_t mFormat;
   const nsIntSize mSize;
+  bool mUsePlaceholder;
   bool mUsingCustomOptions;
 };
 
@@ -182,6 +187,7 @@ nsresult
 ImageEncoder::ExtractData(nsAString& aType,
                           const nsAString& aOptions,
                           const nsIntSize aSize,
+                          bool aUsePlaceholder,
                           nsICanvasRenderingContextInternal* aContext,
                           nsIInputStream** aStream)
 {
@@ -190,8 +196,8 @@ ImageEncoder::ExtractData(nsAString& aType,
     return NS_IMAGELIB_ERROR_NO_ENCODER;
   }
 
-  return ExtractDataInternal(aType, aOptions, nullptr, 0, aSize, aContext,
-                             aStream, encoder);
+  return ExtractDataInternal(aType, aOptions, nullptr, 0, aSize,
+                             aUsePlaceholder, aContext, aStream, encoder);
 }
 
 /* static */
@@ -202,6 +208,7 @@ ImageEncoder::ExtractDataAsync(nsAString& aType,
                                uint8_t* aImageBuffer,
                                int32_t aFormat,
                                const nsIntSize aSize,
+                               bool aUsePlaceholder,
                                nsICanvasRenderingContextInternal* aContext,
                                nsIScriptContext* aScriptContext,
                                FileCallback& aCallback)
@@ -225,6 +232,7 @@ ImageEncoder::ExtractDataAsync(nsAString& aType,
                                                      completeEvent,
                                                      aFormat,
                                                      aSize,
+                                                     aUsePlaceholder,
                                                      aUsingCustomOptions);
   return encoderThread->Dispatch(event, NS_DISPATCH_NORMAL);
 }
@@ -255,6 +263,7 @@ ImageEncoder::ExtractDataInternal(const nsAString& aType,
                                   uint8_t* aImageBuffer,
                                   int32_t aFormat,
                                   const nsIntSize aSize,
+                                  bool aUsePlaceholder,
                                   nsICanvasRenderingContextInternal* aContext,
                                   nsIInputStream** aStream,
                                   imgIEncoder* aEncoder)
@@ -263,7 +272,7 @@ ImageEncoder::ExtractDataInternal(const nsAString& aType,
 
   // get image bytes
   nsresult rv;
-  if (aImageBuffer) {
+  if (aImageBuffer && !aUsePlaceholder) {
     rv = ImageEncoder::GetInputStream(
       aSize.width,
       aSize.height,
@@ -272,13 +281,13 @@ ImageEncoder::ExtractDataInternal(const nsAString& aType,
       aEncoder,
       nsPromiseFlatString(aOptions).get(),
       getter_AddRefs(imgStream));
-  } else if (aContext) {
+  } else if (aContext && !aUsePlaceholder) {
     NS_ConvertUTF16toUTF8 encoderType(aType);
     rv = aContext->GetInputStream(encoderType.get(),
                                   nsPromiseFlatString(aOptions).get(),
                                   getter_AddRefs(imgStream));
   } else {
-    // no context, so we have to encode an empty image
+    // If placeholder data requested or no context, encode an empty image.
     // note that if we didn't have a current context, the spec says we're
     // supposed to just return transparent black pixels of the canvas
     // dimensions.
@@ -287,6 +296,11 @@ ImageEncoder::ExtractDataInternal(const nsAString& aType,
                           gfxImageFormat::ARGB32);
     if (emptyCanvas->CairoStatus()) {
       return NS_ERROR_INVALID_ARG;
+    }
+    if (aUsePlaceholder) {
+      // If placeholder data was requested, return all-white, opaque image data.
+      int32_t dataSize = emptyCanvas->GetDataSize();
+      memset(emptyCanvas->Data(), 0xFF, dataSize);
     }
     rv = aEncoder->InitFromData(emptyCanvas->Data(),
                                 aSize.width * aSize.height * 4,
