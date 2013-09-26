@@ -633,6 +633,7 @@ protected:
   virtual bool RecvNotifySessionHistoryChange(const uint32_t& aCount) override;
 
   virtual bool RecvRequestCrossBrowserNavigation(const uint32_t& aGlobalIndex) override;
+  virtual bool RecvShowCanvasPermissionPrompt(const nsCString& firstPartyURI) override;
 
   ContentCacheInParent mContentCache;
 

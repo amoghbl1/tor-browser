@@ -295,8 +295,12 @@ OffscreenCanvas::ToBlob(JSContext* aCx,
   RefPtr<EncodeCompleteCallback> callback =
     new EncodeCallback(global, promise);
 
+  // TODO: Can we obtain the context and document here somehow
+  // so that we can decide when usePlaceholder should be true/false?
+  // See https://trac.torproject.org/18599
+  // For now, we always return a placeholder.
   CanvasRenderingContextHelper::ToBlob(aCx, global,
-                                       callback, aType, aParams, aRv);
+                                       callback, aType, aParams, true /* usePlaceholder */ , aRv);
 
   return promise.forget();
 }

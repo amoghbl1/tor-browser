@@ -3277,6 +3277,18 @@ TabParent::RecvRequestCrossBrowserNavigation(const uint32_t& aGlobalIndex)
   return NS_SUCCEEDED(frameLoader->RequestGroupedHistoryNavigation(aGlobalIndex));
 }
 
+bool
+TabParent::RecvShowCanvasPermissionPrompt(const nsCString& firstPartyURI)
+{
+  nsCOMPtr<nsIBrowser> browser = do_QueryInterface(mFrameElement);
+  NS_ENSURE_TRUE(browser, false);
+  nsCOMPtr<nsIObserverService> os = services::GetObserverService();
+  NS_ENSURE_TRUE(os, false);
+  nsresult rv = os->NotifyObservers(browser, "canvas-permissions-prompt",
+                                    NS_ConvertUTF8toUTF16(firstPartyURI).get());
+  return NS_SUCCEEDED(rv);
+}
+
 NS_IMETHODIMP
 FakeChannel::OnAuthAvailable(nsISupports *aContext, nsIAuthInformation *aAuthInfo)
 {
