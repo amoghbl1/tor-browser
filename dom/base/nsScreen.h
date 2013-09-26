@@ -130,6 +130,9 @@ protected:
   nsDeviceContext* GetDeviceContext();
   nsresult GetRect(nsRect& aRect);
   nsresult GetAvailRect(nsRect& aRect);
+  bool IsChrome();
+  nsresult GetDOMWindow(nsIDOMWindow **aResult);
+  nsresult GetWindowInnerRect(nsRect& aRect);
 
   mozilla::dom::ScreenOrientation mOrientation;
 
