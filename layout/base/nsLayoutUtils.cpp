@@ -80,6 +80,8 @@
 
 #include "mozilla/Preferences.h"
 
+#include "mozilla/LookAndFeel.h"
+
 #ifdef MOZ_XUL
 #include "nsXULPopupManager.h"
 #endif
@@ -4270,11 +4272,61 @@ ShouldDarkenColors(nsPresContext* aPresContext)
 nscolor
 nsLayoutUtils::GetColor(nsIFrame* aFrame, nsCSSProperty aProperty)
 {
+  if (aProperty == eCSSProperty_color)
+  {
+    nscolor nativeColor = NS_RGB(0, 0, 0);
+    if (GetNativeTextColor(aFrame, nativeColor))
+      return nativeColor;
+  }
+
   nscolor color = aFrame->GetVisitedDependentColor(aProperty);
   if (ShouldDarkenColors(aFrame->PresContext())) {
     color = DarkenColor(color);
   }
+
   return color;
+}
+
+bool
+nsLayoutUtils::GetNativeTextColor(nsIFrame* aFrame, nscolor& aColor)
+{
+  nsPresContext *presContext = aFrame->PresContext();
+  if (!presContext->IsChrome()) {
+    // If native appearance was used to draw the background of the containing
+    // frame, return a contrasting native foreground color instead of the
+    // color from the element's style.  This avoids a problem where black
+    // text was displayed on a black background when a Windows theme such as
+    // "High Contrast Black" was used.  The background is drawn inside
+    // nsNativeThemeWin::ClassicDrawWidgetBackground().
+    //
+    // Because both the background color and this foreground color are used
+    // directly without exposing the colors via CSS computed styles, the
+    // native colors are not leaked to content.
+    nsIFrame* bgFrame =
+                    nsCSSRendering::FindNonTransparentBackgroundFrame(aFrame);
+    if (bgFrame) {
+      const nsStyleDisplay* displayData = bgFrame->StyleDisplay();
+      uint8_t widgetType = displayData->mAppearance;
+      nsITheme *theme = presContext->GetTheme();
+      if (theme && widgetType && theme->ThemeSupportsWidget(presContext,
+                                                            bgFrame,
+                                                            widgetType)) {
+        bool isDisabled = false;
+        nsIContent* frameContent = bgFrame->GetContent();
+        if (frameContent && frameContent->IsElement()) {
+          EventStates es = frameContent->AsElement()->State();
+          isDisabled = es.HasState(NS_EVENT_STATE_DISABLED); 
+        } 
+
+        if (NS_SUCCEEDED(LookAndFeel::GetColorForNativeAppearance(widgetType,
+                                                       isDisabled, &aColor))) {
+            return true;
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
 gfxFloat

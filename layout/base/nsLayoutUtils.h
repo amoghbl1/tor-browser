@@ -1271,6 +1271,10 @@ public:
   // Get a suitable foreground color for painting aProperty for aFrame.
   static nscolor GetColor(nsIFrame* aFrame, nsCSSProperty aProperty);
 
+  // Get the native text color if appropriate.  If false is returned, callers
+  // should fallback to the CSS color.
+  static bool GetNativeTextColor(nsIFrame* aFrame, nscolor& aColor);
+
   // Get a baseline y position in app units that is snapped to device pixels.
   static gfxFloat GetSnappedBaselineY(nsIFrame* aFrame, gfxContext* aContext,
                                       nscoord aY, nscoord aAscent);

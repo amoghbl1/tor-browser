@@ -25,6 +25,7 @@
 #include "nsCSSParser.h"
 #include "mozilla/css/StyleRule.h"
 #include "mozilla/css/Declaration.h"
+#include "mozilla/css/Loader.h"
 #include "nsComputedDOMStyle.h"
 #include "nsStyleSet.h"
 
@@ -164,9 +165,10 @@ class CanvasRadialGradient : public CanvasGradient
 {
 public:
   CanvasRadialGradient(CanvasRenderingContext2D* aContext,
+                       mozilla::css::Loader *aLoader,
                        const Point &aBeginOrigin, Float aBeginRadius,
                        const Point &aEndOrigin, Float aEndRadius)
-    : CanvasGradient(aContext, Type::RADIAL)
+    : CanvasGradient(aContext, aLoader, Type::RADIAL)
     , mCenter1(aBeginOrigin)
     , mCenter2(aEndOrigin)
     , mRadius1(aBeginRadius)
@@ -184,8 +186,9 @@ class CanvasLinearGradient : public CanvasGradient
 {
 public:
   CanvasLinearGradient(CanvasRenderingContext2D* aContext,
+                       mozilla::css::Loader *aLoader,
                        const Point &aBegin, const Point &aEnd)
-    : CanvasGradient(aContext, Type::LINEAR)
+    : CanvasGradient(aContext, aLoader, Type::LINEAR)
     , mBegin(aBegin)
     , mEnd(aEnd)
   {
@@ -396,8 +399,16 @@ CanvasGradient::AddColorStop(float offset, const nsAString& colorstr, ErrorResul
     return;
   }
 
+  nsIPresShell* presShell = nullptr;
+  if (mCSSLoader) {
+    nsIDocument *doc = mCSSLoader->GetDocument();
+    if (doc)
+      presShell = doc->GetShell();
+  }
+
   nscolor color;
-  if (!nsRuleNode::ComputeColor(value, nullptr, nullptr, color)) {
+  if (!nsRuleNode::ComputeColor(value, presShell ? presShell->GetPresContext() : nullptr,
+                                nullptr, color)) {
     rv.Throw(NS_ERROR_DOM_SYNTAX_ERR);
     return;
   }
@@ -1403,8 +1414,11 @@ CanvasRenderingContext2D::GetFillRule(nsAString& aString)
 already_AddRefed<CanvasGradient>
 CanvasRenderingContext2D::CreateLinearGradient(double x0, double y0, double x1, double y1)
 {
+  nsIDocument *doc = mCanvasElement ? mCanvasElement->OwnerDoc() : nullptr;
+  mozilla::css::Loader *cssLoader = doc ? doc->CSSLoader() : nullptr;
+
   nsRefPtr<CanvasGradient> grad =
-    new CanvasLinearGradient(this, Point(x0, y0), Point(x1, y1));
+    new CanvasLinearGradient(this, cssLoader, Point(x0, y0), Point(x1, y1));
 
   return grad.forget();
 }
@@ -1419,8 +1433,10 @@ CanvasRenderingContext2D::CreateRadialGradient(double x0, double y0, double r0,
     return nullptr;
   }
 
+  nsIDocument *doc = mCanvasElement ? mCanvasElement->OwnerDoc() : nullptr;
+  mozilla::css::Loader *cssLoader = doc ? doc->CSSLoader() : nullptr;
   nsRefPtr<CanvasGradient> grad =
-    new CanvasRadialGradient(this, Point(x0, y0), r0, Point(x1, y1), r1);
+    new CanvasRadialGradient(this, cssLoader, Point(x0, y0), r0, Point(x1, y1), r1);
 
   return grad.forget();
 }

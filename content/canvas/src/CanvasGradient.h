@@ -62,8 +62,9 @@ public:
   }
 
 protected:
-  CanvasGradient(CanvasRenderingContext2D* aContext, Type aType)
+  CanvasGradient(CanvasRenderingContext2D* aContext, mozilla::css::Loader *aLoader, Type aType)
     : mContext(aContext)
+    , mCSSLoader(aLoader)
     , mType(aType)
   {
     SetIsDOMBinding();
@@ -72,6 +73,7 @@ protected:
   nsRefPtr<CanvasRenderingContext2D> mContext;
   nsTArray<mozilla::gfx::GradientStop> mRawStops;
   mozilla::RefPtr<mozilla::gfx::GradientStops> mStops;
+  mozilla::css::Loader* mCSSLoader; // not ref counted, it owns us
   Type mType;
   virtual ~CanvasGradient() {}
 };
