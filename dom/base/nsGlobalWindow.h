@@ -599,6 +599,8 @@ public:
     return mIsChrome;
   }
 
+  bool IsChrome() const;
+
   using nsPIDOMWindow::IsModalContentWindow;
   static bool IsModalContentWindow(JSContext* aCx, JSObject* aGlobal);
 

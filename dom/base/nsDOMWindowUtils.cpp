@@ -2070,9 +2070,13 @@ nsDOMWindowUtils::GetViewId(nsIDOMElement* aElement, nsViewID* aResult)
 NS_IMETHODIMP
 nsDOMWindowUtils::GetScreenPixelsPerCSSPixel(float* aScreenPixels)
 {
-  nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
-  NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
-  return window->GetDevicePixelRatio(aScreenPixels);
+  // We don't call nsGlobalWindow::GetDevicePixelRatio() in case it is
+  // being spoofed to satisfy the "privacy.resistFingerprinting" pref.
+  nsPresContext* presContext = GetPresContext();
+  *aScreenPixels = !presContext ? 1.0 :
+    (float(nsPresContext::AppUnitsPerCSSPixel())/
+     presContext->AppUnitsPerDevPixel());
+  return NS_OK;
 }
 
 NS_IMETHODIMP
