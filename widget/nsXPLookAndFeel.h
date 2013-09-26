@@ -52,7 +52,8 @@ public:
   // otherwise we'll return NS_ERROR_NOT_AVAILABLE, in which case, the
   // platform-specific nsLookAndFeel should use its own values instead.
   //
-  nsresult GetColorImpl(ColorID aID, nscolor &aResult);
+  nsresult GetColorImpl(ColorID aID, bool aUseStandinsForNativeColors,
+                        nscolor &aResult);
   virtual nsresult GetIntImpl(IntID aID, int32_t &aResult);
   virtual nsresult GetFloatImpl(FloatID aID, float &aResult);
 
@@ -90,6 +91,8 @@ protected:
   void InitColorFromPref(int32_t aIndex);
   virtual nsresult NativeGetColor(ColorID aID, nscolor &aResult) = 0;
   bool IsSpecialColor(ColorID aID, nscolor &aColor);
+  bool ColorIsNotCSSAccessible(ColorID aID);
+  nscolor GetStandinForNativeColor(ColorID aID);
 
   static void OnPrefChanged(const char* aPref, void* aClosure);
 
