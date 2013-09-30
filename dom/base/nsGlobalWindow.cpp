@@ -77,6 +77,7 @@
 #include "AudioChannelService.h"
 #include "nsAboutProtocolUtils.h"
 #include "nsCharTraits.h" // NS_IS_HIGH/LOW_SURROGATE
+#include "mozIThirdPartyUtil.h"
 #include "PostMessageEvent.h"
 
 // Interfaces Needed
@@ -2793,6 +2794,11 @@ nsGlobalWindow::PreloadLocalStorage()
   }
 
   nsresult rv;
+  nsCOMPtr<nsIURI> firstPartyIsolationURI;
+  rv = GetFirstPartyIsolationURI(getter_AddRefs(firstPartyIsolationURI));
+  if (NS_FAILED(rv)) {
+    return;
+  }
 
   nsCOMPtr<nsIDOMStorageManager> storageManager =
     do_GetService("@mozilla.org/dom/localStorage-manager;1", &rv);
@@ -2800,7 +2806,7 @@ nsGlobalWindow::PreloadLocalStorage()
     return;
   }
 
-  storageManager->PrecacheStorage(principal);
+  storageManager->PrecacheStorageForFirstParty(firstPartyIsolationURI, principal);
 }
 
 void
@@ -7825,6 +7831,18 @@ nsGlobalWindow::CallerInnerWindow()
   return static_cast<nsGlobalWindow*>(win.get());
 }
 
+nsresult
+nsGlobalWindow::GetFirstPartyIsolationURI(nsIURI** aFirstPartyIsolationURI)
+{
+  nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
+                               do_GetService(THIRDPARTYUTIL_CONTRACTID);
+  if (!thirdPartyUtil)
+    return NS_ERROR_FAILURE;
+
+  nsCOMPtr<nsIDocument> doc = do_QueryInterface(mDoc);
+  return thirdPartyUtil->GetFirstPartyIsolationURI(NULL, doc, aFirstPartyIsolationURI);
+}
+
 void
 nsGlobalWindow::PostMessageMozOuter(JSContext* aCx, JS::Handle<JS::Value> aMessage,
                                     const nsAString& aTargetOrigin,
@@ -10060,9 +10078,17 @@ nsGlobalWindow::GetSessionStorage(ErrorResult& aError)
     }
 
     nsCOMPtr<nsIDOMStorage> storage;
-    aError = storageManager->CreateStorage(this, principal, documentURI,
-                                           IsPrivateBrowsing(),
-                                           getter_AddRefs(storage));
+    nsCOMPtr<nsIURI> firstPartyIsolationURI;
+    rv = GetFirstPartyIsolationURI(getter_AddRefs(firstPartyIsolationURI));
+    if (NS_FAILED(rv)) {
+      aError.Throw(rv);
+      return nullptr;
+    }
+
+    aError = storageManager->CreateStorageForFirstParty(this, firstPartyIsolationURI,
+                                                        principal, documentURI,
+                                                        IsPrivateBrowsing(),
+                                                        getter_AddRefs(storage));
     if (aError.Failed()) {
       return nullptr;
     }
@@ -10120,10 +10146,17 @@ nsGlobalWindow::GetLocalStorage(ErrorResult& aError)
       mDoc->GetDocumentURI(documentURI);
     }
 
+    nsCOMPtr<nsIURI> firstPartyIsolationURI;
+    rv = GetFirstPartyIsolationURI(getter_AddRefs(firstPartyIsolationURI));
+    if (NS_FAILED(rv)) {
+      aError.Throw(rv);
+      return nullptr;
+    }
+
     nsCOMPtr<nsIDOMStorage> storage;
-    aError = storageManager->CreateStorage(this, principal, documentURI,
-                                           IsPrivateBrowsing(),
-                                           getter_AddRefs(storage));
+    aError = storageManager->CreateStorageForFirstParty(this, firstPartyIsolationURI, principal, documentURI,
+                                                        IsPrivateBrowsing(),
+                                                        getter_AddRefs(storage));
     if (aError.Failed()) {
       return nullptr;
     }
@@ -10978,7 +11011,13 @@ nsGlobalWindow::Observe(nsISupports* aSubject, const char* aTopic,
 
       nsCOMPtr<nsIDOMStorageManager> storageManager = do_QueryInterface(GetDocShell());
       if (storageManager) {
-        rv = storageManager->CheckStorage(principal, istorage, &check);
+        nsresult rv;
+        nsCOMPtr<nsIURI> firstPartyIsolationURI;
+        rv = GetFirstPartyIsolationURI(getter_AddRefs(firstPartyIsolationURI));
+        NS_ENSURE_SUCCESS(rv, rv);
+
+        rv = storageManager->CheckStorageForFirstParty(firstPartyIsolationURI,
+                                          principal, changingStorage, &check);
         if (NS_FAILED(rv)) {
           return rv;
         }

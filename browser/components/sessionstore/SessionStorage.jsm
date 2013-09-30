@@ -111,6 +111,8 @@ var SessionStorageInternal = {
       // There is no need to pass documentURI, it's only used to fill documentURI property of
       // domstorage event, which in this case has no consumer. Prevention of events in case
       // of missing documentURI will be solved in a followup bug to bug 600307.
+      // TODO: We should call createStorageForFirstParty() here.  See comment
+      //       inside _readEntry() for details.
       let storage = storageManager.createStorage(window, principal, "", aDocShell.usePrivateBrowsing);
 
       for (let key of Object.keys(data)) {
@@ -139,6 +141,11 @@ var SessionStorageInternal = {
 
     try {
       let storageManager = aDocShell.QueryInterface(Ci.nsIDOMStorageManager);
+      // TODO: We should call getStorageForFirstParty() here, but we need an
+      //       nsIDocument to call thirdPartyUtil.getFirstPartyURI(), and
+      //       unfortunately nsIDocument is not exposed to JavaScript.
+      //       However, this code is not called in TBB because the
+      //       browser.sessionstore.privacy_level pref. is set to 2.
       storage = storageManager.getStorage(window, aPrincipal);
     } catch (e) {
       // sessionStorage might throw if it's turned off, see bug 458954

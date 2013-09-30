@@ -123,6 +123,7 @@ DOMStorageCache::Release(void)
 void
 DOMStorageCache::Init(DOMStorageManager* aManager,
                       bool aPersistent,
+                      nsIURI* aFirstPartyIsolationURI,
                       nsIPrincipal* aPrincipal,
                       const nsACString& aQuotaScope)
 {
@@ -131,6 +132,7 @@ DOMStorageCache::Init(DOMStorageManager* aManager,
   }
 
   mInitialized = true;
+  mFirstPartyIsolationURI = aFirstPartyIsolationURI;
   mPrincipal = aPrincipal;
   mPersistent = aPersistent;
   mQuotaScope = aQuotaScope.IsEmpty() ? mScope : aQuotaScope;
