@@ -7,26 +7,36 @@
 
 interface nsIDOMStorage;
 interface nsIPrincipal;
+interface nsIURI;
 
 /**
  * General purpose interface that has two implementations, for localStorage
  * resp. sessionStorage with "@mozilla.org/dom/localStorage-manager;1" resp.
  * "@mozilla.org/dom/sessionStorage-manager;1" contract IDs.
  */
-[scriptable, uuid(8096f9ea-fa61-4960-b5d7-fb30ac42c8d8)]
+[scriptable, uuid(96dd7614-fcc8-4745-9a1d-52f44dea8818)]
 interface nsIDOMStorageManager : nsISupports
 {
   /**
    * This starts async preloading of a storage cache for scope
    * defined by the principal.
+   *
+   * @param aFirstPartyIsolationURI
+   *    First party URI to bound storage to.
+   * @param aPrincipal
+   *    Principal to bound storage to.
    */
   void precacheStorage(in nsIPrincipal aPrincipal);
+  void precacheStorageForFirstParty(in nsIURI aFirstPartyIsolationURI,
+                                    in nsIPrincipal aPrincipal);
 
   /**
    * Returns instance of DOM storage object for given principal.
    * A new object is always returned and it is ensured there is
    * a storage for the scope created.
    *
+   * @param aFirstPartyIsolationURI
+   *    First party URI to bound storage to.
    * @param aPrincipal
    *    Principal to bound storage to.
    * @param aDocumentURI
@@ -37,6 +47,10 @@ interface nsIDOMStorageManager : nsISupports
   nsIDOMStorage createStorage(in nsIPrincipal aPrincipal,
                               in DOMString aDocumentURI,
                               [optional] in bool aPrivate);
+  nsIDOMStorage createStorageForFirstParty(in nsIURI aFirstPartyIsolationURI,
+                                           in nsIPrincipal aPrincipal,
+                                           in DOMString aDocumentURI,
+                                           [optional] in bool aPrivate);
   /**
    * Returns instance of DOM storage object for given principal.
    * If there is no storage managed for the scope, then null is returned and
@@ -50,6 +64,9 @@ interface nsIDOMStorageManager : nsISupports
    */
   nsIDOMStorage getStorage(in nsIPrincipal aPrincipal,
                            [optional] in bool aPrivate);
+  nsIDOMStorage getStorageForFirstParty(in nsIURI aFirstPartyIsolationURI,
+                                        in nsIPrincipal aPrincipal,
+                                        [optional] in bool aPrivate);
 
   /**
    * Clones given storage into this storage manager.
@@ -66,6 +83,8 @@ interface nsIDOMStorageManager : nsISupports
    * Returns true if the storage belongs to the given principal and is managed
    * (i.e. has been created and is cached) by this storage manager.
    *
+   * @param aFirstPartyIsolationURI
+   *    First party URI to check the storage against.
    * @param aPrincipal
    *    Principal to check the storage against.
    * @param aStorage
@@ -78,6 +97,9 @@ interface nsIDOMStorageManager : nsISupports
    */
   bool checkStorage(in nsIPrincipal aPrincipal,
                     in nsIDOMStorage aStorage);
+  bool checkStorageForFirstParty(in nsIURI aFirstPartyIsolationURI,
+                                 in nsIPrincipal aPrincipal,
+                                 in nsIDOMStorage aStorage);
 
   /**
    * @deprecated

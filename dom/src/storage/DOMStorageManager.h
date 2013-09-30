@@ -78,10 +78,12 @@ private:
   // Ensures cache for a scope, when it doesn't exist it is created and initalized,
   // this also starts preload of persistent data.
   already_AddRefed<DOMStorageCache> PutCache(const nsACString& aScope,
+                                             nsIURI* aFirstPartyIsolationURI,
                                              nsIPrincipal* aPrincipal);
 
   // Helper for creation of DOM storage objects
   nsresult GetStorageInternal(bool aCreate,
+                              nsIURI* aFirstPartyIsolationURI,
                               nsIPrincipal* aPrincipal,
                               const nsAString& aDocumentURI,
                               bool aPrivate,

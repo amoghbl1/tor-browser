@@ -15,6 +15,7 @@
 #include "nsXULAppAPI.h"
 #include "nsThreadUtils.h"
 #include "nsIObserverService.h"
+#include "mozIThirdPartyUtil.h"
 #include "mozilla/Services.h"
 #include "mozilla/Preferences.h"
 
@@ -121,7 +122,28 @@ DOMStorageManager::~DOMStorageManager()
 namespace { // anon
 
 nsresult
-CreateScopeKey(nsIPrincipal* aPrincipal,
+AppendFirstPartyToKey(nsIURI* aFirstPartyIsolationURI, nsACString& aKey)
+{
+  if (aFirstPartyIsolationURI) {
+    nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
+                            do_GetService(THIRDPARTYUTIL_CONTRACTID);
+    if (!thirdPartyUtil)
+      return NS_ERROR_FAILURE;
+
+    nsAutoCString firstPartyHost;
+    nsresult rv = thirdPartyUtil->GetFirstPartyHostForIsolation(aFirstPartyIsolationURI,
+                                                                firstPartyHost);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    aKey.AppendLiteral("&");
+    aKey.Append(firstPartyHost);
+  }
+
+  return NS_OK;
+}
+
+nsresult
+CreateScopeKey(nsIURI* aFirstPartyIsolationURI, nsIPrincipal* aPrincipal,
                nsACString& aKey)
 {
   nsCOMPtr<nsIURI> uri;
@@ -179,21 +201,22 @@ CreateScopeKey(nsIPrincipal* aPrincipal,
 
     if (appId == nsIScriptSecurityManager::NO_APP_ID && !isInBrowserElement) {
       aKey.Assign(key);
-      return NS_OK;
+    } else {
+      aKey.Truncate();
+      aKey.AppendInt(appId);
+      aKey.Append(NS_LITERAL_CSTRING(":") + (isInBrowserElement ?
+                  NS_LITERAL_CSTRING("t") : NS_LITERAL_CSTRING("f")) +
+                  NS_LITERAL_CSTRING(":") + key);
     }
-
-    aKey.Truncate();
-    aKey.AppendInt(appId);
-    aKey.Append(NS_LITERAL_CSTRING(":") + (isInBrowserElement ?
-                NS_LITERAL_CSTRING("t") : NS_LITERAL_CSTRING("f")) +
-                NS_LITERAL_CSTRING(":") + key);
   }
 
-  return NS_OK;
+  // Isolate scope keys to the URL bar domain by appending &firstPartyHost
+  // if available.
+  return AppendFirstPartyToKey(aFirstPartyIsolationURI, aKey);
 }
 
 nsresult
-CreateQuotaDBKey(nsIPrincipal* aPrincipal,
+CreateQuotaDBKey(nsIURI* aFirstPartyIsolationURI, nsIPrincipal* aPrincipal,
                  nsACString& aKey)
 {
   nsresult rv;
@@ -233,17 +256,18 @@ CreateQuotaDBKey(nsIPrincipal* aPrincipal,
 
     if (appId == nsIScriptSecurityManager::NO_APP_ID && !isInBrowserElement) {
       aKey.Assign(subdomainsDBKey);
-      return NS_OK;
+    } else {
+      aKey.Truncate();
+      aKey.AppendInt(appId);
+      aKey.Append(NS_LITERAL_CSTRING(":") + (isInBrowserElement ?
+                  NS_LITERAL_CSTRING("t") : NS_LITERAL_CSTRING("f")) +
+                  NS_LITERAL_CSTRING(":") + subdomainsDBKey);
     }
-
-    aKey.Truncate();
-    aKey.AppendInt(appId);
-    aKey.Append(NS_LITERAL_CSTRING(":") + (isInBrowserElement ?
-                NS_LITERAL_CSTRING("t") : NS_LITERAL_CSTRING("f")) +
-                NS_LITERAL_CSTRING(":") + subdomainsDBKey);
   }
 
-  return NS_OK;
+  // Isolate scope keys to the URL bar domain by appending &firstPartyHost
+  // if available.
+  return AppendFirstPartyToKey(aFirstPartyIsolationURI, aKey);
 }
 
 } // anon
@@ -283,24 +307,23 @@ DOMStorageManager::GetScopeUsage(const nsACString& aScope)
 
 already_AddRefed<DOMStorageCache>
 DOMStorageManager::PutCache(const nsACString& aScope,
+                            nsIURI* aFirstPartyIsolationURI,
                             nsIPrincipal* aPrincipal)
 {
   DOMStorageCacheHashKey* entry = mCaches.PutEntry(aScope);
   nsRefPtr<DOMStorageCache> cache = entry->cache();
 
   nsAutoCString quotaScope;
-  CreateQuotaDBKey(aPrincipal, quotaScope);
+  CreateQuotaDBKey(aFirstPartyIsolationURI, aPrincipal, quotaScope);
 
+  // To avoid ever persisting session storage to disk, initialize LocalStorage
+  // like SessionStorage.
   switch (mType) {
   case SessionStorage:
+  case LocalStorage:
     // Lifetime handled by the manager, don't persist
     entry->HardRef();
-    cache->Init(this, false, aPrincipal, quotaScope);
-    break;
-
-  case LocalStorage:
-    // Lifetime handled by the cache, do persist
-    cache->Init(this, true, aPrincipal, quotaScope);
+    cache->Init(this, false, aFirstPartyIsolationURI, aPrincipal, quotaScope);
     break;
 
   default:
@@ -322,6 +345,7 @@ DOMStorageManager::DropCache(DOMStorageCache* aCache)
 
 nsresult
 DOMStorageManager::GetStorageInternal(bool aCreate,
+                                      nsIURI* aFirstPartyIsolationURI,
                                       nsIPrincipal* aPrincipal,
                                       const nsAString& aDocumentURI,
                                       bool aPrivate,
@@ -330,7 +354,7 @@ DOMStorageManager::GetStorageInternal(bool aCreate,
   nsresult rv;
 
   nsAutoCString scope;
-  rv = CreateScopeKey(aPrincipal, scope);
+  rv = CreateScopeKey(aFirstPartyIsolationURI, aPrincipal, scope);
   if (NS_FAILED(rv)) {
     return NS_ERROR_NOT_AVAILABLE;
   }
@@ -361,7 +385,7 @@ DOMStorageManager::GetStorageInternal(bool aCreate,
 
     // There is always a single instance of a cache per scope
     // in a single instance of a DOM storage manager.
-    cache = PutCache(scope, aPrincipal);
+    cache = PutCache(scope, aFirstPartyIsolationURI, aPrincipal);
   } else if (mType == SessionStorage) {
     if (!cache->CheckPrincipal(aPrincipal)) {
       return NS_ERROR_DOM_SECURITY_ERR;
@@ -379,7 +403,16 @@ DOMStorageManager::GetStorageInternal(bool aCreate,
 NS_IMETHODIMP
 DOMStorageManager::PrecacheStorage(nsIPrincipal* aPrincipal)
 {
-  return GetStorageInternal(true, aPrincipal, EmptyString(), false, nullptr);
+  return GetStorageInternal(true, nullptr, aPrincipal, EmptyString(),
+                            false, nullptr);
+}
+
+NS_IMETHODIMP
+DOMStorageManager::PrecacheStorageForFirstParty(nsIURI* aFirstPartyIsolationURI,
+                                                nsIPrincipal* aPrincipal)
+{
+  return GetStorageInternal(true, aFirstPartyIsolationURI, aPrincipal, EmptyString(),
+                            false, nullptr);
 }
 
 NS_IMETHODIMP
@@ -388,7 +421,19 @@ DOMStorageManager::CreateStorage(nsIPrincipal* aPrincipal,
                                  bool aPrivate,
                                  nsIDOMStorage** aRetval)
 {
-  return GetStorageInternal(true, aPrincipal, aDocumentURI, aPrivate, aRetval);
+  return GetStorageInternal(true, nullptr, aPrincipal, aDocumentURI,
+                            aPrivate, aRetval);
+}
+
+NS_IMETHODIMP
+DOMStorageManager::CreateStorageForFirstParty(nsIURI* aFirstPartyIsolationURI,
+                                              nsIPrincipal* aPrincipal,
+                                              const nsAString& aDocumentURI,
+                                              bool aPrivate,
+                                              nsIDOMStorage** aRetval)
+{
+  return GetStorageInternal(true, aFirstPartyIsolationURI, aPrincipal, aDocumentURI,
+                            aPrivate, aRetval);
 }
 
 NS_IMETHODIMP
@@ -396,7 +441,18 @@ DOMStorageManager::GetStorage(nsIPrincipal* aPrincipal,
                               bool aPrivate,
                               nsIDOMStorage** aRetval)
 {
-  return GetStorageInternal(false, aPrincipal, EmptyString(), aPrivate, aRetval);
+  return GetStorageInternal(false, nullptr, aPrincipal, EmptyString(),
+                            aPrivate, aRetval);
+}
+
+NS_IMETHODIMP
+DOMStorageManager::GetStorageForFirstParty(nsIURI* aFirstPartyIsolationURI,
+                                           nsIPrincipal* aPrincipal,
+                                           bool aPrivate,
+                                           nsIDOMStorage** aRetval)
+{
+  return GetStorageInternal(false, aFirstPartyIsolationURI, aPrincipal,
+                            EmptyString(), aPrivate, aRetval);
 }
 
 NS_IMETHODIMP
@@ -423,6 +479,7 @@ DOMStorageManager::CloneStorage(nsIDOMStorage* aStorage)
   // Since this manager is sessionStorage manager, PutCache hard references
   // the cache in our hashtable.
   nsRefPtr<DOMStorageCache> newCache = PutCache(origCache->Scope(),
+                                                origCache->FirstPartyIsolationURI(),
                                                 origCache->Principal());
 
   newCache->CloneFrom(origCache);
@@ -433,6 +490,15 @@ NS_IMETHODIMP
 DOMStorageManager::CheckStorage(nsIPrincipal* aPrincipal,
                                 nsIDOMStorage* aStorage,
                                 bool* aRetval)
+{
+  return CheckStorageForFirstParty(nullptr, aPrincipal, aStorage, aRetval);
+}
+
+NS_IMETHODIMP
+DOMStorageManager::CheckStorageForFirstParty(nsIURI* aFirstPartyIsolationURI,
+                                             nsIPrincipal* aPrincipal,
+                                             nsIDOMStorage* aStorage,
+                                             bool* aRetval)
 {
   nsCOMPtr<nsPIDOMStorage> pstorage = do_QueryInterface(aStorage);
   if (!pstorage) {
@@ -446,7 +512,7 @@ DOMStorageManager::CheckStorage(nsIPrincipal* aPrincipal,
   }
 
   nsAutoCString scope;
-  nsresult rv = CreateScopeKey(aPrincipal, scope);
+  nsresult rv = CreateScopeKey(aFirstPartyIsolationURI, aPrincipal, scope);
   if (NS_FAILED(rv)) {
     return rv;
   }

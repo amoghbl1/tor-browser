@@ -167,6 +167,7 @@
 #include "nsIChannelPolicy.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsSandboxFlags.h"
+#include "mozIThirdPartyUtil.h"
 #include "nsXULAppAPI.h"
 #include "nsDOMNavigationTiming.h"
 #include "nsISecurityUITelemetry.h"
@@ -2800,14 +2801,29 @@ nsDocShell::GetSessionStorageForPrincipal(nsIPrincipal* aPrincipal,
         return NS_ERROR_UNEXPECTED;
     }
 
+    nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
+                            do_GetService(THIRDPARTYUTIL_CONTRACTID);
+    if (!thirdPartyUtil)
+      return NS_ERROR_FAILURE;
+
+    nsCOMPtr<nsIDocument> doc(do_GetInterface(GetAsSupports(this)));
+    nsCOMPtr<nsIURI> firstPartyIsolationURI;
+    nsresult rv = thirdPartyUtil->GetFirstPartyIsolationURI(nullptr, doc,
+                                           getter_AddRefs(firstPartyIsolationURI));
+    NS_ENSURE_SUCCESS(rv, rv);
+
     if (aCreate) {
-        return manager->CreateStorage(aPrincipal, aDocumentURI,
+        return manager->CreateStorageForFirstParty(firstPartyIsolationURI,
+                                      aPrincipal, aDocumentURI,
                                       mInPrivateBrowsing, aStorage);
     }
 
-    return manager->GetStorage(aPrincipal, mInPrivateBrowsing, aStorage);
+    return manager->GetStorageForFirstParty(firstPartyIsolationURI, aPrincipal,
+                                            mInPrivateBrowsing, aStorage);
 }
 
+// Bacause it is not called from anywhere, nsDocShell::AddSessionStorage()
+// does not need to be modified to isolate DOM Storage to the first party URI.
 nsresult
 nsDocShell::AddSessionStorage(nsIPrincipal* aPrincipal,
                               nsIDOMStorage* aStorage)
