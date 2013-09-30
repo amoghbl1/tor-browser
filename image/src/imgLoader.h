@@ -20,6 +20,7 @@
 #include "imgRequest.h"
 #include "nsIProgressEventSink.h"
 #include "nsIChannel.h"
+#include "mozIThirdPartyUtil.h"
 #include "nsIThreadRetargetableStreamListener.h"
 #include "imgIRequest.h"
 #include "mozilla/net/ReferrerPolicy.h"
@@ -302,14 +303,19 @@ public:
 
   nsresult InitCache();
 
-  bool RemoveFromCache(nsIURI *aKey);
+  nsAutoCString GetCacheKey(nsIURI *firstPartyIsolationURI,
+                            nsIURI* uri,
+                            bool *isIsolated);
+  nsAutoCString GetCacheKey(nsIURI *firstPartyIsolationURI,
+                            ImageURL *imgURI,
+                            bool *isIsolated);
   bool RemoveFromCache(ImageURL *aKey);
-  bool RemoveFromCache(nsCString &spec,
+  bool RemoveFromCache(nsAutoCString key,
                        imgCacheTable &cache,
                        imgCacheQueue &queue);
   bool RemoveFromCache(imgCacheEntry *entry);
 
-  bool PutIntoCache(nsIURI *key, imgCacheEntry *entry);
+  bool PutIntoCache(nsAutoCString key, imgCacheEntry *entry);
 
   void AddToUncachedImages(imgRequest* aRequest);
   void RemoveFromUncachedImages(imgRequest* aRequest);
@@ -352,12 +358,12 @@ public:
   // happens, by calling imgRequest::SetCacheEntry() when an entry with no
   // observers is re-requested.
   bool SetHasNoProxies(imgRequest *aRequest, imgCacheEntry *aEntry);
-  bool SetHasProxies(imgRequest *aRequest);
+  bool SetHasProxies(nsIURI *firstPartyIsolationURI, imgRequest *aRequest);
 
 private: // methods
 
   bool ValidateEntry(imgCacheEntry *aEntry, nsIURI *aKey,
-                       nsIURI *aInitialDocumentURI, nsIURI *aReferrerURI,
+                       nsIURI *aFirstPartyIsolationURI, nsIURI *aReferrerURI,
                        ReferrerPolicy aReferrerPolicy,
                        nsILoadGroup *aLoadGroup,
                        imgINotificationObserver *aObserver, nsISupports *aCX,
@@ -395,10 +401,12 @@ private: // methods
   imgCacheQueue &GetCacheQueue(ImageURL *aURI);
   void CacheEntriesChanged(ImageURL *aURI, int32_t sizediff = 0);
   void CheckCacheLimits(imgCacheTable &cache, imgCacheQueue &queue);
+  bool RemoveMatchingUrlsFromCache(nsIURI *aImgURI);
 
 private: // data
   friend class imgCacheEntry;
   friend class imgMemoryReporter;
+  friend class imgRequest;
 
   imgCacheTable mCache;
   imgCacheQueue mCacheQueue;
@@ -420,6 +428,7 @@ private: // data
   static uint32_t sCacheMaxSize;
   static imgMemoryReporter* sMemReporter;
 
+  static nsCOMPtr<mozIThirdPartyUtil> sThirdPartyUtilSvc;
   nsCString mAcceptHeader;
 
   nsAutoPtr<imgCacheExpirationTracker> mCacheTracker;

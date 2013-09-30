@@ -358,6 +358,9 @@ nsCookiePermission::CanSetCookie(nsIURI     *aURI,
         }
       }
     }
+
+    // TODO: Why don't we just use this here:
+    // httpChannelInternal->GetDocumentURI(aURI);
   }
 
   return NS_OK;
