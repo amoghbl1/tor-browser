@@ -943,9 +943,9 @@ nsWindowWatcher::OpenWindowInternal(nsIDOMWindow *aParent,
                                             ? pWin.get()
                                             : pWin->GetCurrentInnerWindow();
 
-      parentStorageManager->GetStorage(pInnerWin, subjectPrincipal,
-                                       isPrivateBrowsingWindow,
-                                       getter_AddRefs(storage));
+      parentStorageManager->GetStorageForFirstParty(pInnerWin, uriToLoad, subjectPrincipal,
+                                                    isPrivateBrowsingWindow,
+                                                    getter_AddRefs(storage));
       if (storage) {
         newStorageManager->CloneStorage(storage);
       }
