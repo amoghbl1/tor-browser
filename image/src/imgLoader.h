@@ -19,6 +19,7 @@
 #include "imgRequest.h"
 #include "nsIProgressEventSink.h"
 #include "nsIChannel.h"
+#include "mozIThirdPartyUtil.h"
 #include "nsIThreadRetargetableStreamListener.h"
 #include "imgIRequest.h"
 
@@ -276,14 +277,20 @@ public:
 
   nsresult InitCache();
 
-  bool RemoveFromCache(nsIURI *aKey);
+  nsAutoCString GetCacheKey(nsIURI *firstPartyIsolationURI,
+                            nsIURI* uri,
+                            bool *isIsolated);
+  nsAutoCString GetCacheKey(nsIURI *firstPartyIsolationURI,
+                            ImageURL *imgURI,
+                            bool *isIsolated);
   bool RemoveFromCache(ImageURL *aKey);
-  bool RemoveFromCache(nsCString &spec,
+  bool RemoveFromCache(nsAutoCString key,
                        imgCacheTable &cache,
                        imgCacheQueue &queue);
   bool RemoveFromCache(imgCacheEntry *entry);
 
-  bool PutIntoCache(nsIURI *key, imgCacheEntry *entry);
+  bool PutIntoCache(nsAutoCString key, imgCacheEntry *entry);
+
 
   // Returns true if we should prefer evicting cache entry |two| over cache
   // entry |one|.
@@ -322,13 +329,13 @@ public:
   // HasObservers(). The request's cache entry will be re-set before this
   // happens, by calling imgRequest::SetCacheEntry() when an entry with no
   // observers is re-requested.
-  bool SetHasNoProxies(ImageURL *key, imgCacheEntry *entry);
-  bool SetHasProxies(ImageURL *key);
+  bool SetHasNoProxies(ImageURL *imgURI, imgCacheEntry *entry);
+  bool SetHasProxies(nsIURI *firstPartyIsolationURI, ImageURL *imgURI);
 
 private: // methods
 
-  bool ValidateEntry(imgCacheEntry *aEntry, nsIURI *aKey,
-                       nsIURI *aInitialDocumentURI, nsIURI *aReferrerURI,
+  bool ValidateEntry(imgCacheEntry *aEntry, nsIURI *aURI,
+                       nsIURI *aFirstPartyIsolationURI, nsIURI *aReferrerURI,
                        nsILoadGroup *aLoadGroup,
                        imgINotificationObserver *aObserver, nsISupports *aCX,
                        nsLoadFlags aLoadFlags, bool aCanMakeNewChannel,
@@ -363,10 +370,12 @@ private: // methods
   imgCacheQueue &GetCacheQueue(ImageURL *aURI);
   void CacheEntriesChanged(ImageURL *aURI, int32_t sizediff = 0);
   void CheckCacheLimits(imgCacheTable &cache, imgCacheQueue &queue);
+  bool RemoveMatchingUrlsFromCache(nsIURI *aImgURI);
 
 private: // data
   friend class imgCacheEntry;
   friend class imgMemoryReporter;
+  friend class imgRequest;
 
   imgCacheTable mCache;
   imgCacheQueue mCacheQueue;
@@ -378,6 +387,7 @@ private: // data
   static uint32_t sCacheMaxSize;
   static imgMemoryReporter* sMemReporter;
 
+  static nsCOMPtr<mozIThirdPartyUtil> sThirdPartyUtilSvc;
   nsCString mAcceptHeader;
 
   nsAutoPtr<imgCacheExpirationTracker> mCacheTracker;

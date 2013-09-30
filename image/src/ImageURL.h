@@ -69,6 +69,13 @@ public:
     return newURI.forget();
   }
 
+  nsresult Equals(nsIURI *otherURI, bool *result) {
+    nsAutoCString otherSpec;    
+    otherURI->GetSpec(otherSpec);
+    *result = mSpec.Equals(otherSpec);
+    return NS_OK;
+  }
+
 private:
   // Since this is a basic storage class, no duplication of spec parsing is
   // included in the functionality. Instead, the class depends upon the

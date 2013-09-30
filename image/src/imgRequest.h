@@ -55,6 +55,7 @@ public:
 
   nsresult Init(nsIURI *aURI,
                 nsIURI *aCurrentURI,
+                nsIURI *aFirstPartyIsolationURI,
                 nsIRequest *aRequest,
                 nsIChannel *aChannel,
                 imgCacheEntry *aCacheEntry,
@@ -206,6 +207,8 @@ private:
   nsRefPtr<ImageURL> mURI;
   // The URI of the resource we ended up loading after all redirects, etc.
   nsCOMPtr<nsIURI> mCurrentURI;
+  // The first party that triggered the load -- for cookie + cache isolation
+  nsCOMPtr<nsIURI> mFirstPartyIsolationURI;
   // The principal of the document which loaded this image. Used when validating for CORS.
   nsCOMPtr<nsIPrincipal> mLoadingPrincipal;
   // The principal of this image.

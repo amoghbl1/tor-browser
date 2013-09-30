@@ -28,7 +28,7 @@
 #include "nsIContentPolicy.h"
 #include "nsAutoPtr.h"
 #include "imgRequestProxy.h"
-
+#include "mozIThirdPartyUtil.h"
 
 //*****************************************************************************
 // class nsContextMenuInfo
@@ -273,15 +273,15 @@ nsContextMenuInfo::GetBackgroundImageRequestInternal(nsIDOMNode *aDOMNode, imgRe
   nsCOMPtr<nsIPrincipal> principal;
   nsCOMPtr<nsIChannelPolicy> channelPolicy;
   nsCOMPtr<nsIContentSecurityPolicy> csp;
-  if (doc) {
-    principal = doc->NodePrincipal();
-    nsresult rv = principal->GetCsp(getter_AddRefs(csp));
-    NS_ENSURE_SUCCESS(rv, rv);
-    if (csp) {
-      channelPolicy = do_CreateInstance("@mozilla.org/nschannelpolicy;1");
-      channelPolicy->SetContentSecurityPolicy(csp);
-      channelPolicy->SetLoadType(nsIContentPolicy::TYPE_IMAGE);
-    }
+  NS_ENSURE_TRUE(doc, NS_ERROR_FAILURE);
+
+  principal = doc->NodePrincipal();
+  nsresult rv = principal->GetCsp(getter_AddRefs(csp));
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (csp) {
+    channelPolicy = do_CreateInstance("@mozilla.org/nschannelpolicy;1");
+    channelPolicy->SetContentSecurityPolicy(csp);
+    channelPolicy->SetLoadType(nsIContentPolicy::TYPE_IMAGE);
   }
   
   while (true) {
@@ -307,8 +307,12 @@ nsContextMenuInfo::GetBackgroundImageRequestInternal(nsIDOMNode *aDOMNode, imgRe
 
           nsRefPtr<imgLoader> il = imgLoader::GetInstance();
           NS_ENSURE_TRUE(il, NS_ERROR_FAILURE);
-
-          return il->LoadImage(bgUri, nullptr, nullptr, principal, nullptr,
+          nsCOMPtr<nsIURI> firstPartyIsolationURI;
+          nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
+              = do_GetService(THIRDPARTYUTIL_CONTRACTID);
+          thirdPartySvc->GetFirstPartyIsolationURI(nullptr, doc,
+                                                   getter_AddRefs(firstPartyIsolationURI));
+          return il->LoadImage(bgUri, firstPartyIsolationURI, nullptr, principal, nullptr,
                                nullptr, nullptr, nsIRequest::LOAD_NORMAL,
                                nullptr, channelPolicy, EmptyString(), aRequest);
         }

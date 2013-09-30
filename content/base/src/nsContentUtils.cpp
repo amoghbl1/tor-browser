@@ -176,6 +176,7 @@
 #include "xpcprivate.h" // nsXPConnect
 #include "HTMLSplitOnSpacesTokenizer.h"
 #include "nsContentTypeParser.h"
+#include "mozIThirdPartyUtil.h"
 
 #include "nsIBidiKeyboard.h"
 
@@ -2744,20 +2745,24 @@ nsContentUtils::LoadImage(nsIURI* aURI, nsIDocument* aLoadingDocument,
     
   // Make the URI immutable so people won't change it under us
   NS_TryToSetImmutable(aURI);
+ 
+  nsCOMPtr<nsIURI> firstPartyIsolationURI;
+  nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
+                               = do_GetService(THIRDPARTYUTIL_CONTRACTID);
+  thirdPartySvc->GetFirstPartyIsolationURI(nullptr, aLoadingDocument,
+                                           getter_AddRefs(firstPartyIsolationURI));
 
-  // XXXbz using "documentURI" for the initialDocumentURI is not quite
-  // right, but the best we can do here...
-  return imgLoader->LoadImage(aURI,                 /* uri to load */
-                              documentURI,          /* initialDocumentURI */
-                              aReferrer,            /* referrer */
-                              aLoadingPrincipal,    /* loading principal */
-                              loadGroup,            /* loadgroup */
-                              aObserver,            /* imgINotificationObserver */
-                              aLoadingDocument,     /* uniquification key */
-                              aLoadFlags,           /* load flags */
-                              nullptr,               /* cache key */
-                              channelPolicy,        /* CSP info */
-                              initiatorType,        /* the load initiator */
+  return imgLoader->LoadImage(aURI,                   /* uri to load */
+                              firstPartyIsolationURI, /* firstPartyIsolationURI */
+                              aReferrer,              /* referrer */
+                              aLoadingPrincipal,      /* loading principal */
+                              loadGroup,              /* loadgroup */
+                              aObserver,              /* imgINotificationObserver */
+                              aLoadingDocument,       /* uniquification key */
+                              aLoadFlags,             /* load flags */
+                              nullptr,                /* cache key */
+                              channelPolicy,          /* CSP info */
+                              initiatorType,          /* the load initiator */
                               aRequest);
 }
 
