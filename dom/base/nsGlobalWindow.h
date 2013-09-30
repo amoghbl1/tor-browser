@@ -971,6 +971,7 @@ public:
                                 mozilla::ErrorResult& aError);
   void CancelAnimationFrame(int32_t aHandle, mozilla::ErrorResult& aError);
   nsPerformance* GetPerformance();
+  nsresult GetFirstPartyIsolationURI(nsIURI** aFirstPartyIsolationURI);
 #ifdef MOZ_WEBSPEECH
   mozilla::dom::SpeechSynthesis*
     GetSpeechSynthesis(mozilla::ErrorResult& aError);

@@ -6,6 +6,7 @@
 #ifndef nsDOMStorageCache_h___
 #define nsDOMStorageCache_h___
 
+#include "nsIURI.h"
 #include "nsIPrincipal.h"
 #include "nsITimer.h"
 
@@ -75,7 +76,8 @@ protected:
   virtual ~DOMStorageCache();
 
 public:
-  void Init(DOMStorageManager* aManager, bool aPersistent, nsIPrincipal* aPrincipal,
+  void Init(DOMStorageManager* aManager, bool aPersistent,
+            nsIURI* aFirstPartyIsolationURI, nsIPrincipal* aPrincipal,
             const nsACString& aQuotaScope);
 
   // Copies all data from the other storage.
@@ -99,6 +101,8 @@ public:
   nsresult Clear(const DOMStorage* aStorage);
 
   void GetKeys(const DOMStorage* aStorage, nsTArray<nsString>& aKeys);
+
+  nsIURI* FirstPartyIsolationURI() const { return mFirstPartyIsolationURI; }
 
   // Whether the principal equals principal the cache was created for
   bool CheckPrincipal(nsIPrincipal* aPrincipal) const;
@@ -180,6 +184,9 @@ private:
 
   // Timer that holds this cache alive for a while after it has been preloaded.
   nsCOMPtr<nsITimer> mKeepAliveTimer;
+
+  // The first party URI associated with this cache.
+  nsCOMPtr<nsIURI> mFirstPartyIsolationURI;
 
   // Principal the cache has been initially created for, this is used only
   // for sessionStorage access checks since sessionStorage objects are strictly
