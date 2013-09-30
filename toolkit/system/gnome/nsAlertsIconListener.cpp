@@ -229,7 +229,8 @@ nsAlertsIconListener::StartRequest(const nsAString & aImageUrl, bool aInPrivateB
   if (!il)
     return ShowAlert(nullptr);
 
-  nsresult rv = il->LoadImageXPCOM(imageUri, nullptr, nullptr,
+  // XXX: Hrmm.... Bypass cache, or isolate to imageUrl?
+  nsresult rv = il->LoadImageXPCOM(imageUri, imageUri, nullptr,
                                    NS_LITERAL_STRING("default"), nullptr, nullptr,
                                    this, nullptr,
                                    aInPrivateBrowsing ? nsIRequest::LOAD_ANONYMOUS :

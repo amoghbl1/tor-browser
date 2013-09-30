@@ -38,7 +38,7 @@ interface imgILoader : nsISupports
   /**
    * Start the load and decode of an image.
    * @param aURI the URI to load
-   * @param aInitialDocumentURI the URI that 'initiated' the load -- used for
+   * @param aFirstPartyIsolationURI the URI that 'initiated' the load -- used for
    *           3rd party cookie blocking
    * @param aReferrerURI the 'referring' URI
    * @param aReferrerPolicy the policy to apply to sending referrers.
@@ -62,7 +62,7 @@ interface imgILoader : nsISupports
    * goes away.
    */
   imgIRequest loadImageXPCOM(in nsIURI aURI,
-                             in nsIURI aInitialDocumentURL,
+                             in nsIURI aFirstPartyIsolationURI,
                              in nsIURI aReferrerURI,
                              in AString aReferrerPolicy,
                              in nsIPrincipal aLoadingPrincipal,
