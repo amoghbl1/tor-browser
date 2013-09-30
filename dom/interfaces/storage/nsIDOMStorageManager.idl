@@ -8,20 +8,28 @@
 interface nsIDOMStorage;
 interface nsIPrincipal;
 interface nsIDOMWindow;
+interface nsIURI;
 
 /**
  * General purpose interface that has two implementations, for localStorage
  * resp. sessionStorage with "@mozilla.org/dom/localStorage-manager;1" resp.
  * "@mozilla.org/dom/sessionStorage-manager;1" contract IDs.
  */
-[scriptable, uuid(a15f7ebd-4f35-4e73-a2d8-255d27fd14ee)]
+[scriptable, uuid(96dd7614-fcc8-4745-9a1d-52f44dea8818)]
 interface nsIDOMStorageManager : nsISupports
 {
   /**
    * This starts async preloading of a storage cache for scope
    * defined by the principal.
+   *
+   * @param aFirstPartyIsolationURI
+   *    First party URI to bind storage to.
+   * @param aPrincipal
+   *    Principal to bind storage to.
    */
   void precacheStorage(in nsIPrincipal aPrincipal);
+  void precacheStorageForFirstParty(in nsIURI aFirstPartyIsolationURI,
+                                    in nsIPrincipal aPrincipal);
 
   /**
    * Returns instance of DOM storage object for given principal.
@@ -30,8 +38,10 @@ interface nsIDOMStorageManager : nsISupports
    *
    * @param aWindow
    *    The parent window.
+   * @param aFirstPartyIsolationURI
+   *    First party URI to bind storage to.
    * @param aPrincipal
-   *    Principal to bound storage to.
+   *    Principal to bind storage to.
    * @param aDocumentURI
    *    URL of the demanding document, used for DOM storage event only.
    * @param aPrivate
@@ -41,6 +51,11 @@ interface nsIDOMStorageManager : nsISupports
                               in nsIPrincipal aPrincipal,
                               in DOMString aDocumentURI,
                               [optional] in bool aPrivate);
+  nsIDOMStorage createStorageForFirstParty(in nsIDOMWindow aWindow,
+                                           in nsIURI aFirstPartyIsolationURI,
+                                           in nsIPrincipal aPrincipal,
+                                           in DOMString aDocumentURI,
+                                           [optional] in bool aPrivate);
   /**
    * Returns instance of DOM storage object for given principal.
    * If there is no storage managed for the scope, then null is returned and
@@ -49,14 +64,20 @@ interface nsIDOMStorageManager : nsISupports
    *
    * @param aWindow
    *    The parent window.
+   * @param aFirstPartyIsolationURI
+   *    First party URI to bind storage to.
    * @param aPrincipal
-   *    Principal to bound storage to.
+   *    Principal to bind storage to.
    * @param aPrivate
    *    Whether the demanding document is running in Private Browsing mode or not.
    */
   nsIDOMStorage getStorage(in nsIDOMWindow aWindow,
                            in nsIPrincipal aPrincipal,
                            [optional] in bool aPrivate);
+  nsIDOMStorage getStorageForFirstParty(in nsIDOMWindow aWindow,
+                                        in nsIURI aFirstPartyIsolationURI,
+                                        in nsIPrincipal aPrincipal,
+                                        [optional] in bool aPrivate);
 
   /**
    * Clones given storage into this storage manager.
@@ -73,6 +94,8 @@ interface nsIDOMStorageManager : nsISupports
    * Returns true if the storage belongs to the given principal and is managed
    * (i.e. has been created and is cached) by this storage manager.
    *
+   * @param aFirstPartyIsolationURI
+   *    First party URI to check the storage against.
    * @param aPrincipal
    *    Principal to check the storage against.
    * @param aStorage
@@ -85,6 +108,9 @@ interface nsIDOMStorageManager : nsISupports
    */
   bool checkStorage(in nsIPrincipal aPrincipal,
                     in nsIDOMStorage aStorage);
+  bool checkStorageForFirstParty(in nsIURI aFirstPartyIsolationURI,
+                                 in nsIPrincipal aPrincipal,
+                                 in nsIDOMStorage aStorage);
 
   /**
    * @deprecated
