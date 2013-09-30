@@ -93,6 +93,7 @@ imgRequest::~imgRequest()
 
 nsresult imgRequest::Init(nsIURI *aURI,
                           nsIURI *aCurrentURI,
+                          nsIURI *aFirstPartyIsolationURI,
                           nsIRequest *aRequest,
                           nsIChannel *aChannel,
                           imgCacheEntry *aCacheEntry,
@@ -116,6 +117,7 @@ nsresult imgRequest::Init(nsIURI *aURI,
   // Use ImageURL to ensure access to URI data off main thread.
   mURI = new ImageURL(aURI);
   mCurrentURI = aCurrentURI;
+  mFirstPartyIsolationURI = aFirstPartyIsolationURI;
   mRequest = aRequest;
   mChannel = aChannel;
   mTimedChannel = do_QueryInterface(mChannel);
@@ -211,7 +213,7 @@ void imgRequest::AddProxy(imgRequestProxy *proxy)
   if (progressTracker->ObserverCount() == 0) {
     MOZ_ASSERT(mURI, "Trying to SetHasProxies without key uri.");
     if (mLoader) {
-      mLoader->SetHasProxies(this);
+      mLoader->SetHasProxies(mFirstPartyIsolationURI, this);
     }
   }
 
@@ -436,7 +438,9 @@ void imgRequest::RemoveFromCache()
     if (mCacheEntry) {
       mLoader->RemoveFromCache(mCacheEntry);
     } else {
-      mLoader->RemoveFromCache(mURI);
+      mLoader->RemoveFromCache(mLoader->GetCacheKey(mFirstPartyIsolationURI, mURI, nullptr),
+                               mLoader->GetCache(mURI),
+                               mLoader->GetCacheQueue(mURI));
     }
   }
 
