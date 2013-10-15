@@ -13,6 +13,7 @@
 #include "nsIPipe.h"
 #include "nsCOMPtr.h"
 #include <algorithm>
+#include "nsHttpRequestHead.h"
 
 #ifdef DEBUG
 #include "prthread.h"
@@ -86,6 +87,32 @@ nsHttpPipeline::~nsHttpPipeline()
         free(mPushBackBuf);
 }
 
+// Generate a shuffled request ordering sequence 
+void
+nsHttpPipeline::ShuffleTransOrder(uint32_t count)
+{
+   if (count < 2)
+       return;
+
+   uint32_t pos = mRequestQ[0]->PipelinePosition();
+   uint32_t i = 0;
+
+   for (i=0; i < count; ++i) {
+       uint32_t ridx = rand() % count;
+
+       nsAHttpTransaction *tmp = mRequestQ[i];
+       mRequestQ[i] = mRequestQ[ridx];
+       mRequestQ[ridx] = tmp;
+   }
+
+   for (i=0; i < count; ++i) {
+       mRequestQ[i]->SetPipelinePosition(pos);
+       pos++;
+   }
+
+   LOG(("nsHttpPipeline::ShuffleTransOrder: Shuffled %d transactions.\n", count));
+}
+
 nsresult
 nsHttpPipeline::AddTransaction(nsAHttpTransaction *trans)
 {
@@ -110,6 +137,8 @@ nsHttpPipeline::AddTransaction(nsAHttpTransaction *trans)
     // trans->SetConnection() needs to be updated to point back at
     // the pipeline object.
     trans->SetConnection(this);
+
+    ShuffleTransOrder(mRequestQ.Length());
 
     if (mConnection && !mClosed && mRequestQ.Length() == 1)
         mConnection->ResumeSend();
@@ -776,8 +805,11 @@ nsHttpPipeline::CancelPipeline(nsresult originalReason)
     if (respLen > 1)
         mResponseQ.TruncateLength(1);
 
-    DontReuse();
-    Classify(nsAHttpTransaction::CLASS_SOLO);
+    /* Don't flag timed out connections as unreusable.. Tor is just slow :( */
+    if (originalReason != NS_ERROR_NET_TIMEOUT) {
+        DontReuse();
+        Classify(nsAHttpTransaction::CLASS_SOLO);
+    }
 
     return total;
 }
@@ -858,8 +890,19 @@ nsHttpPipeline::FillSendBuf()
 
     uint32_t n;
     uint64_t avail;
+    uint64_t totalSent = 0;
+    uint64_t reqsSent = 0;
+    uint64_t alreadyPending = 0;
+
+    mSendBufIn->Available(&alreadyPending);
+
     nsAHttpTransaction *trans;
     nsITransport *transport = Transport();
+#ifdef WTF_TEST
+    uint64_t totalAvailable = Available();
+    nsRefPtr<nsHttpConnectionInfo> ci;
+    GetConnectionInfo(getter_AddRefs(ci));
+#endif
 
     while ((trans = Request(0)) != nullptr) {
         avail = trans->Available();
@@ -880,6 +923,7 @@ nsHttpPipeline::FillSendBuf()
             }
 
             mSendingToProgress += n;
+            totalSent += n;
             if (!mSuppressSendEvents && transport) {
                 // Simulate a SENDING_TO event
                 trans->OnTransportStatus(transport,
@@ -890,6 +934,14 @@ nsHttpPipeline::FillSendBuf()
 
         avail = trans->Available();
         if (avail == 0) {
+#ifdef WTF_TEST
+            nsHttpRequestHead *head = trans->RequestHead();
+            fprintf(stderr, "WTF-order: Pipelined req %d/%d (%dB). Url: %s%s\n",
+                    trans->PipelinePosition(), PipelineDepth(), n,
+                    ci->Host(), head ? head->RequestURI().BeginReading() : "<unknown?>");
+#endif
+            reqsSent++;
+
             // move transaction from request queue to response queue
             mRequestQ.RemoveElementAt(0);
             mResponseQ.AppendElement(trans);
@@ -909,6 +961,13 @@ nsHttpPipeline::FillSendBuf()
         else
             mRequestIsPartial = true;
     }
+
+#ifdef WTF_TEST
+    if (totalSent)
+      fprintf(stderr, "WTF-combine: Sent %ld/%ld bytes of %ld combined pipelined requests for host %s\n",
+              alreadyPending+totalSent, totalAvailable, reqsSent, ci->Host());
+#endif
+
     return NS_OK;
 }
 
