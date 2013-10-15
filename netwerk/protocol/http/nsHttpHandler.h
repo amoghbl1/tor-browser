@@ -273,6 +273,8 @@ public:
                                      nsCString& hostLine);
 
     bool GetPipelineAggressive()     { return mPipelineAggressive; }
+    uint32_t GetMaxPipelinedRequests()     { return mMaxPipelinedRequests; }
+    uint32_t GetMaxOptimisticPipelinedRequests()     { return mMaxOptimisticPipelinedRequests; }
     void GetMaxPipelineObjectSize(int64_t *outVal)
     {
         *outVal = mMaxPipelineObjectSize;

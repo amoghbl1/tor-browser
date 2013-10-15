@@ -19,6 +19,18 @@
 
 #include "nsIObserver.h"
 #include "nsITimer.h"
+#include "nsIRandomGenerator.h"
+
+// We need our own optional debug define because pipelining behavior
+// is significantly altered by rendering speed (which is abysmal on
+// debug builds)
+#ifdef DEBUG
+# define WTF_DEBUG
+#endif
+
+#ifdef WTF_DEBUG
+# define WTF_TEST
+#endif 
 
 class nsIHttpUpgradeListener;
 
@@ -508,6 +520,7 @@ private:
     nsresult BuildPipeline(nsConnectionEntry *,
                            nsAHttpTransaction *,
                            nsHttpPipeline **);
+    bool     HasPipelines(nsConnectionEntry *);
     bool     RestrictConnections(nsConnectionEntry *, bool = false);
     nsresult ProcessNewTransaction(nsHttpTransaction *);
     nsresult EnsureSocketThreadTarget();
@@ -524,7 +537,7 @@ private:
 
     nsresult MakeNewConnection(nsConnectionEntry *ent,
                                nsHttpTransaction *trans);
-    bool     AddToShortestPipeline(nsConnectionEntry *ent,
+    bool     AddToBestPipeline(nsConnectionEntry *ent,
                                    nsHttpTransaction *trans,
                                    nsHttpTransaction::Classifier classification,
                                    uint16_t depthLimit);
