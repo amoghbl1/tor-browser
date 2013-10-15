@@ -32,6 +32,8 @@ public:
     return true;
   }
 
+  uint32_t RequestDepth() { return mRequestQ.Length(); }
+
 private:
     virtual ~nsHttpPipeline();
 
@@ -39,6 +41,8 @@ private:
 
     static nsresult ReadFromPipe(nsIInputStream *, void *, const char *,
                                  uint32_t, uint32_t, uint32_t *);
+
+    void ShuffleTransOrder(uint32_t);
 
     // convenience functions
     nsAHttpTransaction *Request(int32_t i)
