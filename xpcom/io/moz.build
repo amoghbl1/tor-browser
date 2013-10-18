@@ -126,4 +126,8 @@ FINAL_LIBRARY = 'xpcom_core'
 if CONFIG['OS_ARCH'] == 'Linux' and 'lib64' in CONFIG['libdir']:
     DEFINES['HAVE_USR_LIB64_DIR'] = True
 
+LOCAL_INCLUDES += [
+    '../build'
+]
+
 GENERATED_INCLUDES += ['..']
