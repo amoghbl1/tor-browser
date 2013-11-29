@@ -1,24 +1,46 @@
-#Specify the cross compile
 export CROSS_COMPILE=1
 
-ac_add_options --enable-application=browser
-ac_add_options --target=i686-apple-darwin11
-#ac_add_options --enable-default-toolkit=cairo-windows
+SYSROOTDIR=/usr/lib/apple/SDKs/MacOSX10.6.sdk
+ROOTDIR="$HOME/build/x-tools/x86_64-apple-darwin10/bin"
+FLAGS="-arch i386 -isysroot $SYSROOTDIR"
+
+# Ideally we use the patch provided in
+# https://bugzilla.mozilla.org/show_bug.cgi?id=933071 to get rid of our path
+# symlinks but for some reason that does not work. While Firefox is not
+# complaining with this patch on compile time anymore it won't start...
+# CROSS_PRIVATE_FRAMEWORKS=$SYSROOTDIR/System/Library/PrivateFrameworks
+
+# Needed for our otool patch
+TOOLCHAIN_PREFIX=x86_64-apple-darwin10-
+
+CC="$ROOTDIR/x86_64-apple-darwin10-clang $FLAGS"
+CXX="$ROOTDIR/x86_64-apple-darwin10-clang++ $FLAGS"
+
+# We need them as configure is looking for i386-apple-darwin10-* which is not
+# existing.
+RANLIB=$ROOTDIR/x86_64-apple-darwin10-ranlib
+AR=$ROOTDIR/x86_64-apple-darwin10-ar
+AS=$ROOTDIR/x86_64-apple-darwin10-as
+LD=$ROOTDIR/x86_64-apple-darwin10-ld
+STRIP=$ROOTDIR/x86_64-apple-darwin10-strip
+
 mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-macos
 mk_add_options MOZ_APP_DISPLAYNAME=TorBrowser
-mk_add_options MOZ_MAKE_FLAGS="-j4"
 mk_add_options MOZILLA_OFFICIAL=1
 mk_add_options BUILD_OFFICIAL=1
 
-ac_add_options --disable-debug
-ac_add_options --enable-optimize
+ac_add_options --target=i386-apple-darwin10
+ac_add_options --enable-application=browser
 ac_add_options --enable-strip
 ac_add_options --enable-official-branding
+ac_add_options --enable-optimize
+ac_add_options --disable-debug
 
-# ICU seems still to have cross-compiling issues:
-#ac_add_options --without-intl-api
+# See above for a reason why this is currently disabled
+# ac_add_options --with-macos-private-frameworks=$CROSS_PRIVATE_FRAMEWORKS
+ac_add_options --disable-updater
 ac_add_options --disable-crashreporter
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-webrtc
 ac_add_options --disable-tests
-#ac_add_options --disable-ctypes
+# ac_add_options --disable-ctypes
