@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ThirdPartyUtil.h"
+#include "mozilla/Preferences.h"
 #include "nsNetUtil.h"
 #include "nsIServiceManager.h"
 #include "nsIHttpChannelInternal.h"
@@ -409,6 +410,39 @@ ThirdPartyUtil::GetBaseDomain(nsIURI* aHostURI,
   }
 
   return NS_OK;
+}
+
+// Returns true if First Party Isolation is currently active for the given nsIChannel.
+// Depends on Preference setting and possibly the state of Private Browsing mode.
+bool ThirdPartyUtil::IsFirstPartyIsolationActive(nsIChannel *aChannel, nsIDocument *aDoc)
+{
+  int32_t isolationState = mozilla::Preferences::GetInt("privacy.thirdparty.isolate");
+  if (isolationState == 1) {
+    if (!aChannel && aDoc) {
+      // No channel passed directly. Can we get a channel from aDoc?
+      aChannel = aDoc->GetChannel();
+    }
+    return aChannel && NS_UsePrivateBrowsing(aChannel);
+  } else { // (isolationState == 0) || (isolationState == 2)
+    return (isolationState == 2);
+  }
+}
+
+// Produces a URI that uniquely identifies the first party to which
+// image cache and dom storage objects should be isolated. If isolation
+// is deactivated, then aOutput will return null.
+// Not scriptable due to the use of an nsIDocument parameter.
+NS_IMETHODIMP
+ThirdPartyUtil::GetFirstPartyIsolationURI(nsIChannel *aChannel, nsIDocument *aDoc, nsIURI **aOutput)
+{
+  bool isolationActive = IsFirstPartyIsolationActive(aChannel, aDoc);
+  if (isolationActive) {
+    return GetFirstPartyURI(aChannel, aDoc, aOutput);
+  } else {
+    // We return a null pointer when isolation is off.
+    *aOutput = nullptr;
+    return NS_OK;
+  }
 }
 
 // Not scriptable due to the use of an nsIDocument parameter.

@@ -541,6 +541,14 @@ pref("privacy.sanitize.migrateFx3Prefs",    false);
 
 pref("network.proxy.share_proxy_settings",  false); // use the same proxy settings for all protocols
 
+// The privacy.thirdparty.isolate pref determines whether
+// an isolated DOM Storage map and image cache are
+// maintained for each URL bar domain.
+// 0 - No isolation
+// 1 - Enable isolation in private windows
+// 2 - Enable isolation everywhere
+pref("privacy.thirdparty.isolate",          1);
+
 // simple gestures support
 pref("browser.gesture.swipe.left", "Browser:BackOrBackDuplicate");
 pref("browser.gesture.swipe.right", "Browser:ForwardOrForwardDuplicate");

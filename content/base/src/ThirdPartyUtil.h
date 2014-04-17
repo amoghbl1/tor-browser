@@ -27,6 +27,7 @@ public:
 private:
   nsresult IsThirdPartyInternal(const nsCString& aFirstDomain,
     nsIURI* aSecondURI, bool* aResult);
+  bool IsFirstPartyIsolationActive(nsIChannel* aChannel, nsIDocument* aDoc);
   bool SchemeIsWhiteListed(nsIURI *aURI);
   static already_AddRefed<nsIURI> GetURIFromWindow(nsIDOMWindow* aWin);
   static nsresult GetOriginatingURI(nsIChannel  *aChannel, nsIURI **aURI);

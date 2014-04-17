@@ -165,6 +165,29 @@ interface mozIThirdPartyUtil : nsISupports
                                      in nsIDocument aDoc);
 
   /**
+   * getFirstPartyIsolationURI
+   *
+   * If first-party isolation is active, then
+   * obtains the top-level url bar URI for either a channel or a document.
+   * Otherwise returns null.
+   * Either parameter may be null (but not both).
+   *
+   * @param aChannel
+   *        An arbitrary channel for some content element of a first party
+   *        load. Can be null.
+   *
+   * @param aDoc
+   *        An arbitrary third party document. Can be null.
+   *
+   * @return the first party url bar URI for the load.
+   *
+   * @throws if the URI cannot be obtained or the URI lacks a hostname and the
+   *         URI's scheme is not white listed.
+   */
+  [noscript] nsIURI getFirstPartyIsolationURI(in nsIChannel aChannel,
+                                     in nsIDocument aDoc);
+
+  /**
    * getFirstPartyURIFromChannel
    *
    * Obtain the top-level url bar URI for a channel.
