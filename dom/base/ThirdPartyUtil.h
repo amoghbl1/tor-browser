@@ -29,6 +29,7 @@ private:
 
   nsresult IsThirdPartyInternal(const nsCString& aFirstDomain,
     nsIURI* aSecondURI, bool* aResult);
+  bool IsFirstPartyIsolationActive(nsIChannel* aChannel, nsIDocument* aDoc);
   bool SchemeIsWhiteListed(nsIURI *aURI);
   static nsresult GetOriginatingURI(nsIChannel  *aChannel, nsIURI **aURI);
   nsresult GetFirstPartyURIInternal(nsIChannel *aChannel, nsIDocument *aDoc,
