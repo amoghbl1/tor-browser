@@ -1412,7 +1412,8 @@ DumpHelp()
          "  -P <profile>       Start with <profile>.\n"
          "  -migration         Start with migration wizard.\n"
          "  -ProfileManager    Start with ProfileManager.\n"
-         "  -no-remote         Do not accept or send remote commands; implies -new-instance.\n"
+         "  -no-remote         (default) Do not accept or send remote commands; implies -new-instance.\n"
+         "  -allow-remote      Accept and send remote commands.\n"
          "  -new-instance      Open new instance, not a new window in running instance.\n"
          "  -UILocale <locale> Start with <locale> resources as UI Locale.\n"
          "  -safe-mode         Disables extensions and themes for this session.\n", gAppData->name);
@@ -3152,6 +3153,11 @@ XREMain::XRE_mainInit(bool* aExitFlag)
     gSafeMode = true;
 #endif
 
+  // In the Tor Browser, remoting is disabled by default unless -osint is used.
+  bool allowRemote = (CheckArg("allow-remote") == ARG_FOUND);
+  if (!allowRemote && (CheckArg("osint", false, nullptr, false) != ARG_FOUND))
+      SaveToEnv("MOZ_NO_REMOTE=1");
+
   // Handle -no-remote and -new-instance command line arguments. Setup
   // the environment to better accommodate other components and various
   // restart scenarios.
@@ -3159,8 +3165,9 @@ XREMain::XRE_mainInit(bool* aExitFlag)
   if (ar == ARG_BAD) {
     PR_fprintf(PR_STDERR, "Error: argument -no-remote is invalid when argument -osint is specified\n");
     return 1;
-  } else if (ar == ARG_FOUND) {
-    SaveToEnv("MOZ_NO_REMOTE=1");
+  } else if ((ar == ARG_FOUND) && allowRemote) {
+    PR_fprintf(PR_STDERR, "Error: argument -no-remote is invalid when argument -allow-remote is specified\n");
+    return 1;
   }
 
   ar = CheckArg("new-instance", true);
