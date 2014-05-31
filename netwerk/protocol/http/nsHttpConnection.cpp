@@ -1595,12 +1595,9 @@ nsHttpConnection::SetupProxyConnect()
     request.SetHeader(nsHttp::Proxy_Connection, NS_LITERAL_CSTRING("keep-alive"));
     request.SetHeader(nsHttp::Connection, NS_LITERAL_CSTRING("keep-alive"));
 
-    val = mTransaction->RequestHead()->PeekHeader(nsHttp::Host);
-    if (val) {
-        // all HTTP/1.1 requests must include a Host header (even though it
-        // may seem redundant in this case; see bug 82388).
-        request.SetHeader(nsHttp::Host, nsDependentCString(val));
-    }
+    // all HTTP/1.1 requests must include a Host header (even though it
+    // may seem redundant in this case; see bug 82388).
+    request.SetHeader(nsHttp::Host, buf);
 
     val = mTransaction->RequestHead()->PeekHeader(nsHttp::Proxy_Authorization);
     if (val) {
