@@ -1,0 +1,66 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+Tor bug
+https://trac.torproject.org/projects/tor/ticket/4755
+-->
+<head>
+  <meta charset="utf-8">
+  <title>Test for Tor Bug #4755: Return client window coordinates for mouse event screenX/Y.</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://trac.torproject.org/projects/tor/ticket/4755">Tor Bug 4755</a>
+<p id="display"></p>
+<pre id="test"></pre>
+<script type="application/javascript">
+  // This test produces fake mouse events and checks that the screenX and screenY
+  // properties of the received event objects provide client window coordinates.
+  function test_go () { 
+    // Listening for asynchronous events, so we need to use the following call.
+    SimpleTest.waitForExplicitFinish();
+    // A full list of possible mouse and touch events.
+    var eventTypes = ["mousedown", "mouseup"],
+                     // TODO: get the following events working. No success so far.
+                 /*  ["click", "contextmenu", "DOMMouseScroll", "dblclick", "wheel",
+                      "mouseenter", "mouseleave", "mousemove", "mouseout", "mouseover",
+                      "MozEdgeUIGesture", "MozMagnifyGesture", "MozMagnifyGestureStart",
+                      "MozMagnifyGestureUpdate", "MozPressTapGesture", "MozRotateGesture",
+                      "MozRotateGestureStart", "MozRotateGestureUpdate", "MozSwipeGesture",
+                      "MozTapGesture", "MozTouchDown", "MozTouchMove", "MozTouchUp",
+                      "touchcancel", "touchend", "touchenter", "touchleave", "touchmove",
+                      "touchstart"], */
+        n = eventTypes.length,
+        examineEvent = function examineEvent (event) {
+          console.log(n, event.type, event.screenX, event.clientX, event.screenY, event.clientY);
+          is(event.screenX, event.clientX, "event.screenX and event.clientX should be the same");
+          is(event.screenY, event.clientY, "event.screenY and event.clientY should be the same");
+          --n;
+          if (n === 0) {
+            // We have now received all posted events.
+            SimpleTest.finish();
+          }
+        },
+        pretest = document.querySelector("pre#test");
+    // The following loop creates a new div for each event in eventTypes,
+    // attaches a listener to listen for the event, and then generates
+    // a fake event at the center of the div.
+    for (var i = 0; i < eventTypes.length; ++i) {
+      var div = document.createElement("div");
+      div.style = "width:10px;height:10px;background-color:red;";
+      // Name the div after the event we're listening for.
+      div.id = eventTypes[i];
+      document.body.appendChild(div);
+      div.addEventListener(eventTypes[i], examineEvent, false);
+      // For some reason, the following synthesizeMouseAtCenter call only seems to run if we
+      // wrap it in a window.setTimeout(..., 0).
+      window.setTimeout(() => synthesizeMouseAtCenter(div, {type : eventTypes[i]}), 0);
+    }
+  }
+  // Run the test once the window has loaded.
+  window.onload = test_go;
+</script>
+</body>
+</html>
