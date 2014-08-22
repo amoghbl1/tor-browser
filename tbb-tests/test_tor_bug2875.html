@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+Tor bug
+https://trac.torproject.org/projects/tor/ticket/2875
+-->
+<head>
+  <meta charset="utf-8">
+  <title>Test for Tor Bug #2875: Limit device and system specific CSS Media Queries</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  <script type="application/javascript">
+  var keyValMatches = ([key, val]) => matchMedia("(" + key + ":" + val +")").matches;
+
+  // Default spoofed values by Tor Browser:
+  var tor_defaults = [
+    ["color", 8],
+    ["color-index", 0],
+    ["aspect-ratio", window.innerWidth + "/" + window.innerHeight],
+    ["device-aspect-ratio", window.innerWidth + "/" + window.innerHeight],
+    ["device-height", window.innerHeight + "px"],
+    ["device-width", window.innerWidth + "px"],
+    ["grid", 0],
+    ["height", window.innerHeight + "px"],
+    ["monochrome", 0],
+    ["orientation", window.innerWidth > window.innerHeight ? "landscape" : "portrait"],
+    ["resolution", "96dpi"],
+    ["resolution", "1dppx"],
+    ["width", window.innerWidth + "px"],
+    ["-moz-device-pixel-ratio", 1],
+    ["-moz-device-orientation", window.innerWidth > window.innerHeight ? "landscape" : "portrait"]
+  ];
+
+  tor_defaults.map(([key, val]) => ok(keyValMatches([key, val]), "Expected " + key + ":" + val));
+
+  var tor_suppressed_toggles = [
+    "-moz-images-in-menus",
+    "-moz-mac-graphite-theme",
+    "-moz-maemo-classic",
+    "-moz-scrollbar-end-backward",
+    "-moz-scrollbar-end-forward",
+    "-moz-scrollbar-start-backward",
+    "-moz-scrollbar-start-backward",
+    "-moz-scrollbar-thumb-proportional",
+    "-moz-touch-enabled",
+    "-moz-windows-classic",
+    "-moz-windows-compositor",
+    "-moz-windows-default-theme",
+    "-moz-windows-glass",
+    "-moz-windows-theme"
+  ];
+
+  tor_suppressed_toggles.map(key => ok(!keyValMatches([key, 0]) && !keyValMatches([key, 1]),
+                                       key + " should not exist.")); 
+
+  var foundOSVersion = false;
+  ["windows-xp", "windows-vista", "windows-win7", "windows-win8"].map(function (val) {
+    foundOSVersion = foundOSVersion || keyValMatches(["-moz-os-version", val]);
+  });
+  ok(!foundOSVersion, "-moz-os-version should have no match");
+    
+  </script>
+</head>
+<body>
+<a target="_blank" href="https://trac.torproject.org/projects/tor/ticket/2875">Tor Bug 2875</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+
+</div>
+<pre id="test">
+</pre>
+</body>
+</html>
