@@ -816,8 +816,8 @@ SimpleTest.waitForFocus = function (callback, targetWindow, expectBlankPage) {
     // be forwarded to the child process.
     // XXXndeakin now sure what this issue with Components.utils is about, but
     // browser tests require the former and plain tests require the latter.
-    var Cu = Components.utils || SpecialPowers.Cu;
-    var Ci = Components.interfaces || SpecialPowers.Ci;
+    var Cu = (window.hasOwnProperty("Components") && Components.utils) || SpecialPowers.Cu;
+    var Ci = (window.hasOwnProperty("Components") && Components.interfaces) || SpecialPowers.Ci;
 
     var browser = null;
     if (typeof(XULElement) != "undefined" &&

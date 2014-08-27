@@ -38,7 +38,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=238987
         shouldStop = true;
       }
     } else if (e.target.id == "end") {
-      modifier = Components.interfaces.nsIDOMEvent.SHIFT_MASK;
+      modifier = SpecialPowers.Ci.nsIDOMEvent.SHIFT_MASK;
     } else if (modifier) {
       var expected = backwardFocusArray.pop();
       ok(expected == e.target.id,
@@ -59,7 +59,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=238987
     if ("id" in e.target) {
       s = s + ", id=\"" + e.target.id + "\"";
     }
-    ok(e.eventPhase == Components.interfaces.nsIDOMEvent.CAPTURING_PHASE,
+    ok(e.eventPhase == SpecialPowers.Ci.nsIDOMEvent.CAPTURING_PHASE,
        "|window| should not have got a focus event, " + s);
   }
 
@@ -85,14 +85,14 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=238987
     if ("id" in e.target) {
       s = s + ", id=\"" + e.target.id + "\"";
     }
-    ok(e.eventPhase == Components.interfaces.nsIDOMEvent.CAPTURING_PHASE,
+    ok(e.eventPhase == SpecialPowers.Ci.nsIDOMEvent.CAPTURING_PHASE,
        "|window| should not have got a blur event, " + s);
   }
 
   function tab() {
     var utils = SpecialPowers.DOMWindowUtils;
     // Send tab key events.
-    var key = Components.interfaces.nsIDOMKeyEvent.DOM_VK_TAB;
+    var key = SpecialPowers.Ci.nsIDOMKeyEvent.DOM_VK_TAB;
     utils.sendKeyEvent("keydown", key, 0, modifier);
     utils.sendKeyEvent("keypress", key, 0, modifier);
     utils.sendKeyEvent("keyup", key, 0, modifier);
