@@ -84,7 +84,8 @@ if CONFIG['MOZ_OMX_PLUGIN']:
     ]
 
 if CONFIG['ENABLE_TESTS']:
-    DIRS += ['/testing/specialpowers']
+    DIRS += ['/testing/specialpowers',
+             '/tbb-tests']
 
 DIRS += [
     '/testing/gtest',
