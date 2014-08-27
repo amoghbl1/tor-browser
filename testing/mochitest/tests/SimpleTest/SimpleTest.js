@@ -824,7 +824,7 @@ SimpleTest.waitForFocus = function (callback, targetWindow, expectBlankPage) {
     // be forwarded to the child process.
     // XXXndeakin now sure what this issue with Components.utils is about, but
     // browser tests require the former and plain tests require the latter.
-    var Cu = Components.utils || SpecialPowers.Cu;
+    var Cu = (window.hasOwnProperty("Components") && Components.utils) || SpecialPowers.Cu;
     if (Cu.isCrossProcessWrapper(targetWindow)) {
         // Look for a tabbrowser and see if targetWindow corresponds to one
         // within that tabbrowser. If not, just return.
