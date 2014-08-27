@@ -94,6 +94,9 @@ if CONFIG['ENABLE_TESTS']:
 if CONFIG['ENABLE_TESTS']:
     add_tier_dir('platform', 'testing/gtest')
 
+if CONFIG['ENABLE_TESTS']:
+    add_tier_dir('platform', 'tbb-tests')
+
 add_tier_dir('platform', [
     'uriloader',
     'caps',
