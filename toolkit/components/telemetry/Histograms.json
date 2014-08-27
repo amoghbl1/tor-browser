@@ -4707,11 +4707,6 @@
     "description": "The device supports touch input",
     "cpp_guard": "XP_WIN"
   },
-  "COMPONENTS_SHIM_ACCESSED_BY_CONTENT": {
-    "expires_in_version": "never",
-    "kind": "flag",
-    "description": "Whether content ever accesed the Components shim in this session"
-  },
   "CHECK_ADDONS_MODIFIED_MS": {
     "expires_in_version": "never",
     "kind": "exponential",
