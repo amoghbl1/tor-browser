@@ -1,0 +1,25 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+Tor bug
+https://trac.torproject.org/projects/tor/ticket/2874
+-->
+<head>
+  <meta charset="utf-8">
+  <title>Test for Tor Bug 2874</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  <script type="application/javascript">
+  is(typeof Components, 'undefined', "The global window object should not expose a Components property to untrusted content.");
+  </script>
+</head>
+<body>
+<a target="_blank" href="https://trac.torproject.org/projects/tor/ticket/2874">Tor Bug 2874</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+
+</div>
+<pre id="test">
+</pre>
+</body>
+</html>
