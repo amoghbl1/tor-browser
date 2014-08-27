@@ -58,10 +58,11 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=795275
 
   function getWin(id) { return document.getElementById(id).contentWindow.wrappedJSObject; }
   function go() {
-    getWin('frame1').touchComponents();
-    getWin('frame2').touchInterfaces();
-    getWin('frame4').touchComponents();
-    getWin('frame4').touchInterfaces();
+// TODO: We have removed Components from content scripts. We could remove these tests.
+//    getWin('frame1').touchComponents();
+//    getWin('frame2').touchInterfaces();
+//    getWin('frame4').touchComponents();
+//    getWin('frame4').touchInterfaces();
     // This shouldn't warn.
     getWin('frame5').touchViaXBL();
 
@@ -72,7 +73,7 @@ https://bugzilla.mozilla.org/show_bug.cgi?id=795275
 
   function done() {
     gConsoleService.unregisterListener(gListener);
-    is(gWarnings, 3, "Got the right number of warnings");
+    is(gWarnings, 0, "Got the right number of warnings");
     SimpleTest.finish();
   }
 
