@@ -15,7 +15,7 @@ var archiveReaderEnabled = false;
 // placebo for compat. An easy way to differentiate this from the real thing
 // is whether the property is read-only or not.
 var c = Object.getOwnPropertyDescriptor(this, 'Components');
-if ((!c.value || c.writable) && typeof SpecialPowers === 'object')
+if ((!c || !c.value || c.writable) && typeof SpecialPowers === 'object')
   Components = SpecialPowers.Components;
 
 function executeSoon(aFun)
