@@ -2727,11 +2727,6 @@ OldBindingConstructorEnabled(const nsGlobalNameStruct *aStruct,
   return true;
 }
 
-static nsresult
-LookupComponentsShim(JSContext *cx, JS::Handle<JSObject*> global,
-                     nsPIDOMWindow *win,
-                     JS::MutableHandle<JSPropertyDescriptor> desc);
-
 bool
 nsWindowSH::NameStructEnabled(JSContext* aCx, nsGlobalWindow *aWin,
                               const nsAString& aName,
@@ -2770,10 +2765,6 @@ nsWindowSH::GlobalResolve(nsGlobalWindow *aWin, JSContext *cx,
                           JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
                           JS::MutableHandle<JSPropertyDescriptor> desc)
 {
-  if (id == XPCJSRuntime::Get()->GetStringID(XPCJSRuntime::IDX_COMPONENTS)) {
-    return LookupComponentsShim(cx, obj, aWin, desc);
-  }
-
 #ifdef USE_CONTROLLERS_SHIM
   if (id == XPCJSRuntime::Get()->GetStringID(XPCJSRuntime::IDX_CONTROLLERS) &&
       !xpc::IsXrayWrapper(obj) &&
@@ -3155,94 +3146,6 @@ LocationSetterUnwrapper(JSContext *cx, JS::Handle<JSObject*> obj_, JS::Handle<js
   }
 
   return LocationSetter<nsIDOMWindow>(cx, obj, id, strict, vp);
-}
-
-struct InterfaceShimEntry {
-  const char *geckoName;
-  const char *domName;
-};
-
-// We add shims from Components.interfaces.nsIDOMFoo to window.Foo for each
-// interface that has interface constants that sites might be getting off
-// of Ci.
-const InterfaceShimEntry kInterfaceShimMap[] =
-{ { "nsIDOMFileReader", "FileReader" },
-  { "nsIXMLHttpRequest", "XMLHttpRequest" },
-  { "nsIDOMDOMException", "DOMException" },
-  { "nsIDOMNode", "Node" },
-  { "nsIDOMCSSPrimitiveValue", "CSSPrimitiveValue" },
-  { "nsIDOMCSSRule", "CSSRule" },
-  { "nsIDOMCSSValue", "CSSValue" },
-  { "nsIDOMEvent", "Event" },
-  { "nsIDOMNSEvent", "Event" },
-  { "nsIDOMKeyEvent", "KeyEvent" },
-  { "nsIDOMMouseEvent", "MouseEvent" },
-  { "nsIDOMMouseScrollEvent", "MouseScrollEvent" },
-  { "nsIDOMMutationEvent", "MutationEvent" },
-  { "nsIDOMSimpleGestureEvent", "SimpleGestureEvent" },
-  { "nsIDOMUIEvent", "UIEvent" },
-  { "nsIDOMHTMLMediaElement", "HTMLMediaElement" },
-  { "nsIDOMMediaError", "MediaError" },
-  { "nsIDOMOfflineResourceList", "OfflineResourceList" },
-  { "nsIDOMRange", "Range" },
-  { "nsIDOMSVGLength", "SVGLength" },
-  { "nsIDOMNodeFilter", "NodeFilter" },
-  { "nsIDOMXPathResult", "XPathResult" } };
-
-static nsresult
-LookupComponentsShim(JSContext *cx, JS::Handle<JSObject*> global,
-                     nsPIDOMWindow *win,
-                     JS::MutableHandle<JSPropertyDescriptor> desc)
-{
-  // Keep track of how often this happens.
-  Telemetry::Accumulate(Telemetry::COMPONENTS_SHIM_ACCESSED_BY_CONTENT, true);
-
-  // Warn once.
-  nsCOMPtr<nsIDocument> doc = win->GetExtantDoc();
-  if (doc) {
-    doc->WarnOnceAbout(nsIDocument::eComponents, /* asError = */ true);
-  }
-
-  // Create a fake Components object.
-  JS::Rooted<JSObject*> components(cx, JS_NewObject(cx, nullptr, JS::NullPtr(), global));
-  NS_ENSURE_TRUE(components, NS_ERROR_OUT_OF_MEMORY);
-
-  // Create a fake interfaces object.
-  JS::Rooted<JSObject*> interfaces(cx, JS_NewObject(cx, nullptr, JS::NullPtr(), global));
-  NS_ENSURE_TRUE(interfaces, NS_ERROR_OUT_OF_MEMORY);
-  bool ok =
-    JS_DefineProperty(cx, components, "interfaces", interfaces,
-                      JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY,
-                      JS_PropertyStub, JS_StrictPropertyStub);
-  NS_ENSURE_TRUE(ok, NS_ERROR_OUT_OF_MEMORY);
-
-  // Define a bunch of shims from the Ci.nsIDOMFoo to window.Foo for DOM
-  // interfaces with constants.
-  for (uint32_t i = 0; i < ArrayLength(kInterfaceShimMap); ++i) {
-
-    // Grab the names from the table.
-    const char *geckoName = kInterfaceShimMap[i].geckoName;
-    const char *domName = kInterfaceShimMap[i].domName;
-
-    // Look up the appopriate interface object on the global.
-    JS::Rooted<JS::Value> v(cx, JS::UndefinedValue());
-    ok = JS_GetProperty(cx, global, domName, &v);
-    NS_ENSURE_TRUE(ok, NS_ERROR_OUT_OF_MEMORY);
-    if (!v.isObject()) {
-      NS_WARNING("Unable to find interface object on global");
-      continue;
-    }
-
-    // Define the shim on the interfaces object.
-    ok = JS_DefineProperty(cx, interfaces, geckoName, v,
-                           JSPROP_ENUMERATE | JSPROP_PERMANENT | JSPROP_READONLY,
-                           JS_PropertyStub, JS_StrictPropertyStub);
-    NS_ENSURE_TRUE(ok, NS_ERROR_OUT_OF_MEMORY);
-  }
-
-  FillPropertyDescriptor(desc, global, JS::ObjectValue(*components), false);
-
-  return NS_OK;
 }
 
 NS_IMETHODIMP
