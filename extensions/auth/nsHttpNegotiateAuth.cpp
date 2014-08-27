@@ -85,6 +85,10 @@ nsHttpNegotiateAuth::ChallengeReceived(nsIHttpAuthenticableChannel *authChannel,
     nsIAuthModule *module = (nsIAuthModule *) *continuationState;
 
     *identityInvalid = false;
+
+    /* Always fail Negotiate auth for Tor Browser. We don't need it. */
+    return NS_ERROR_ABORT;
+
     if (module)
         return NS_OK;
 
