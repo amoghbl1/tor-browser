@@ -26,12 +26,12 @@ window.__defineGetter__('_EU_Ci', function() {
   // placebo for compat. An easy way to differentiate this from the real thing
   // is whether the property is read-only or not.
   var c = Object.getOwnPropertyDescriptor(window, 'Components');
-  return c.value && !c.writable ? Components.interfaces : SpecialPowers.Ci;
+  return c && c.value && !c.writable ? Components.interfaces : SpecialPowers.Ci;
 });
 
 window.__defineGetter__('_EU_Cc', function() {
   var c = Object.getOwnPropertyDescriptor(window, 'Components');
-  return c.value && !c.writable ? Components.classes : SpecialPowers.Cc;
+  return c && c.value && !c.writable ? Components.classes : SpecialPowers.Cc;
 });
 
 /**
