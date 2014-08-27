@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+Tor bug
+https://trac.torproject.org/projects/tor/ticket/5856
+-->
+<head>
+  <meta charset="utf-8">
+  <title>Test for Tor Bug #5856: Do not expose physical screen info via window & window.screen.</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+  <script type="application/javascript">
+  var checkPair = function ([a, b]) {
+    is(eval(a), eval(b), a + " should return " + b);
+  }
+  var pairs = [
+    ["window.screenX", 0],
+    ["window.screenY", 0],
+    ["window.mozInnerScreenX", 0],
+    ["window.mozInnerScreenY", 0],
+    ["window.screen.pixelDepth", 24],
+    ["window.screen.colorDepth", 24],
+    ["window.screen.availWidth", "window.innerWidth"],
+    ["window.screen.availHeight", "window.innerHeight"],
+    ["window.screen.left", 0],
+    ["window.screen.top", 0],
+    ["window.screen.availLeft", 0],
+    ["window.screen.availTop", 0],
+    ["window.screen.width", "window.innerWidth"],
+    ["window.screen.height", "window.innerHeight"]
+  ];
+
+  pairs.map(checkPair);
+
+  </script>
+</head>
+<body>
+<a target="_blank" href="https://trac.torproject.org/projects/tor/ticket/5856">Tor Bug 5856</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+
+</div>
+<pre id="test">
+</pre>
+</body>
+</html>
