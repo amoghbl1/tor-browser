@@ -7,9 +7,14 @@
 // Disable initial homepage notifications
 pref("browser.search.update", false);
 pref("browser.rights.3.shown", true);
-pref("browser.startup.homepage_override.mstone", "ignore");
 pref("startup.homepage_welcome_url", "");
-pref("startup.homepage_override_url", "");
+
+// Set a generic, default URL that will be opened in a tab after an update.
+// Typically, this will not be used; instead, the <update> element within
+// each update manifest should contain attributes similar to:
+//   actions="showURL"
+//   openURL="https://blog.torproject.org/tor-browser-55a2-released"
+pref("startup.homepage_override_url", "https://blog.torproject.org/category/tags/tor-browser");
 
 // Try to nag a bit more about updates: Pop up a restart dialog an hour after the initial dialog
 pref("app.update.promptWaitTime", 3600);
