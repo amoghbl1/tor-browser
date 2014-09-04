@@ -28,8 +28,14 @@ if [ $1 = -h ]; then
   notice ""
   notice "Options:"
   notice "  -h  show this help text"
+  notice "  -q  be less verbose"
   notice ""
   exit 1
+fi
+
+if [ $1 = -q ]; then
+  QUIET=1
+  shift
 fi
 
 # -----------------------------------------------------------------------------
@@ -63,17 +69,47 @@ if [ ! -f "precomplete" ]; then
 fi
 
 list_files files
+list_symlinks symlinks symlink_targets
+
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove the following lines (which remove entire directories
+# which, if present, contain old, unpacked copies of HTTPS Everywhere):
+# Make sure we delete the pre 5.1.0 HTTPS Everywhere as well in case it
+# exists. The extension ID got changed with the version bump to 5.1.0.
+ext_path='TorBrowser/Data/Browser/profile.default/extensions'
+if [ -d "$ext_dir" ]; then
+  directories_to_remove="$ext_path/https-everywhere@eff.org $ext_path/https-everywhere-eff@eff.org"
+else
+  directories_to_remove=""
+fi
+# END TOR_BROWSER_DATA_OUTSIDE_APP_DIR removal
 
 popd
 
 # Add the type of update to the beginning of the update manifests.
-> $updatemanifestv2
-> $updatemanifestv3
+> "$updatemanifestv2"
+> "$updatemanifestv3"
 notice ""
 notice "Adding type instruction to update manifests"
 notice "       type complete"
-echo "type \"complete\"" >> $updatemanifestv2
-echo "type \"complete\"" >> $updatemanifestv3
+echo "type \"complete\"" >> "$updatemanifestv2"
+echo "type \"complete\"" >> "$updatemanifestv3"
+
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove the following lines:
+# If removal of any old, existing directories is desired, emit the appropriate
+# rmrfdir commands.
+notice ""
+notice "Adding directory removal instructions to update manifests"
+for dir_to_remove in $directories_to_remove; do
+  # rmrfdir requires a trailing slash; if slash is missing, add one.
+  if ! [[ "$dir_to_remove" =~ /$ ]]; then
+   dir_to_remove="${dir_to_remove}/"
+  fi
+  echo "rmrfdir \"$dir_to_remove\"" >> "$updatemanifestv2"
+  echo "rmrfdir \"$dir_to_remove\"" >> "$updatemanifestv3"
+done
+# END TOR_BROWSER_DATA_OUTSIDE_APP_DIR removal
 
 notice ""
 notice "Adding file add instructions to update manifests"
@@ -97,6 +133,15 @@ for ((i=0; $i<$num_files; i=$i+1)); do
   copy_perm "$targetdir/$f" "$workdir/$f"
 
   targetfiles="$targetfiles \"$f\""
+done
+
+notice ""
+notice "Adding symlink add instructions to update manifests"
+num_symlinks=${#symlinks[*]}
+for ((i=0; $i<$num_symlinks; i=$i+1)); do
+  link="${symlinks[$i]}"
+  target="${symlink_targets[$i]}"
+  make_addsymlink_instruction "$link" "$target" "$updatemanifestv2" "$updatemanifestv3"
 done
 
 # Append remove instructions for any dead files.
