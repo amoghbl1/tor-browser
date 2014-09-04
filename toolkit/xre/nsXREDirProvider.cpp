@@ -1032,6 +1032,17 @@ nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
   NS_ENSURE_SUCCESS(rv, rv);
 
 #ifdef XP_MACOSX
+#ifdef TOR_BROWSER_UPDATE
+  // For Tor Browser, we cannot store update history, etc. under the user's home directory.
+  // Instead, we place it under Tor Browser.app/TorBrowser/UpdateInfo/
+  nsCOMPtr<nsIFile> localDir;
+  rv = GetAppRootDir(getter_AddRefs(localDir));
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = localDir->AppendNative(NS_LITERAL_CSTRING("TorBrowser"));
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = localDir->AppendNative(NS_LITERAL_CSTRING("UpdateInfo"));
+  NS_ENSURE_SUCCESS(rv, rv);
+#else
   nsCOMPtr<nsIFile> appRootDirFile;
   nsCOMPtr<nsIFile> localDir;
   nsAutoString appDirPath;
@@ -1062,6 +1073,7 @@ nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
       NS_FAILED(localDir->AppendRelativePath(appDirPath))) {
     return NS_ERROR_FAILURE;
   }
+#endif
 
   NS_ADDREF(*aResult = localDir);
   return NS_OK;
@@ -1210,33 +1222,8 @@ nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile, bool aLocal)
   NS_ENSURE_ARG_POINTER(aFile);
   nsCOMPtr<nsIFile> localDir;
 
-  nsresult rv = GetAppDir()->Clone(getter_AddRefs(localDir));
+  nsresult rv = GetAppRootDir(getter_AddRefs(localDir));
   NS_ENSURE_SUCCESS(rv, rv);
-
-  int levelsToRemove = 1; // In FF21+, appDir points to browser subdirectory.
-#if defined(XP_MACOSX)
-  levelsToRemove += 2;
-#endif
-  while (localDir && (levelsToRemove > 0)) {
-    // When crawling up the hierarchy, components named "." do not count.
-    nsAutoCString removedName;
-    rv = localDir->GetNativeLeafName(removedName);
-    NS_ENSURE_SUCCESS(rv, rv);
-    bool didRemove = !removedName.Equals(".");
-
-    // Remove a directory component.
-    nsCOMPtr<nsIFile> parentDir;
-    rv = localDir->GetParent(getter_AddRefs(parentDir));
-    NS_ENSURE_SUCCESS(rv, rv);
-    localDir = parentDir;
-
-    if (didRemove)
-      --levelsToRemove;
-  }
-
-  if (!localDir)
-    return NS_ERROR_FAILURE;
-
   rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("TorBrowser"
                                      XPCOM_FILE_PATH_SEPARATOR "Data"
                                      XPCOM_FILE_PATH_SEPARATOR "Browser"));
@@ -1341,6 +1328,44 @@ nsXREDirProvider::GetUserDataDirectory(nsIFile** aFile, bool aLocal,
   NS_ADDREF(*aFile = localDir);
   return NS_OK;
 }
+
+nsresult
+nsXREDirProvider::GetAppRootDir(nsIFile* *aFile)
+{
+  NS_ENSURE_ARG_POINTER(aFile);
+  nsCOMPtr<nsIFile> appRootDir;
+
+  nsresult rv = GetAppDir()->Clone(getter_AddRefs(appRootDir));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  int levelsToRemove = 1; // In FF21+, appDir points to browser subdirectory.
+#if defined(XP_MACOSX)
+  levelsToRemove += 2;
+#endif
+  while (appRootDir && (levelsToRemove > 0)) {
+    // When crawling up the hierarchy, components named "." do not count.
+    nsAutoCString removedName;
+    rv = appRootDir->GetNativeLeafName(removedName);
+    NS_ENSURE_SUCCESS(rv, rv);
+    bool didRemove = !removedName.Equals(".");
+
+    // Remove a directory component.
+    nsCOMPtr<nsIFile> parentDir;
+    rv = appRootDir->GetParent(getter_AddRefs(parentDir));
+    NS_ENSURE_SUCCESS(rv, rv);
+    appRootDir = parentDir;
+
+    if (didRemove)
+      --levelsToRemove;
+  }
+
+  if (!appRootDir)
+    return NS_ERROR_FAILURE;
+
+  NS_ADDREF(*aFile = appRootDir);
+  return NS_OK;
+}
+
 
 nsresult
 nsXREDirProvider::EnsureDirectoryExists(nsIFile* aDirectory)

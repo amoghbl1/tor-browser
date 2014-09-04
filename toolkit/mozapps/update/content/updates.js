@@ -3,6 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#filter substitution
+
 Components.utils.import("resource://gre/modules/DownloadUtils.jsm");
 Components.utils.import("resource://gre/modules/AddonManager.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
@@ -48,6 +50,11 @@ const SRCEVT_BACKGROUND       = 2;
 const CERT_ATTR_CHECK_FAILED_NO_UPDATE  = 100;
 const CERT_ATTR_CHECK_FAILED_HAS_UPDATE = 101;
 const BACKGROUNDCHECK_MULTIPLE_FAILURES = 110;
+
+#ifdef TOR_BROWSER_VERSION
+# Add double-quotes back on (stripped by JarMaker.py).
+#expand const TOR_BROWSER_VERSION = "__TOR_BROWSER_VERSION__";
+#endif
 
 var gLogEnabled = false;
 var gUpdatesFoundPageId;
@@ -531,8 +538,13 @@ var gUpdates = {
       return;
     }
 
+#ifdef TOR_BROWSER_UPDATE
+    var appVersion = TOR_BROWSER_VERSION;
+#else
+    var appVersion = Services.appinfo.version;
+#endif
     if (!this.update.appVersion ||
-        Services.vc.compare(this.update.appVersion, Services.appinfo.version) == 0) {
+        Services.vc.compare(this.update.appVersion, appVersion) == 0) {
       aCallback(false);
       return;
     }
@@ -544,6 +556,11 @@ var gUpdates = {
 
     var self = this;
     AddonManager.getAllAddons(function(addons) {
+#ifdef TOR_BROWSER_UPDATE
+      let compatVersion = self.update.platformVersion;
+#else
+      let compatVersion = self.update.appVersion;
+#endif
       self.addons = [];
       addons.forEach(function(addon) {
         // Protect against code that overrides the add-ons manager and doesn't
@@ -572,7 +589,7 @@ var gUpdates = {
               !addon.appDisabled && !addon.userDisabled &&
               addon.scope != AddonManager.SCOPE_APPLICATION &&
               addon.isCompatible &&
-              !addon.isCompatibleWith(self.update.appVersion,
+              !addon.isCompatibleWith(compatVersion,
                                       self.update.platformVersion))
             self.addons.push(addon);
         }
@@ -842,9 +859,14 @@ var gIncompatibleCheckPage = {
     this._totalCount = gUpdates.addons.length;
 
     this._pBar.mode = "normal";
+#ifdef TOR_BROWSER_UPDATE
+    let compatVersion = gUpdates.update.platformVersion;
+#else
+    let compatVersion = gUpdates.update.appVersion;
+#endif
     gUpdates.addons.forEach(function(addon) {
       addon.findUpdates(this, AddonManager.UPDATE_WHEN_NEW_APP_DETECTED,
-                        gUpdates.update.appVersion,
+                        compatVersion,
                         gUpdates.update.platformVersion);
     }, this);
   },
@@ -869,8 +891,13 @@ var gIncompatibleCheckPage = {
     // the add-on will become incompatible.
     let bs = CoC["@mozilla.org/extensions/blocklist;1"].
              getService(CoI.nsIBlocklistService);
+#ifdef TOR_BROWSER_UPDATE
+    let compatVersion = gUpdates.update.platformVersion;
+#else
+    let compatVersion = gUpdates.update.appVersion;
+#endif
     if (bs.isAddonBlocklisted(addon,
-                              gUpdates.update.appVersion,
+                              compatVersion,
                               gUpdates.update.platformVersion))
       return;
 
