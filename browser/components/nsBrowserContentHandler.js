@@ -45,6 +45,10 @@ const NS_BINDING_ABORTED = Components.results.NS_BINDING_ABORTED;
 const NS_ERROR_WONT_HANDLE_CONTENT = 0x805d0001;
 const NS_ERROR_ABORT = Components.results.NS_ERROR_ABORT;
 
+#ifdef TOR_BROWSER_VERSION
+const kTBSavedVersionPref = "browser.startup.homepage_override.torbrowser.version";
+#endif
+
 function shouldLoadURI(aURI) {
   if (aURI && !aURI.schemeIs("chrome"))
     return true;
@@ -96,7 +100,8 @@ const OVERRIDE_NEW_BUILD_ID = 3;
  * Returns:
  *  OVERRIDE_NEW_PROFILE if this is the first run with a new profile.
  *  OVERRIDE_NEW_MSTONE if this is the first run with a build with a different
- *                      Gecko milestone (i.e. right after an upgrade).
+ *                      Gecko milestone or Tor Browser version (i.e. right
+ *                      after an upgrade).
  *  OVERRIDE_NEW_BUILD_ID if this is the first run with a new build ID of the
  *                        same Gecko milestone (i.e. after a nightly upgrade).
  *  OVERRIDE_NONE otherwise.
@@ -111,6 +116,15 @@ function needHomepageOverride(prefb) {
     return OVERRIDE_NONE;
 
   var mstone = Services.appinfo.platformVersion;
+
+#ifdef TOR_BROWSER_VERSION
+#expand const TOR_BROWSER_VERSION = __TOR_BROWSER_VERSION__;
+
+  var savedTBVersion = null;
+  try {
+    savedTBVersion = prefb.getCharPref(kTBSavedVersionPref);
+  } catch (e) {}
+#endif
 
   var savedBuildID = null;
   try {
@@ -129,8 +143,29 @@ function needHomepageOverride(prefb) {
     
     prefb.setCharPref("browser.startup.homepage_override.mstone", mstone);
     prefb.setCharPref("browser.startup.homepage_override.buildID", buildID);
+#ifdef TOR_BROWSER_VERSION
+    prefb.setCharPref(kTBSavedVersionPref, TOR_BROWSER_VERSION);
+
+    // After an upgrade from an older release of Tor Browser (<= 5.5a1), the
+    // savedmstone will be undefined because those releases included the
+    // value "ignore" for the browser.startup.homepage_override.mstone pref.
+    // To correctly detect an upgrade vs. a new profile, we check for the
+    // presence of the "app.update.postupdate" pref.
+    var updated = prefb.prefHasUserValue("app.update.postupdate");
+    return (savedmstone || updated) ? OVERRIDE_NEW_MSTONE
+                                    : OVERRIDE_NEW_PROFILE;
+#else
     return (savedmstone ? OVERRIDE_NEW_MSTONE : OVERRIDE_NEW_PROFILE);
+#endif
   }
+
+#ifdef TOR_BROWSER_VERSION
+  if (TOR_BROWSER_VERSION != savedTBVersion) {
+    prefb.setCharPref("browser.startup.homepage_override.buildID", buildID);
+    prefb.setCharPref(kTBSavedVersionPref, TOR_BROWSER_VERSION);
+    return OVERRIDE_NEW_MSTONE;
+  }
+#endif
 
   if (buildID != savedBuildID) {
     prefb.setCharPref("browser.startup.homepage_override.buildID", buildID);
@@ -515,6 +550,15 @@ nsBrowserContentHandler.prototype = {
       try {
         old_mstone = Services.prefs.getCharPref("browser.startup.homepage_override.mstone");
       } catch (ex) {}
+
+#ifdef TOR_BROWSER_VERSION
+      // We do the same for the Tor Browser version.
+      var old_tbversion = null;
+      try {
+        old_tbversion = prefb.getCharPref(kTBSavedVersionPref);
+      } catch (e) {}
+#endif
+
       override = needHomepageOverride(prefb);
       if (override != OVERRIDE_NONE) {
         switch (override) {
@@ -538,6 +582,10 @@ nsBrowserContentHandler.prototype = {
               overridePage = getPostUpdateOverridePage(overridePage);
 
             overridePage = overridePage.replace("%OLD_VERSION%", old_mstone);
+#ifdef TOR_BROWSER_VERSION
+            overridePage = overridePage.replace("%OLD_TOR_BROWSER_VERSION%",
+                                                old_tbversion);
+#endif
             break;
         }
       }

@@ -7,7 +7,6 @@
 // Disable initial homepage notifications
 pref("browser.search.update", false);
 pref("browser.rights.3.shown", true);
-pref("browser.startup.homepage_override.mstone", "ignore");
 pref("startup.homepage_welcome_url", "");
 pref("startup.homepage_welcome_url.additional", "");
 // Not set Windows 10 users would get a special introduction on first start.

@@ -5,13 +5,22 @@
 # update instructions which is used to remove files and directories that are no
 # longer present in a complete update. The current working directory is used for
 # the location to enumerate and to create the precomplete file.
+# For symlinks, remove instructions are always generated.
 
 import sys
 import os
 
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove all lines in this file that contain:
+#      TorBrowser/Data
+
 def get_build_entries(root_path):
     """ Iterates through the root_path, creating a list for each file and
         directory. Excludes any file paths ending with channel-prefs.js.
+        To support Tor Browser updates, excludes:
+          TorBrowser/Data/Browser/profiles.ini
+          TorBrowser/Data/Browser/profile.default/bookmarks.html
+          TorBrowser/Data/Tor/torrc
     """
     rel_file_path_set = set()
     rel_dir_path_set = set()
@@ -22,6 +31,9 @@ def get_build_entries(root_path):
             rel_path_file = rel_path_file.replace("\\", "/")
             if not (rel_path_file.endswith("channel-prefs.js") or
                     rel_path_file.endswith("update-settings.ini") or
+                    rel_path_file == "TorBrowser/Data/Browser/profiles.ini" or
+                    rel_path_file == "TorBrowser/Data/Browser/profile.default/bookmarks.html" or
+                    rel_path_file == "TorBrowser/Data/Tor/torrc" or
                     rel_path_file.find("distribution/") != -1):
                 rel_file_path_set.add(rel_path_file)
 
@@ -30,7 +42,10 @@ def get_build_entries(root_path):
             rel_path_dir = os.path.join(parent_dir_rel_path, dir_name)
             rel_path_dir = rel_path_dir.replace("\\", "/")+"/"
             if rel_path_dir.find("distribution/") == -1:
-                rel_dir_path_set.add(rel_path_dir)
+                if (os.path.islink(rel_path_dir[:-1])):
+                    rel_file_path_set.add(rel_path_dir[:-1])
+                else:
+                    rel_dir_path_set.add(rel_path_dir)
 
     rel_file_path_list = list(rel_file_path_set)
     rel_file_path_list.sort(reverse=True)

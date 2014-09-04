@@ -3369,14 +3369,11 @@ AC_SUBST(GRE_MILESTONE)
 # set RELEASE_BUILD and NIGHTLY_BUILD variables depending on the cycle we're in
 # The logic works like this:
 # - if we have "a1" in GRE_MILESTONE, we're building Nightly (define NIGHTLY_BUILD)
-# - otherwise, if we have "a" in GRE_MILESTONE, we're building Nightly or Aurora
 # - otherwise, we're building Release/Beta (define RELEASE_BUILD)
 case "$GRE_MILESTONE" in
   *a1*)
       NIGHTLY_BUILD=1
       AC_DEFINE(NIGHTLY_BUILD)
-      ;;
-  *a*)
       ;;
   *)
       RELEASE_BUILD=1
@@ -6521,6 +6518,31 @@ MOZ_ARG_ENABLE_BOOL(update-packaging,
 AC_SUBST(MOZ_UPDATE_PACKAGING)
 
 dnl ========================================================
+dnl Tor Additions
+dnl ========================================================
+MOZ_ARG_WITH_STRING(tor-browser-version,
+[  --with-tor-browser-version=VERSION
+                          Set Tor Browser version, e.g., 4.0b1],
+    TOR_BROWSER_VERSION="$withval")
+
+MOZ_ARG_ENABLE_BOOL(tor-browser-update,
+[  --enable-tor-browser-update
+                          Enable Tor Browser update],
+    TOR_BROWSER_UPDATE=1,
+    TOR_BROWSER_UPDATE= )
+
+if test -n "$TOR_BROWSER_UPDATE"; then
+    if test -z "$TOR_BROWSER_VERSION"; then
+        AC_MSG_ERROR([--enable-tor-browser-update requires --with-tor-browser-version.])
+    fi
+    AC_DEFINE(TOR_BROWSER_UPDATE)
+fi
+
+AC_DEFINE_UNQUOTED(TOR_BROWSER_VERSION,"$TOR_BROWSER_VERSION")
+AC_SUBST(TOR_BROWSER_VERSION)
+AC_SUBST(TOR_BROWSER_UPDATE)
+
+dnl ========================================================
 dnl build the tests by default
 dnl ========================================================
 MOZ_ARG_DISABLE_BOOL(tests,
@@ -9068,7 +9090,7 @@ if test "$MOZ_DEBUG"; then
     A11Y_LOG=1
 fi
 case "$MOZ_UPDATE_CHANNEL" in
-aurora|beta|release|esr)
+aurora|alpha|beta|hardened|release|esr)
     ;;
 *)
     A11Y_LOG=1

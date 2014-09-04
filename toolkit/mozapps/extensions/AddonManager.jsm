@@ -23,7 +23,7 @@ if ("@mozilla.org/xre/app-info;1" in Cc) {
 
 Cu.import("resource://gre/modules/AppConstants.jsm");
 
-const MOZ_COMPATIBILITY_NIGHTLY = !['aurora', 'beta', 'release', 'esr'].includes(AppConstants.MOZ_UPDATE_CHANNEL);
+const MOZ_COMPATIBILITY_NIGHTLY = !['aurora', 'alpha', 'beta', 'hardened', 'release', 'esr'].includes(AppConstants.MOZ_UPDATE_CHANNEL);
 
 const PREF_BLOCKLIST_PINGCOUNTVERSION = "extensions.blocklist.pingCountVersion";
 const PREF_DEFAULT_PROVIDERS_ENABLED  = "extensions.defaultProviders.enabled";

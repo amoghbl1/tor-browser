@@ -38,11 +38,8 @@ XPIDL_MODULE = 'browsercompsbase'
 
 EXTRA_PP_COMPONENTS += [
     'BrowserComponents.manifest',
-    'nsBrowserGlue.js',
-]
-
-EXTRA_COMPONENTS += [
     'nsBrowserContentHandler.js',
+    'nsBrowserGlue.js',
 ]
 
 EXTRA_JS_MODULES += [
