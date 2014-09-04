@@ -39,6 +39,7 @@
 # include <windows.h>
 # include <shlwapi.h>
 # include "nsWindowsHelpers.h"
+# include "prprf.h"
 # define getcwd(path, size) _getcwd(path, size)
 # define getpid() GetCurrentProcessId()
 #elif defined(XP_UNIX)
@@ -168,6 +169,46 @@ GetInstallDirPath(nsIFile *appDir, nsACString& installDirPath)
   return NS_OK;
 }
 
+#if defined(TOR_BROWSER_UPDATE) && defined(XP_WIN)
+#define PATH_SEPARATOR ";"
+
+// In Tor Browser, updater.exe depends on some DLLs that are located in the
+// app directory.  To allow the updater to run when it has been copied into
+// the update directory, we append the app directory to the PATH.
+static nsresult
+AdjustPathForUpdater(nsIFile *appDir)
+{
+  nsAutoCString appPath;
+  nsresult rv = appDir->GetNativePath(appPath);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  char *s = nullptr;
+  char *pathValue = PR_GetEnv("PATH");
+  if ((nullptr == pathValue) || ('\0' == *pathValue)) {
+    s = PR_smprintf("PATH=%s", appPath.get());
+  } else {
+    s = PR_smprintf("PATH=%s" PATH_SEPARATOR "%s", pathValue, appPath.get());
+  }
+
+  // We intentionally leak the value that is passed into PR_SetEnv() because
+  // the environment will hold a pointer to it.
+  if ((nullptr == s) || (PR_SUCCESS != PR_SetEnv(s)))
+    return NS_ERROR_FAILURE;
+
+  return NS_OK;
+}
+#endif
+
+#ifdef DEBUG
+static void
+dump_argv(const char *aPrefix, char **argv, int argc)
+{
+  printf("%s - %d args\n", aPrefix, argc);
+  for (int i = 0; i < argc; ++i)
+    printf("  %d: %s\n", i, argv[i]);
+}
+#endif
+
 #if defined(XP_MACOSX)
 // This is a copy of OS X's XRE_GetBinaryPath from nsAppRunner.cpp with the
 // gBinaryPath check removed so that the updater can reload the stub executable
@@ -255,6 +296,33 @@ typedef enum {
   eAppliedService
 } UpdateStatus;
 
+#ifdef DEBUG
+static const char *
+UpdateStatusToString(UpdateStatus aStatus)
+{
+  const char *rv = "unknown";
+  switch (aStatus) {
+    case eNoUpdateAction:
+      rv = "NoUpdateAction";
+      break;
+    case ePendingUpdate:
+      rv = "PendingUpdate";
+      break;
+    case ePendingService:
+      rv = "PendingService";
+      break;
+    case eAppliedUpdate:
+      rv = "AppliedUpdate";
+      break;
+    case eAppliedService:
+      rv = "AppliedService";
+      break;
+  }
+
+  return rv;
+}
+#endif
+
 /**
  * Returns a value indicating what needs to be done in order to handle an update.
  *
@@ -323,11 +391,43 @@ IsOlderVersion(nsIFile *versionFile, const char *appVersion)
   if (strncmp(buf, kNull, sizeof(kNull) - 1) == 0)
     return false;
 
+#ifdef DEBUG
+  printf("IsOlderVersion checking appVersion %s against updateVersion %s\n",
+         appVersion, buf);
+#endif
+
   if (mozilla::Version(appVersion) > buf)
     return true;
 
   return false;
 }
+
+#ifndef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
+#if defined(TOR_BROWSER_UPDATE) && defined(XP_MACOSX)
+static nsresult
+GetUpdateDirFromAppDir(nsIFile *aAppDir, nsIFile* *aResult)
+{
+  // On Mac OSX, we stage the update to an Updated.app directory that is
+  // directly below the main Tor Browser.app directory (two levels up from
+  // the appDir).
+  NS_ENSURE_ARG_POINTER(aAppDir);
+  NS_ENSURE_ARG_POINTER(aResult);
+  nsCOMPtr<nsIFile> parentDir1, parentDir2;
+  nsresult rv = aAppDir->GetParent(getter_AddRefs(parentDir1));
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = parentDir1->GetParent(getter_AddRefs(parentDir2));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsCOMPtr<nsIFile> updatedDir;
+  if (!GetFile(parentDir2, NS_LITERAL_CSTRING("Updated.app"), updatedDir)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  updatedDir.forget(aResult);
+  return NS_OK;
+}
+#endif
+#endif
 
 static bool
 CopyFileIntoUpdateDir(nsIFile *parentDir, const nsACString& leaf, nsIFile *updateDir)
@@ -541,7 +641,12 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir,
   nsAutoCString applyToDir;
   nsCOMPtr<nsIFile> updatedDir;
 #ifdef XP_MACOSX
+#if defined(TOR_BROWSER_UPDATE) && !defined(TOR_BROWSER_DATA_OUTSIDE_APP_DIR)
+  rv = GetUpdateDirFromAppDir(appDir, getter_AddRefs(updatedDir));
+  if (NS_FAILED(rv)) {
+#else
   if (!GetFile(updateDir, NS_LITERAL_CSTRING("Updated.app"), updatedDir)) {
+#endif
 #else
   if (!GetFile(appDir, NS_LITERAL_CSTRING("updated"), updatedDir)) {
 #endif
@@ -630,6 +735,13 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir,
 #if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && \
     !defined(XP_MACOSX) && !defined(MOZ_WIDGET_GONK)
   AppendToLibPath(installDirPath.get());
+#endif
+
+#if defined(TOR_BROWSER_UPDATE) && defined(XP_WIN)
+  nsresult rv2 = AdjustPathForUpdater(appDir);
+  if (NS_FAILED(rv2)) {
+    LOG(("SwitchToUpdatedApp -- AdjustPathForUpdater failed (0x%x)\n", rv2));
+  }
 #endif
 
   LOG(("spawning updater process for replacing [%s]\n", updaterPath.get()));
@@ -807,7 +919,12 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
     applyToDir.Assign(installDirPath);
   } else {
 #ifdef XP_MACOSX
+#if defined(TOR_BROWSER_UPDATE) && !defined(TOR_BROWSER_DATA_OUTSIDE_APP_DIR)
+    rv = GetUpdateDirFromAppDir(appDir, getter_AddRefs(updatedDir));
+    if (NS_FAILED(rv)) {
+#else
     if (!GetFile(updateDir, NS_LITERAL_CSTRING("Updated.app"), updatedDir)) {
+#endif
 #else
     if (!GetFile(appDir, NS_LITERAL_CSTRING("updated"), updatedDir)) {
 #endif
@@ -911,6 +1028,14 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
   if (isOSUpdate) {
     PR_SetEnv("MOZ_OS_UPDATE=1");
   }
+
+#if defined(TOR_BROWSER_UPDATE) && defined(XP_WIN)
+  nsresult rv2 = AdjustPathForUpdater(appDir);
+  if (NS_FAILED(rv2)) {
+    LOG(("ApplyUpdate -- AdjustPathForUpdater failed (0x%x)\n", rv2));
+  }
+#endif
+
 #if defined(MOZ_WIDGET_GONK)
   // We want the updater to be CPU friendly and not subject to being killed by
   // the low memory killer, so we pass in some preferences to allow it to
@@ -933,6 +1058,9 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
 #endif
 
   LOG(("spawning updater process [%s]\n", updaterPath.get()));
+#ifdef DEBUG
+  dump_argv("ApplyUpdate updater", argv, argc);
+#endif
 
 #if defined(USE_EXECV)
   // Don't use execv when staging updates.
@@ -956,6 +1084,9 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
   // LaunchChildMac uses posix_spawnp and prefers the current
   // architecture when launching. It doesn't require a
   // null-terminated string but it doesn't matter if we pass one.
+#ifdef DEBUG
+  dump_argv("ApplyUpdate after SetupMacCommandLine", argv, argc);
+#endif
   LaunchChildMac(argc, argv, 0, outpid);
   if (restart) {
     exit(0);
@@ -994,9 +1125,29 @@ ProcessUpdates(nsIFile *greDir, nsIFile *appDir, nsIFile *updRootDir,
                bool restart, bool isOSUpdate, nsIFile *osApplyToDir,
                ProcessType *pid)
 {
+#if defined(XP_WIN) && defined(TOR_BROWSER_UPDATE)
+  // Try to remove the "tobedeleted" directory which, if present, contains
+  // files that could not be removed during a previous update (e.g., DLLs
+  // that were in use and therefore locked by Windows).
+  nsCOMPtr<nsIFile> deleteDir;
+  nsresult winrv = appDir->Clone(getter_AddRefs(deleteDir));
+  if (NS_SUCCEEDED(winrv)) {
+    winrv = deleteDir->AppendNative(NS_LITERAL_CSTRING("tobedeleted"));
+    if (NS_SUCCEEDED(winrv)) {
+      winrv = deleteDir->Remove(true);
+    }
+  }
+#endif
+
   nsresult rv;
 
   nsCOMPtr<nsIFile> updatesDir;
+#ifdef DEBUG
+  nsAutoCString path;
+  updRootDir->GetNativePath(path);
+  printf("ProcessUpdates updateRootDir: %s appVersion: %s\n",
+         path.get(), appVersion);
+#endif
   rv = updRootDir->Clone(getter_AddRefs(updatesDir));
   if (NS_FAILED(rv))
     return rv;
@@ -1011,6 +1162,12 @@ ProcessUpdates(nsIFile *greDir, nsIFile *appDir, nsIFile *updRootDir,
  
   nsCOMPtr<nsIFile> statusFile;
   UpdateStatus status = GetUpdateStatus(updatesDir, statusFile);
+#ifdef DEBUG
+  printf("ProcessUpdates status: %s (%d)\n",
+         UpdateStatusToString(status), status);
+  updatesDir->GetNativePath(path);
+  printf("ProcessUpdates updatesDir: %s\n", path.get());
+#endif
   switch (status) {
   case ePendingUpdate:
   case ePendingService: {
@@ -1093,7 +1250,11 @@ nsUpdateProcessor::ProcessUpdate(nsIUpdate* aUpdate)
     if (NS_FAILED(rv))
       appDir = dirProvider->GetAppDir();
 
+#ifdef TOR_BROWSER_UPDATE
+    appVersion = TOR_BROWSER_VERSION;
+#else
     appVersion = gAppData->version;
+#endif
     argc = gRestartArgc;
     argv = gRestartArgv;
   } else {
@@ -1123,6 +1284,8 @@ nsUpdateProcessor::ProcessUpdate(nsIUpdate* aUpdate)
                  getter_AddRefs(updRoot));
     NS_ASSERTION(NS_SUCCEEDED(rv), "Can't get the UpdRootD dir");
 
+    // To support Tor Browser updates from xpcshell, modify the following
+    // code to use TOR_BROWSER_VERSION from the configure process.
     nsCOMPtr<nsIXULAppInfo> appInfo =
       do_GetService("@mozilla.org/xre/app-info;1");
     if (appInfo) {
