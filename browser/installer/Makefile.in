@@ -63,6 +63,10 @@ ifdef WIN32_REDIST_DIR
 DEFINES += -DMOZ_MSVC_REDIST=$(_MSC_VER)
 endif
 
+ifdef TOR_BROWSER_UPDATE
+DEFINES += -DTOR_BROWSER_UPDATE
+endif
+
 ifneq (,$(filter WINNT Darwin Android,$(OS_TARGET)))
 DEFINES += -DMOZ_SHARED_MOZGLUE=1
 endif

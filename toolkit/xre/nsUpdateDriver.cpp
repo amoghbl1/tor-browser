@@ -132,6 +132,18 @@ GetCurrentWorkingDir(char *buf, size_t size)
   return NS_OK;
 }
 
+
+#ifdef DEBUG
+static void
+dump_argv(const char *aPrefix, char **argv, int argc)
+{
+  printf("%s - %d args\n", aPrefix, argc);
+  for (int i = 0; i < argc; ++i)
+    printf("  %d: %s\n", i, argv[i]);
+}
+#endif
+
+
 #if defined(XP_MACOSX)
 // This is a copy of OS X's XRE_GetBinaryPath from nsAppRunner.cpp with the
 // gBinaryPath check removed so that the updater can reload the stub executable
@@ -287,6 +299,10 @@ IsOlderVersion(nsIFile *versionFile, const char *appVersion)
   if (strncmp(buf, kNull, sizeof(kNull) - 1) == 0)
     return false;
 
+#ifdef DEBUG
+  printf("IsOlderVersion checking appVersion %s against updateVersion %s\n",
+         appVersion, buf);
+#endif
   if (mozilla::Version(appVersion) > buf)
     return true;
 
@@ -884,6 +900,9 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
 #endif
 
   LOG(("spawning updater process [%s]\n", updaterPath.get()));
+#ifdef DEBUG
+  dump_argv("ApplyUpdate updater", argv, argc);
+#endif
 
 #if defined(USE_EXECV)
   // Don't use execv when staging updates.
@@ -907,6 +926,9 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
   // LaunchChildMac uses posix_spawnp and prefers the current
   // architecture when launching. It doesn't require a
   // null-terminated string but it doesn't matter if we pass one.
+#ifdef DEBUG
+  dump_argv("ApplyUpdate after SetupMacCommandLine", argv, argc);
+#endif
   LaunchChildMac(argc, argv, 0, outpid);
   if (restart) {
     exit(0);
@@ -948,6 +970,12 @@ ProcessUpdates(nsIFile *greDir, nsIFile *appDir, nsIFile *updRootDir,
   nsresult rv;
 
   nsCOMPtr<nsIFile> updatesDir;
+#ifdef DEBUG
+  nsAutoCString path;
+  updRootDir->GetNativePath(path);
+  printf("ProcessUpdates updateRootDir: %s appVersion: %s\n",
+         path.get(), appVersion);
+#endif
   rv = updRootDir->Clone(getter_AddRefs(updatesDir));
   if (NS_FAILED(rv))
     return rv;
@@ -973,6 +1001,11 @@ ProcessUpdates(nsIFile *greDir, nsIFile *appDir, nsIFile *updRootDir,
 
   nsCOMPtr<nsIFile> statusFile;
   UpdateStatus status = GetUpdateStatus(updatesDir, statusFile);
+#ifdef DEBUG
+  printf("ProcessUpdates status: %d\n", status);
+  updatesDir->GetNativePath(path);
+  printf("ProcessUpdates updatesDir: %s\n", path.get());
+#endif
   switch (status) {
   case ePendingUpdate:
   case ePendingService: {
@@ -1052,7 +1085,11 @@ nsUpdateProcessor::ProcessUpdate(nsIUpdate* aUpdate)
     if (NS_FAILED(rv))
       appDir = dirProvider->GetAppDir();
 
+#ifdef TOR_BROWSER_UPDATE
+    appVersion = TOR_BROWSER_VERSION;
+#else
     appVersion = gAppData->version;
+#endif
     argc = gRestartArgc;
     argv = gRestartArgv;
   } else {
@@ -1076,6 +1113,8 @@ nsUpdateProcessor::ProcessUpdate(nsIUpdate* aUpdate)
     if (NS_FAILED(rv))
       updRoot = appDir;
 
+    // To support Tor Browser Bundle updates from xpcshell, modify the
+    // following code to use the TBB version fron the configure process.
     nsCOMPtr<nsIXULAppInfo> appInfo =
       do_GetService("@mozilla.org/xre/app-info;1");
     if (appInfo) {

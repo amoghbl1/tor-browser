@@ -38,7 +38,11 @@ ac_add_options --disable-debug
 
 # See above for a reason why this is currently disabled
 # ac_add_options --with-macos-private-frameworks=$CROSS_PRIVATE_FRAMEWORKS
-ac_add_options --disable-updater
+#ac_add_options --disable-updater
+ac_add_options --enable-tor-browser-update
+ac_add_options --enable-update-packaging
+# We do not use signed MAR files yet (Mozilla uses them on Windows only).
+ac_add_options --disable-verify-mar
 ac_add_options --disable-crashreporter
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-webrtc

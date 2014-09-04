@@ -9,12 +9,15 @@ mk_add_options BUILD_OFFICIAL=1
 ac_add_options --enable-optimize
 #ac_add_options --disable-optimize
 ac_add_options --enable-official-branding
+ac_add_options --enable-tor-browser-update
+ac_add_options --enable-update-packaging
+# We do not use signed MAR files yet (Mozilla uses them on Windows only).
+ac_add_options --disable-verify-mar
 ac_add_options --disable-strip
 ac_add_options --disable-install-strip
 ac_add_options --disable-tests
 ac_add_options --disable-debug
 ac_add_options --disable-maintenance-service
-ac_add_options --disable-updater
 ac_add_options --disable-crashreporter
 ac_add_options --disable-webrtc
 #ac_add_options --disable-ctypes

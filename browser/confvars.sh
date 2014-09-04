@@ -8,21 +8,6 @@ MOZ_APP_VENDOR=Mozilla
 MOZ_UPDATER=1
 MOZ_PHOENIX=1
 
-if test "$OS_ARCH" = "WINNT"; then
-  if ! test "$HAVE_64BIT_OS"; then
-    MOZ_VERIFY_MAR_SIGNATURE=1
-    MOZ_MAINTENANCE_SERVICE=1
-    if test "$MOZ_UPDATE_CHANNEL" = "nightly" -o \
-            "$MOZ_UPDATE_CHANNEL" = "aurora" -o \
-            "$MOZ_UPDATE_CHANNEL" = "beta" -o \
-            "$MOZ_UPDATE_CHANNEL" = "release"; then
-      if ! test "$MOZ_DEBUG"; then
-        MOZ_STUB_INSTALLER=1
-      fi
-    fi
-  fi
-fi
-
 MOZ_CHROME_FILE_FORMAT=omni
 MOZ_DISABLE_EXPORT_JS=1
 MOZ_SAFE_BROWSING=1
@@ -48,9 +33,9 @@ MOZ_APP_ID={ec8030f7-c20a-464f-9b0e-13a3a9e97384}
 # This should usually be the same as the value MAR_CHANNEL_ID.
 # If more than one ID is needed, then you should use a comma separated list
 # of values.
-ACCEPTED_MAR_CHANNEL_IDS=firefox-mozilla-esr
+ACCEPTED_MAR_CHANNEL_IDS=torbrowser-torproject-release
 # The MAR_CHANNEL_ID must not contain the following 3 characters: ",\t "
-MAR_CHANNEL_ID=firefox-mozilla-esr
+MAR_CHANNEL_ID=torbrowser-torproject-release
 MOZ_PROFILE_MIGRATOR=1
 MOZ_EXTENSION_MANAGER=1
 MOZ_APP_STATIC_INI=1
