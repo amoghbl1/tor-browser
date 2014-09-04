@@ -41,6 +41,7 @@ this.NS_ASSERT = function NS_ASSERT(condition, message) {
     switch (defB.getCharPref("app.update.channel")) {
       case "nightly":
       case "aurora":
+      case "alpha":
       case "beta":
       case "default":
         releaseBuild = false;
