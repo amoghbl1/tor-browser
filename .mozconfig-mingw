@@ -21,8 +21,4 @@ ac_add_options --disable-maintenance-service
 ac_add_options --disable-webrtc
 ac_add_options --disable-tests
 
-# Accessibility now builds under MinGw. WebGL still doesn't :/.
-#ac_add_options --disable-accessibility
-ac_add_options --disable-webgl
-
 #ac_add_options --disable-ctypes
