@@ -25,7 +25,7 @@ LD=$ROOTDIR/x86_64-apple-darwin10-ld
 STRIP=$ROOTDIR/x86_64-apple-darwin10-strip
 
 mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-macos
-mk_add_options MOZ_APP_DISPLAYNAME=TorBrowser
+mk_add_options MOZ_APP_DISPLAYNAME="Tor Browser"
 mk_add_options MOZILLA_OFFICIAL=1
 mk_add_options BUILD_OFFICIAL=1
 
