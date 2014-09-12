@@ -597,7 +597,9 @@
 #ifdef MOZ_ANGLE_RENDERER
 @BINPATH@/libEGL.dll
 @BINPATH@/libGLESv2.dll
+#ifdef MOZ_D3DCOMPILER_DLL_PATH
 @BINPATH@/@MOZ_D3DCOMPILER_DLL@
+#endif
 #endif
 
 ; [Browser Chrome Files]
