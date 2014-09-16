@@ -71,7 +71,7 @@ def dependentlibs_readelf(lib):
 
 def dependentlibs_otool(lib):
     '''Returns the list of dependencies declared in the given MACH-O dylib'''
-    proc = subprocess.Popen(['otool', '-l', lib], stdout = subprocess.PIPE)
+    proc = subprocess.Popen(["../../../../x-tools/x86_64-apple-darwin10/bin/" + TOOLCHAIN_PREFIX + 'otool', '-l', lib], stdout = subprocess.PIPE)
     deps= []
     cmd = None
     for line in proc.stdout:
