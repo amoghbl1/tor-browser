@@ -1685,7 +1685,17 @@ function Update(update) {
     this._patches.push(patch);
   }
 
-  if (this._patches.length == 0 && !update.hasAttribute("unsupported"))
+  if (update.hasAttribute("unsupported"))
+    this.unsupported = ("true" == update.getAttribute("unsupported"));
+  else if (update.hasAttribute("minSupportedOSVersion")) {
+    let minOSVersion = update.getAttribute("minSupportedOSVersion");
+    try {
+      let osVersion = Services.sysinfo.getProperty("version");
+      this.unsupported = (Services.vc.compare(osVersion, minOSVersion) < 0);
+    } catch (e) {}
+  }
+
+  if (this._patches.length == 0 && !this.unsupported)
     throw Cr.NS_ERROR_ILLEGAL_VALUE;
 
   // Fallback to the behavior prior to bug 530872 if the update does not have an
@@ -1730,15 +1740,13 @@ function Update(update) {
       if(!isNaN(attr.value))
         this.promptWaitTime = parseInt(attr.value);
     }
-    else if (attr.name == "unsupported")
-      this.unsupported = attr.value == "true";
     else if (attr.name == "version") {
       // Prevent version from replacing displayVersion if displayVersion is
       // present in the update xml.
       if (!this.displayVersion)
         this.displayVersion = attr.value;
     }
-    else {
+    else if (attr.name != "unsupported") {
       this[attr.name] = attr.value;
 
       switch (attr.name) {
