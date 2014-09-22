@@ -16,6 +16,10 @@ ac_add_options --enable-strip
 ac_add_options --enable-official-branding
 
 ac_add_options --disable-updater
+
+# ICU seems still to have cross-compiling issues:
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1019744#c19
+ac_add_options --without-intl-api
 ac_add_options --disable-crashreporter
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-webrtc

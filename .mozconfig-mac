@@ -10,9 +10,6 @@ FLAGS="-arch x86_64 -isysroot $SYSROOTDIR"
 # complaining with this patch on compile time anymore it won't start...
 # CROSS_PRIVATE_FRAMEWORKS=$SYSROOTDIR/System/Library/PrivateFrameworks
 
-# Needed for our otool patch
-TOOLCHAIN_PREFIX=x86_64-apple-darwin10-
-
 CC="$ROOTDIR/x86_64-apple-darwin10-clang $FLAGS"
 CXX="$ROOTDIR/x86_64-apple-darwin10-clang++ $FLAGS"
 
@@ -38,7 +35,9 @@ ac_add_options --disable-debug
 
 # See above for a reason why this is currently disabled
 # ac_add_options --with-macos-private-frameworks=$CROSS_PRIVATE_FRAMEWORKS
-ac_add_options --disable-updater
+
+# ICU seems still to have cross-compiling issues:
+ac_add_options --without-intl-api
 ac_add_options --disable-crashreporter
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-webrtc
