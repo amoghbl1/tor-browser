@@ -2932,6 +2932,14 @@ ocsp_ConnectToHost(const char *host, PRUint16 port)
     PRNetAddr addr;
     char *netdbbuf = NULL;
 
+    // XXX: Do we need a unittest ifdef here? We don't want to break the tests, but
+    // we want to ensure nothing can ever hit this code in production.
+#if 1
+    printf("Tor Browser BUG: Attempted OSCP direct connect to %s, port %u\n", host,
+            port);
+    goto loser;
+#endif
+
     sock = PR_NewTCPSocket();
     if (sock == NULL)
         goto loser;
