@@ -1334,6 +1334,13 @@ pkix_pl_Socket_Create(
                     plContext),
                     PKIX_COULDNOTCREATESOCKETOBJECT);
 
+        // XXX: Do we need a unittest ifdef here? We don't want to break the tests, but
+        // we want to ensure nothing can ever hit this code in production.
+#if 1
+        printf("Tor Browser BUG: Attempted pkix direct socket connect\n");
+        PKIX_ERROR(PKIX_PRNEWTCPSOCKETFAILED);
+#endif
+
         socket->isServer = isServer;
         socket->timeout = timeout;
         socket->clientSock = NULL;
@@ -1432,6 +1439,13 @@ pkix_pl_Socket_CreateByName(
         PKIX_NULLCHECK_TWO(serverName, pSocket);
 
         localCopyName = PL_strdup(serverName);
+
+        // XXX: Do we need a unittest ifdef here? We don't want to break the tests, but
+        // we want to ensure nothing can ever hit this code in production.
+#if 1
+        printf("Tor Browser BUG: Attempted pkix direct connect to %s\n", serverName);
+        PKIX_ERROR(PKIX_PRNEWTCPSOCKETFAILED);
+#endif
 
         sepPtr = strchr(localCopyName, ':');
         /* First strip off the portnum, if present, from the end of the name */
@@ -1582,6 +1596,13 @@ pkix_pl_Socket_CreateByHostAndPort(
         PKIX_ENTER(SOCKET, "pkix_pl_Socket_CreateByHostAndPort");
         PKIX_NULLCHECK_THREE(hostname, pStatus, pSocket);
 
+        // XXX: Do we need a unittest ifdef here? We don't want to break the tests, but
+        // we want to ensure nothing can ever hit this code in production.
+#if 1
+        printf("Tor Browser BUG: Attempted pkix direct connect to %s, port %u\n", hostname,
+                portnum);
+        PKIX_ERROR(PKIX_PRNEWTCPSOCKETFAILED);
+#endif
 
         prstatus = PR_GetHostByName(hostname, buf, sizeof(buf), &hostent);
 
