@@ -4326,6 +4326,15 @@ extern JS_PUBLIC_API(bool)
 JS_SetDefaultLocale(JSRuntime* rt, const char* locale);
 
 /*
+ * Returns the default locale for the ECMAScript Internationalization API
+ * (Intl.Collator, Intl.NumberFormat, Intl.DateTimeFormat).
+ * Note that the Internationalization API encourages clients to
+ * specify their own locales.
+ */
+extern JS_PUBLIC_API(const char*)
+JS_GetDefaultLocale(JSRuntime *rt);
+
+/*
  * Reset the default locale to OS defaults.
  */
 extern JS_PUBLIC_API(void)

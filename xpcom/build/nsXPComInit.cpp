@@ -8,6 +8,7 @@
 
 #include "mozilla/Atomics.h"
 #include "mozilla/Poison.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/XPCOM.h"
 #include "nsXULAppAPI.h"
 
@@ -40,6 +41,8 @@
 #include "nsINIParserImpl.h"
 #include "nsSupportsPrimitives.h"
 #include "nsConsoleService.h"
+
+#include "nsIJSRuntimeService.h"
 
 #include "nsComponentManager.h"
 #include "nsCategoryManagerUtils.h"
@@ -443,6 +446,67 @@ NS_IMPL_ISUPPORTS(NesteggReporter, nsIMemoryReporter)
 /* static */ template<> Atomic<size_t> CountingAllocatorBase<NesteggReporter>::sAmount(0);
 #endif /* MOZ_WEBM */
 
+// Anonymous namespace for customizing the default locale that JavaScript
+// uses, according to the value of the "javascript.use_us_english_locale" pref.
+// The current default locale can be detected in JavaScript by calling
+// `Intl.DateTimeFormat().resolvedOptions().locale`
+namespace {
+
+#define USE_US_ENGLISH_LOCALE_PREF "javascript.use_us_english_locale"
+
+static char* sSystemLocale;
+static char* sJSLocale;
+
+// Returns a pointer to the current JS Runtime.
+static
+JSRuntime* GetRuntime() {
+  nsresult rv;
+  nsCOMPtr<nsIJSRuntimeService> rts = do_GetService("@mozilla.org/js/xpc/RuntimeService;1", &rv);
+  if (NS_FAILED(rv)) return NULL;
+  JSRuntime* rt;
+  rts->GetRuntime(&rt);
+  return rt;
+}
+
+// If the USE_US_ENGLISH_LOCALE_PREF is active, set all locales to US English.
+// Otherwise, fall back to the default system and JS locales.
+static
+void UseUSEnglishLocalePrefChangedCallback(const char* /* pref */, void* /* closure */) {
+  // Get a pointer to the default JS Runtime.
+  JSRuntime* rt = GetRuntime();
+  if (rt) {
+    // Read the pref to see if we will use US English locale.
+    bool useUSEnglishLocale = mozilla::Preferences::GetBool(USE_US_ENGLISH_LOCALE_PREF, false);
+    // Set the application-wide C-locale. Needed for Date.toLocaleFormat().
+    setlocale(LC_ALL, useUSEnglishLocale ? "C" : sSystemLocale);
+    // Now override the JavaScript Runtime Locale that is used by the Intl API
+    // as well as Date.toLocaleString, Number.toLocaleString, and String.localeCompare.
+    JS_SetDefaultLocale(rt, useUSEnglishLocale ? "en-US" : sJSLocale);
+  }
+}
+
+static
+void StartWatchingUseUSEnglishLocalePref() {
+  // Get the default system locale. To be used if US English locale pref is deactivated.
+  sSystemLocale = strdup(setlocale(LC_ALL,NULL));
+  // Store the default JavaScript locale.
+  JSRuntime* rt = GetRuntime();
+  if (rt) {
+    sJSLocale = strdup(JS_GetDefaultLocale(rt));
+  }
+  // Now keep the locale updated with the current pref value.
+  mozilla::Preferences::RegisterCallbackAndCall(UseUSEnglishLocalePrefChangedCallback, USE_US_ENGLISH_LOCALE_PREF);
+}
+
+static
+void StopWatchingUseUSEnglishLocalePref() {
+  mozilla::Preferences::UnregisterCallback(UseUSEnglishLocalePrefChangedCallback, USE_US_ENGLISH_LOCALE_PREF);
+  if (sSystemLocale) free(sSystemLocale);
+  if (sJSLocale) JS_free(nullptr, sJSLocale);
+}
+
+} // anonymous namespace for locale hiding
+
 EXPORT_XPCOM_API(nsresult)
 NS_InitXPCOM2(nsIServiceManager* *result,
               nsIFile* binDirectory,
@@ -701,6 +765,8 @@ NS_InitXPCOM2(nsIServiceManager* *result,
     mozilla::eventtracer::Init();
 #endif
 
+  // Start watching the "javascript.use_us_english_locale" pref.
+  StartWatchingUseUSEnglishLocalePref();
     return NS_OK;
 }
 
@@ -965,6 +1031,8 @@ ShutdownXPCOM(nsIServiceManager* servMgr)
         delete sExitManager;
         sExitManager = nullptr;
     }
+
+    StopWatchingUseUSEnglishLocalePref();
 
     Omnijar::CleanUp();
 
