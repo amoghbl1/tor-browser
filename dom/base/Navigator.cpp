@@ -337,13 +337,13 @@ Navigator::GetAppCodeName(nsAString& aAppCodeName)
 NS_IMETHODIMP
 Navigator::GetAppVersion(nsAString& aAppVersion)
 {
-  return NS_GetNavigatorAppVersion(aAppVersion);
+  return GetAppVersion(aAppVersion, /* aUsePrefOverriddenValue */ true);
 }
 
 NS_IMETHODIMP
 Navigator::GetAppName(nsAString& aAppName)
 {
-  NS_GetNavigatorAppName(aAppName);
+  AppName(aAppName, /* aUsePrefOverriddenValue */ true);
   return NS_OK;
 }
 
@@ -406,7 +406,7 @@ Navigator::GetLanguage(nsAString& aLanguage)
 NS_IMETHODIMP
 Navigator::GetPlatform(nsAString& aPlatform)
 {
-  return NS_GetNavigatorPlatform(aPlatform);
+  return GetPlatform(aPlatform, /* aUsePrefOverriddenValue */ true);
 }
 
 NS_IMETHODIMP
@@ -2365,29 +2365,12 @@ Navigator::GetWindowFromGlobal(JSObject* aGlobal)
   return win.forget();
 }
 
-} // namespace dom
-} // namespace mozilla
-
 nsresult
-NS_GetNavigatorUserAgent(nsAString& aUserAgent)
+Navigator::GetPlatform(nsAString& aPlatform, bool aUsePrefOverriddenValue)
 {
-  nsresult rv;
+  MOZ_ASSERT(NS_IsMainThread());
 
-  nsCOMPtr<nsIHttpProtocolHandler>
-    service(do_GetService(NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX "http", &rv));
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  nsAutoCString ua;
-  rv = service->GetUserAgent(ua);
-  CopyASCIItoUTF16(ua, aUserAgent);
-
-  return rv;
-}
-
-nsresult
-NS_GetNavigatorPlatform(nsAString& aPlatform)
-{
-  if (!nsContentUtils::IsCallerChrome()) {
+  if (aUsePrefOverriddenValue && !nsContentUtils::IsCallerChrome()) {
     const nsAdoptingString& override =
       mozilla::Preferences::GetString("general.platform.override");
 
@@ -2426,10 +2409,11 @@ NS_GetNavigatorPlatform(nsAString& aPlatform)
 
   return rv;
 }
-nsresult
-NS_GetNavigatorAppVersion(nsAString& aAppVersion)
+
+/* static */ nsresult
+Navigator::GetAppVersion(nsAString& aAppVersion, bool aUsePrefOverriddenValue)
 {
-  if (!nsContentUtils::IsCallerChrome()) {
+  if (aUsePrefOverriddenValue && !nsContentUtils::IsCallerChrome()) {
     const nsAdoptingString& override =
       mozilla::Preferences::GetString("general.appversion.override");
 
@@ -2461,10 +2445,10 @@ NS_GetNavigatorAppVersion(nsAString& aAppVersion)
   return rv;
 }
 
-void
-NS_GetNavigatorAppName(nsAString& aAppName)
+/* static */ void
+Navigator::AppName(nsAString& aAppName, bool aUsePrefOverriddenValue)
 {
-  if (!nsContentUtils::IsCallerChrome()) {
+  if (aUsePrefOverriddenValue && !nsContentUtils::IsCallerChrome()) {
     const nsAdoptingString& override =
       mozilla::Preferences::GetString("general.appname.override");
 
@@ -2475,4 +2459,23 @@ NS_GetNavigatorAppName(nsAString& aAppName)
   }
 
   aAppName.AssignLiteral("Netscape");
+}
+
+} // namespace dom
+} // namespace mozilla
+
+nsresult
+NS_GetNavigatorUserAgent(nsAString& aUserAgent)
+{
+  nsresult rv;
+
+  nsCOMPtr<nsIHttpProtocolHandler>
+    service(do_GetService(NS_NETWORK_PROTOCOL_CONTRACTID_PREFIX "http", &rv));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  nsAutoCString ua;
+  rv = service->GetUserAgent(ua);
+  CopyASCIItoUTF16(ua, aUserAgent);
+
+  return rv;
 }

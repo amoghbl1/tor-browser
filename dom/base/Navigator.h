@@ -46,8 +46,6 @@ class nsIDOMMozIccManager;
 // Navigator: Script "navigator" object
 //*****************************************************************************
 
-void NS_GetNavigatorAppName(nsAString& aAppName);
-
 namespace mozilla {
 namespace dom {
 
@@ -156,6 +154,15 @@ public:
   // The XPCOM GetDoNotTrack is ok
   Geolocation* GetGeolocation(ErrorResult& aRv);
   battery::BatteryManager* GetBattery(ErrorResult& aRv);
+
+  static void AppName(nsAString& aAppName, bool aUsePrefOverriddenValue);
+
+  static nsresult GetPlatform(nsAString& aPlatform,
+                              bool aUsePrefOverriddenValue);
+
+  static nsresult GetAppVersion(nsAString& aAppVersion,
+                                bool aUsePrefOverriddenValue);
+
   already_AddRefed<Promise> GetDataStores(const nsAString &aName,
                                           ErrorResult& aRv);
   bool Vibrate(uint32_t aDuration);
@@ -361,7 +368,5 @@ private:
 } // namespace mozilla
 
 nsresult NS_GetNavigatorUserAgent(nsAString& aUserAgent);
-nsresult NS_GetNavigatorPlatform(nsAString& aPlatform);
-nsresult NS_GetNavigatorAppVersion(nsAString& aAppVersion);
 
 #endif // mozilla_dom_Navigator_h
