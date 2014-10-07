@@ -124,12 +124,12 @@ for ((i=0; $i<$num_files; i=$i+1)); do
 done
 
 notice ""
-notice "Adding symlink add instructions to file 'updatev3.manifest'"
+notice "Adding symlink add instructions to update manifests"
 num_symlinks=${#symlinks[*]}
 for ((i=0; $i<$num_symlinks; i=$i+1)); do
   link="${symlinks[$i]}"
   target="${symlink_targets[$i]}"
-  make_addsymlink_instruction "$link" "$target" "$updatemanifestv3"
+  make_addsymlink_instruction "$link" "$target" "$updatemanifestv2" "$updatemanifestv3"
 done
 
 # Append remove instructions for any dead files.

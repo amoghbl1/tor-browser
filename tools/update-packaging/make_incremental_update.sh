@@ -249,11 +249,12 @@ done
 
 # Remove and re-add symlinks
 notice ""
-notice "Adding symlink remove/add instructions to file 'updatev3.manifest'"
+notice "Adding symlink remove/add instructions to update manifests"
 num_oldsymlinks=${#oldsymlinks[*]}
 for ((i=0; $i<$num_oldsymlinks; i=$i+1)); do
   link="${oldsymlinks[$i]}"
   verbose_notice "        remove: $link"
+  echo "remove \"$link\"" >> "$updatemanifestv2"
   echo "remove \"$link\"" >> "$updatemanifestv3"
 done
 
@@ -261,7 +262,7 @@ num_newsymlinks=${#newsymlinks[*]}
 for ((i=0; $i<$num_newsymlinks; i=$i+1)); do
   link="${newsymlinks[$i]}"
   target="${newsymlink_targets[$i]}"
-  make_addsymlink_instruction "$link" "$target" "$updatemanifestv3"
+  make_addsymlink_instruction "$link" "$target" "$updatemanifestv2" "$updatemanifestv3"
 done
 
 # Newly added files

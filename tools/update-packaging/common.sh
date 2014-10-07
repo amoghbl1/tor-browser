@@ -115,9 +115,11 @@ make_add_if_not_instruction() {
 make_addsymlink_instruction() {
   link="$1"
   target="$2"
-  filev3="$3"
+  filev2="$3"
+  filev3="$4"
 
   verbose_notice "        addsymlink: $link -> $target"
+  echo "addsymlink \"$link\" \"$target\"" >> "$filev2"
   echo "addsymlink \"$link\" \"$target\"" >> "$filev3"
 }
 
