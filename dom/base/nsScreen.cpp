@@ -174,22 +174,26 @@ nsScreen::Notify(const hal::ScreenConfiguration& aConfiguration)
 void
 nsScreen::GetMozOrientation(nsString& aOrientation)
 {
-  switch (mOrientation) {
-  case eScreenOrientation_PortraitPrimary:
-    aOrientation.AssignLiteral("portrait-primary");
-    break;
-  case eScreenOrientation_PortraitSecondary:
-    aOrientation.AssignLiteral("portrait-secondary");
-    break;
-  case eScreenOrientation_LandscapePrimary:
+  if (!IsChrome()) {
     aOrientation.AssignLiteral("landscape-primary");
-    break;
-  case eScreenOrientation_LandscapeSecondary:
-    aOrientation.AssignLiteral("landscape-secondary");
-    break;
-  case eScreenOrientation_None:
-  default:
-    MOZ_CRASH("Unacceptable mOrientation value");
+  } else {
+    switch (mOrientation) {
+    case eScreenOrientation_PortraitPrimary:
+      aOrientation.AssignLiteral("portrait-primary");
+      break;
+    case eScreenOrientation_PortraitSecondary:
+      aOrientation.AssignLiteral("portrait-secondary");
+      break;
+    case eScreenOrientation_LandscapePrimary:
+      aOrientation.AssignLiteral("landscape-primary");
+      break;
+    case eScreenOrientation_LandscapeSecondary:
+      aOrientation.AssignLiteral("landscape-secondary");
+      break;
+    case eScreenOrientation_None:
+    default:
+      MOZ_CRASH("Unacceptable mOrientation value");
+    }
   }
 }
 
