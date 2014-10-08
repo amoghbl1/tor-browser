@@ -1488,6 +1488,9 @@ nsComputedDOMStyle::DoGetFontSizeAdjust()
 CSSValue*
 nsComputedDOMStyle::DoGetOSXFontSmoothing()
 {
+  if (!nsContentUtils::IsCallerChrome())
+    return nullptr;
+
   nsROCSSPrimitiveValue* val = new nsROCSSPrimitiveValue;
   val->SetIdent(nsCSSProps::ValueToKeywordEnum(StyleFont()->mFont.smoothing,
                                                nsCSSProps::kFontSmoothingKTable));
