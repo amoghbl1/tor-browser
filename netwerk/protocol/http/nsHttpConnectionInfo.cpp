@@ -143,6 +143,11 @@ nsHttpConnectionInfo::SetOriginServer(const nsACString &host, int32_t port)
     // information so that a change in proxy config will mean this connection
     // is not reused
 
+    // NOTE: Adding the username and the password provides a means to isolate
+    // keep-alive to the URL bar domain as well: If the username is the URL bar
+    // domain, keep-alive connections are not reused by resources bound to
+    // different URL bar domains as the respective hash keys are not matching.
+
     if ((!mUsingHttpProxy && ProxyHost()) ||
         (mUsingHttpProxy && mUsingConnect)) {
         mHashKey.AppendLiteral(" (");
@@ -152,6 +157,11 @@ nsHttpConnectionInfo::SetOriginServer(const nsACString &host, int32_t port)
         mHashKey.Append(':');
         mHashKey.AppendInt(ProxyPort());
         mHashKey.Append(')');
+        mHashKey.Append('[');
+        mHashKey.Append(ProxyUsername());
+        mHashKey.Append(':');
+        mHashKey.Append(ProxyPassword());
+        mHashKey.Append(']');
     }
 
     if(!mAuthenticationHost.IsEmpty()) {
