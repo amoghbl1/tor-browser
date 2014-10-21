@@ -812,6 +812,7 @@ nsSocketTransport::Init(const char **types, uint32_t typeCount,
     mHost = host;
 
     const char *proxyType = nullptr;
+    mProxyInfo = proxyInfo;
     if (proxyInfo) {
         mProxyPort = proxyInfo->Port();
         mProxyHost = proxyInfo->Host();
@@ -1079,9 +1080,8 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
 
         const char *host       = mHost.get();
         int32_t     port       = (int32_t) mPort;
-        const char *proxyHost  = mProxyHost.IsEmpty() ? nullptr : mProxyHost.get();
-        int32_t     proxyPort  = (int32_t) mProxyPort;
         uint32_t    proxyFlags = 0;
+        nsCOMPtr<nsIProxyInfo> proxyInfo = mProxyInfo;
 
         uint32_t i;
         for (i=0; i<mTypeCount; ++i) {
@@ -1107,7 +1107,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                 // if this is the first type, we'll want the 
                 // service to allocate a new socket
                 rv = provider->NewSocket(mNetAddr.raw.family,
-                                         host, port, proxyHost, proxyPort,
+                                         host, port, proxyInfo,
                                          proxyFlags, &fd,
                                          getter_AddRefs(secinfo));
 
@@ -1121,7 +1121,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                 // so we just want the service to add itself
                 // to the stack (such as pushing an io layer)
                 rv = provider->AddToSocket(mNetAddr.raw.family,
-                                           host, port, proxyHost, proxyPort,
+                                           host, port, proxyInfo,
                                            proxyFlags, fd,
                                            getter_AddRefs(secinfo));
             }
@@ -1151,8 +1151,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                      (strcmp(mTypes[i], "socks4") == 0)) {
                 // since socks is transparent, any layers above
                 // it do not have to worry about proxy stuff
-                proxyHost = nullptr;
-                proxyPort = -1;
+                proxyInfo = nullptr;
                 proxyTransparent = true;
             }
         }

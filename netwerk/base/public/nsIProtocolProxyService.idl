@@ -136,6 +136,35 @@ interface nsIProtocolProxyService : nsISupports
                               in nsIProxyInfo aFailoverProxy);
 
     /**
+     * This method may be called to construct a nsIProxyInfo instance for
+     * a SOCKS connection, with the specified username and password.
+     * @param aHost
+     *        The proxy hostname or IP address.
+     * @param aPort
+     *        The proxy port.
+     * @param aUsername
+     *        The SOCKS5 username
+     * @param aPassword
+     *        The SOCKS5 password
+     * @param aFlags
+     *        Flags associated with this connection.  See nsIProxyInfo.idl
+     *        for currently defined flags.
+     * @param aFailoverTimeout
+     *        Specifies the length of time (in seconds) to ignore this proxy if
+     *        this proxy fails.  Pass UINT32_MAX to specify the default
+     *        timeout value, causing nsIProxyInfo::failoverTimeout to be
+     *        assigned the default value.
+     * @param aFailoverProxy
+     *        Specifies the next proxy to try if this proxy fails.  This
+     *        parameter may be null.
+     */
+    nsIProxyInfo newSOCKSProxyInfo(in AUTF8String aHost, in long aPort,
+                                   in ACString aUsername, in ACString aPassword,
+                                   in unsigned long aFlags,
+                                   in unsigned long aFailoverTimeout,
+                                   in nsIProxyInfo aFailoverProxy);
+
+    /**
      * If the proxy identified by aProxyInfo is unavailable for some reason,
      * this method may be called to access an alternate proxy that may be used
      * instead.  As a side-effect, this method may affect future result values

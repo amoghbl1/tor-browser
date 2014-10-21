@@ -268,6 +268,7 @@ private:
     nsCString    mHost;
     nsCString    mProxyHost;
     uint16_t     mPort;
+    nsCOMPtr<nsIProxyInfo> mProxyInfo;
     uint16_t     mProxyPort;
     bool mProxyTransparent;
     bool mProxyTransparentResolvesHost;

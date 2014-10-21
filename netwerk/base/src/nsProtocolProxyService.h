@@ -177,6 +177,10 @@ protected:
      *        The proxy host name (UTF-8 ok).
      * @param port
      *        The proxy port number.
+     * @param username
+     *        The username for the proxy (ASCII). May be "", but not null.
+     * @param password
+     *        The password for the proxy (ASCII). May be "", but not null.
      * @param flags
      *        The proxy flags (nsIProxyInfo::flags).
      * @param timeout
@@ -191,6 +195,8 @@ protected:
     NS_HIDDEN_(nsresult) NewProxyInfo_Internal(const char *type,
                                                const nsACString &host,
                                                int32_t port,
+                                               const nsACString &username,
+                                               const nsACString &password,
                                                uint32_t flags,
                                                uint32_t timeout,
                                                nsIProxyInfo *next,
@@ -374,6 +380,8 @@ protected:
     int32_t                      mSOCKSProxyPort;
     int32_t                      mSOCKSProxyVersion;
     bool                         mSOCKSProxyRemoteDNS;
+    nsCString                    mSOCKSProxyUsername;
+    nsCString                    mSOCKSProxyPassword;
 
     nsRefPtr<nsPACMan>           mPACMan;  // non-null if we are using PAC
     nsCOMPtr<nsISystemProxySettings> mSystemProxySettings;

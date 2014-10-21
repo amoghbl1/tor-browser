@@ -516,6 +516,12 @@ nsProtocolProxyService::PrefsChanged(nsIPrefBranch *prefBranch,
     if (!pref || !strcmp(pref, PROXY_PREF("socks_port")))
         proxy_GetIntPref(prefBranch, PROXY_PREF("socks_port"), mSOCKSProxyPort);
 
+    if (!pref || !strcmp(pref, PROXY_PREF("socks_username")))
+        proxy_GetStringPref(prefBranch, PROXY_PREF("socks_username"), mSOCKSProxyUsername);
+
+    if (!pref || !strcmp(pref, PROXY_PREF("socks_password")))
+        proxy_GetStringPref(prefBranch, PROXY_PREF("socks_password"), mSOCKSProxyPassword);
+
     if (!pref || !strcmp(pref, PROXY_PREF("socks_version"))) {
         int32_t version;
         proxy_GetIntPref(prefBranch, PROXY_PREF("socks_version"), version);
@@ -1188,10 +1194,25 @@ nsProtocolProxyService::NewProxyInfo(const nsACString &aType,
     }
     NS_ENSURE_TRUE(type, NS_ERROR_INVALID_ARG);
 
-    if (aPort <= 0)
-        aPort = -1;
+    return NewProxyInfo_Internal(type, aHost, aPort,
+                                 mSOCKSProxyUsername, mSOCKSProxyPassword,
+                                 aFlags, aFailoverTimeout,
+                                 aFailoverProxy, 0, aResult);
+}
 
-    return NewProxyInfo_Internal(type, aHost, aPort, aFlags, aFailoverTimeout,
+NS_IMETHODIMP
+nsProtocolProxyService::NewSOCKSProxyInfo(const nsACString &aHost,
+                                          int32_t aPort,
+                                          const nsACString &aUsername,
+                                          const nsACString &aPassword,
+                                          uint32_t aFlags,
+                                          uint32_t aFailoverTimeout,
+                                          nsIProxyInfo *aFailoverProxy,
+                                          nsIProxyInfo **aResult)
+{
+    return NewProxyInfo_Internal(kProxyType_SOCKS, aHost, aPort,
+                                 aUsername, aPassword,
+                                 aFlags, aFailoverTimeout,
                                  aFailoverProxy, 0, aResult);
 }
 
@@ -1496,12 +1517,17 @@ nsresult
 nsProtocolProxyService::NewProxyInfo_Internal(const char *aType,
                                               const nsACString &aHost,
                                               int32_t aPort,
+                                              const nsACString &aUsername,
+                                              const nsACString &aPassword,
                                               uint32_t aFlags,
                                               uint32_t aFailoverTimeout,
                                               nsIProxyInfo *aFailoverProxy,
                                               uint32_t aResolveFlags,
                                               nsIProxyInfo **aResult)
 {
+    if (aPort <= 0)
+        aPort = -1;
+
     nsCOMPtr<nsProxyInfo> failover;
     if (aFailoverProxy) {
         failover = do_QueryInterface(aFailoverProxy);
@@ -1515,6 +1541,8 @@ nsProtocolProxyService::NewProxyInfo_Internal(const char *aType,
     proxyInfo->mType = aType;
     proxyInfo->mHost = aHost;
     proxyInfo->mPort = aPort;
+    proxyInfo->mUsername = aUsername;
+    proxyInfo->mPassword = aPassword;
     proxyInfo->mFlags = aFlags;
     proxyInfo->mResolveFlags = aResolveFlags;
     proxyInfo->mTimeout = aFailoverTimeout == UINT32_MAX
@@ -1680,8 +1708,9 @@ nsProtocolProxyService::Resolve_Internal(nsIChannel *channel,
     }
 
     if (type) {
-        rv = NewProxyInfo_Internal(type, *host, port, proxyFlags,
-                                   UINT32_MAX, nullptr, flags,
+        rv = NewProxyInfo_Internal(type, *host, port,
+                                   mSOCKSProxyUsername, mSOCKSProxyPassword,
+                                   proxyFlags, UINT32_MAX, nullptr, flags,
                                    result);
         if (NS_FAILED(rv))
             return rv;
