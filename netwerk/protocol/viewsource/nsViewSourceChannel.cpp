@@ -115,6 +115,12 @@ nsViewSourceChannel::GetName(nsACString &result)
 }
 
 NS_IMETHODIMP
+nsViewSourceChannel::GetProxyURI(nsIURI** proxyURI)
+{
+    return NS_ERROR_NOT_IMPLEMENTED;
+}
+
+NS_IMETHODIMP
 nsViewSourceChannel::IsPending(bool *result)
 {
     NS_ENSURE_TRUE(mChannel, NS_ERROR_FAILURE);

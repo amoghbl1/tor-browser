@@ -65,6 +65,7 @@ HttpBaseChannel::HttpBaseChannel()
   , mAllRedirectsSameOrigin(true)
   , mSuspendCount(0)
   , mProxyResolveFlags(0)
+  , mProxyURI(nullptr)
   , mContentDispositionHint(UINT32_MAX)
   , mHttpHandler(gHttpHandler)
   , mRedirectCount(0)
@@ -1071,6 +1072,15 @@ HttpBaseChannel::SetReferrer(nsIURI *referrer)
   // finally, remember the referrer URI and set the Referer header.
   mReferrer = clone;
   mRequestHead.SetHeader(nsHttp::Referer, spec);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::GetProxyURI(nsIURI** proxyURI)
+{
+  NS_ENSURE_ARG_POINTER(proxyURI);
+  *proxyURI = mProxyURI;
+  NS_IF_ADDREF(*proxyURI);
   return NS_OK;
 }
 

@@ -56,6 +56,12 @@ interface nsIHttpChannel : nsIChannel
     attribute nsIURI referrer;
 
     /**
+     * Read the proxy URI, which, if non-null, will be used to resolve
+     * proxies for this channel.
+     */
+    readonly attribute nsIURI proxyURI;
+
+    /**
      * Get the value of a particular request header.
      *
      * @param aHeader

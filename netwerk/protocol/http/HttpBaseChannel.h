@@ -115,6 +115,7 @@ public:
   NS_IMETHOD SetRequestMethod(const nsACString& aMethod);
   NS_IMETHOD GetReferrer(nsIURI **referrer);
   NS_IMETHOD SetReferrer(nsIURI *referrer);
+  NS_IMETHOD GetProxyURI(nsIURI **proxyURI);
   NS_IMETHOD GetRequestHeader(const nsACString& aHeader, nsACString& aValue);
   NS_IMETHOD SetRequestHeader(const nsACString& aHeader,
                               const nsACString& aValue, bool aMerge);
