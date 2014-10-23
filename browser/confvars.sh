@@ -8,6 +8,17 @@ MOZ_APP_VENDOR=Mozilla
 MOZ_UPDATER=1
 MOZ_PHOENIX=1
 
+if test "$OS_ARCH" = "WINNT"; then
+  MOZ_VERIFY_MAR_SIGNATURE=1
+elif test "$OS_ARCH" = "Linux"; then
+  MOZ_VERIFY_MAR_SIGNATURE=1
+elif test "$OS_ARCH" = "Darwin"; then
+  MOZ_VERIFY_MAR_SIGNATURE=1
+fi
+
+# Enable building ./signmar and running libmar signature tests
+MOZ_ENABLE_SIGNMAR=1
+
 MOZ_CHROME_FILE_FORMAT=omni
 MOZ_DISABLE_EXPORT_JS=1
 MOZ_SAFE_BROWSING=1
