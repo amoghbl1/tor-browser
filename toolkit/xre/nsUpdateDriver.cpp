@@ -39,6 +39,7 @@
 # include <windows.h>
 # include <shlwapi.h>
 # include "nsWindowsHelpers.h"
+# include "prprf.h"
 # define getcwd(path, size) _getcwd(path, size)
 # define getpid() GetCurrentProcessId()
 #elif defined(XP_UNIX)
@@ -132,6 +133,36 @@ GetCurrentWorkingDir(char *buf, size_t size)
   return NS_OK;
 }
 
+
+#if defined(XP_WIN)
+#define PATH_SEPARATOR ";"
+
+// In Tor Browser, updater.exe depends on some DLLs that are located in the
+// app directory.  To allow the updater to run when it has been copied into
+// the update directory, we append the app directory to the PATH.
+static nsresult
+AdjustPathForUpdater(nsIFile *appDir)
+{
+  nsAutoCString appPath;
+  nsresult rv = appDir->GetNativePath(appPath);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  char *s = nullptr;
+  char *pathValue = PR_GetEnv("PATH");
+  if ((nullptr == pathValue) || ('\0' == *pathValue)) {
+    s = PR_smprintf("PATH=%s", appPath.get());
+  } else {
+    s = PR_smprintf("PATH=%s" PATH_SEPARATOR "%s", pathValue, appPath.get());
+  }
+
+  // We intentionally leak the value that is passed into PR_SetEnv() because
+  // the environment will hold a pointer to it.
+  if ((nullptr == s) || (PR_SUCCESS != PR_SetEnv(s)))
+    return NS_ERROR_FAILURE;
+
+  return NS_OK;
+}
+#endif
 
 #ifdef DEBUG
 static void
@@ -592,6 +623,13 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
     PR_SetEnv("MOZ_SAFE_MODE_RESTART=1");
   }
 
+#if defined(XP_WIN)
+  nsresult rv2 = AdjustPathForUpdater(appDir);
+  if (NS_FAILED(rv2)) {
+    LOG(("SwitchToUpdatedApp -- AdjustPathForUpdater failed (0x%x)\n", rv2));
+  }
+#endif
+
   LOG(("spawning updater process for replacing [%s]\n", updaterPath.get()));
 
 #if defined(USE_EXECV)
@@ -881,6 +919,14 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
   if (isOSUpdate) {
     PR_SetEnv("MOZ_OS_UPDATE=1");
   }
+
+#if defined(XP_WIN)
+  nsresult rv2 = AdjustPathForUpdater(appDir);
+  if (NS_FAILED(rv2)) {
+    LOG(("ApplyUpdate -- AdjustPathForUpdater failed (0x%x)\n", rv2));
+  }
+#endif
+
 #if defined(MOZ_WIDGET_GONK)
   // We want the updater to be CPU friendly and not subject to being killed by
   // the low memory killer, so we pass in some preferences to allow it to
