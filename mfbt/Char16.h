@@ -95,6 +95,24 @@ class char16ptr_t
     explicit operator wchar_t*() const {
       return const_cast<wchar_t*>(static_cast<const wchar_t*>(*this));
     }
+    explicit operator int() const {
+      return reinterpret_cast<intptr_t>(ptr);
+    }
+    explicit operator unsigned int() const {
+      return reinterpret_cast<uintptr_t>(ptr);
+    }
+    explicit operator long() const {
+      return reinterpret_cast<intptr_t>(ptr);
+    }
+    explicit operator unsigned long() const {
+      return reinterpret_cast<uintptr_t>(ptr);
+    }
+    explicit operator long long() const {
+      return reinterpret_cast<intptr_t>(ptr);
+    }
+    explicit operator unsigned long long() const {
+      return reinterpret_cast<uintptr_t>(ptr);
+    }
 
     /**
      * Some Windows API calls accept BYTE* but require that data actually be WCHAR*.
@@ -130,8 +148,23 @@ class char16ptr_t
     bool operator!=(decltype(nullptr)) const {
       return ptr != nullptr;
     }
-    char16ptr_t operator+(size_t add) const {
-      return char16ptr_t(ptr + add);
+    char16ptr_t operator+(int aValue) const {
+      return char16ptr_t(ptr + aValue);
+    }
+    char16ptr_t operator+(unsigned int aValue) const {
+      return char16ptr_t(ptr + aValue);
+    }
+    char16ptr_t operator+(long aValue) const {
+      return char16ptr_t(ptr + aValue);
+    }
+    char16ptr_t operator+(unsigned long aValue) const {
+      return char16ptr_t(ptr + aValue);
+    }
+    char16ptr_t operator+(long long aValue) const {
+      return char16ptr_t(ptr + aValue);
+    }
+    char16ptr_t operator+(unsigned long long aValue) const {
+      return char16ptr_t(ptr + aValue);
     }
     ptrdiff_t operator-(const char16ptr_t &other) const {
       return ptr - other.ptr;
