@@ -66,6 +66,7 @@
 #include "nsPerformance.h"
 #include "CacheObserver.h"
 #include "mozilla/Telemetry.h"
+#include "mozIThirdPartyUtil.h"
 
 namespace mozilla { namespace net {
 
@@ -2563,6 +2564,19 @@ nsHttpChannel::OpenCacheEntry(bool usingSSL)
     nsRefPtr<LoadContextInfo> info = GetLoadContextInfo(this);
     nsCOMPtr<nsICacheStorage> cacheStorage;
     nsCOMPtr<nsIURI> openURI;
+
+    /* Obtain optional third party isolation domain */
+    nsAutoCString cacheDomain;
+    nsCOMPtr<nsIURI> firstPartyIsolationURI;
+    nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
+         = do_GetService(THIRDPARTYUTIL_CONTRACTID);
+    rv = thirdPartySvc->GetFirstPartyIsolationURI(this, nullptr,
+                                           getter_AddRefs(firstPartyIsolationURI));
+    if (NS_SUCCEEDED(rv) && firstPartyIsolationURI) {
+        thirdPartySvc->GetFirstPartyHostForIsolation(firstPartyIsolationURI,
+                cacheDomain);
+    }
+
     if (!mFallbackKey.IsEmpty() && mFallbackChannel) {
         // This is a fallback channel, open fallback URI instead
         rv = NS_NewURI(getter_AddRefs(openURI), mFallbackKey);
@@ -2617,7 +2631,7 @@ nsHttpChannel::OpenCacheEntry(bool usingSSL)
         cacheEntryOpenFlags |= nsICacheStorage::OPEN_BYPASS_IF_BUSY;
 
     rv = cacheStorage->AsyncOpenURI(
-        openURI, mPostID ? nsPrintfCString("%d", mPostID) : EmptyCString(),
+        openURI, nsPrintfCString("%s@%d", cacheDomain.get(), mPostID),
         cacheEntryOpenFlags, this);
     NS_ENSURE_SUCCESS(rv, rv);
 
@@ -2652,7 +2666,7 @@ bypassCacheEntryOpen:
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = cacheStorage->AsyncOpenURI(
-      mURI, EmptyCString(), nsICacheStorage::OPEN_TRUNCATE, this);
+      mURI, cacheDomain, nsICacheStorage::OPEN_TRUNCATE, this);
     NS_ENSURE_SUCCESS(rv, rv);
 
     waitFlags.Keep(WAIT_FOR_OFFLINE_CACHE_ENTRY);
