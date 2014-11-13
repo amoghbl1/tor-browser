@@ -86,6 +86,7 @@
 #include "nsIX509Cert.h"
 #include "ScopedNSSTypes.h"
 #include "nsNullPrincipal.h"
+#include "mozIThirdPartyUtil.h"
 #include "nsIPackagedAppService.h"
 #include "nsIDeprecationWarner.h"
 #include "nsIDocument.h"
@@ -2926,6 +2927,19 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
 
     nsCOMPtr<nsICacheStorage> cacheStorage;
     nsCOMPtr<nsIURI> openURI;
+
+    /* Obtain optional third party isolation domain */
+    nsAutoCString cacheDomain;
+    nsCOMPtr<nsIURI> firstPartyIsolationURI;
+    nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
+         = do_GetService(THIRDPARTYUTIL_CONTRACTID);
+    rv = thirdPartySvc->GetFirstPartyIsolationURI(this, nullptr,
+                                           getter_AddRefs(firstPartyIsolationURI));
+    if (NS_SUCCEEDED(rv) && firstPartyIsolationURI) {
+        thirdPartySvc->GetFirstPartyHostForIsolation(firstPartyIsolationURI,
+                cacheDomain);
+    }
+
     if (!mFallbackKey.IsEmpty() && mFallbackChannel) {
         // This is a fallback channel, open fallback URI instead
         rv = NS_NewURI(getter_AddRefs(openURI), mFallbackKey);
@@ -3005,6 +3019,7 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
     if (mLoadFlags & LOAD_BYPASS_LOCAL_CACHE_IF_BUSY)
         cacheEntryOpenFlags |= nsICacheStorage::OPEN_BYPASS_IF_BUSY;
 
+    extension.Append(nsPrintfCString("%s@", cacheDomain.get()));
     if (PossiblyIntercepted()) {
         extension.Append(nsPrintfCString("u%lld", mInterceptionID));
     } else if (mPostID) {
@@ -3070,7 +3085,7 @@ bypassCacheEntryOpen:
     NS_ENSURE_SUCCESS(rv, rv);
 
     rv = cacheStorage->AsyncOpenURI(
-      mURI, EmptyCString(), nsICacheStorage::OPEN_TRUNCATE, this);
+      mURI, cacheDomain, nsICacheStorage::OPEN_TRUNCATE, this);
     NS_ENSURE_SUCCESS(rv, rv);
 
     waitFlags.Keep(WAIT_FOR_OFFLINE_CACHE_ENTRY);
