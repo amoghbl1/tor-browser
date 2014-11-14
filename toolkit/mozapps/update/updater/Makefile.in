@@ -18,9 +18,14 @@ LIBS += \
   $(MOZ_BZ2_LIBS) \
   $(NULL)
 
-ifeq ($(OS_ARCH),WINNT)
+LIBS += $(call EXPAND_LIBNAME_PATH,signmar,$(DEPTH)/modules/libmar/sign)
 LIBS += $(call EXPAND_LIBNAME_PATH,verifymar,$(DEPTH)/modules/libmar/verify)
+ifeq ($(OS_ARCH),WINNT)
 OS_LIBS += $(call EXPAND_LIBNAME,comctl32 ws2_32 shell32 shlwapi)
+else
+LIBS += $(DIST)/lib/$(LIB_PREFIX)nss3.$(LIB_SUFFIX) \
+	$(DIST)/lib/$(LIB_PREFIX)nssutil3.$(LIB_SUFFIX) \
+	$(NSPR_LIBS)
 endif
 
 ifdef MOZ_WIDGET_GTK
@@ -51,14 +56,13 @@ else ifneq (,$(filter nightly aurora nightly-elm nightly-profiling nightly-oak n
 	PRIMARY_CERT = nightly_aurora_level3_primary.der
 	SECONDARY_CERT = nightly_aurora_level3_secondary.der
 else
-	PRIMARY_CERT = dep1.der
-	SECONDARY_CERT = dep2.der
+	PRIMARY_CERT = xpcshellCertificate.der
+	SECONDARY_CERT = xpcshellCertificate.der
 endif
 
 export::
 	$(PYTHON) $(srcdir)/gen_cert_header.py primaryCertData $(srcdir)/$(PRIMARY_CERT) > primaryCert.h
 	$(PYTHON) $(srcdir)/gen_cert_header.py secondaryCertData $(srcdir)/$(SECONDARY_CERT) > secondaryCert.h
-	$(PYTHON) $(srcdir)/gen_cert_header.py xpcshellCertData $(srcdir)/xpcshellCertificate.der > xpcshellCert.h
 
 ifdef MOZ_WIDGET_GTK
 libs:: updater.png
