@@ -54,6 +54,20 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
   if (sop && nsContentUtils::IsSystemPrincipal(sop->GetPrincipal()))
     return true;
 
+  // Don't show canvas prompt for chrome scripts (e.g. Page Inspector)
+  if (nsContentUtils::IsCallerChrome())
+    return true;
+
+  JS::AutoFilename scriptFile;
+  unsigned scriptLine = 0;
+  bool isScriptKnown = false;
+  if (JS::DescribeScriptedCaller(aCx, &scriptFile, &scriptLine)) {
+    isScriptKnown = true;
+    // Don't show canvas prompt for PDF.js
+    if (scriptFile.get() &&
+        strcmp(scriptFile.get(), "resource://pdf.js/build/pdf.js") == 0)
+      return true;
+  }
   bool isAllowed = false;
   nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
                                 do_GetService(THIRDPARTYUTIL_CONTRACTID);
@@ -87,19 +101,19 @@ bool IsImageExtractionAllowed(nsIDocument *aDocument, JSContext *aCx)
         rv = thirdPartyUtil->IsThirdPartyURI(uri, docURI, &isThirdParty);
         NS_ENSURE_SUCCESS(rv, false);
 
-        JS::AutoFilename scriptFile;;
-        unsigned scriptLine = 0;
-        JS::DescribeScriptedCaller(aCx, &scriptFile, &scriptLine);
-
         nsCString firstPartySpec;
         rv = uri->GetSpec(firstPartySpec);
         nsCString docSpec;
         docURI->GetSpec(docSpec);
         nsPrintfCString msg("On %s: blocked access to canvas image data"
-                            " from document %s, script from %s:%u ",  // L10n
-                            firstPartySpec.get(), docSpec.get(),
-                            scriptFile.get(), scriptLine);
-
+                            " from document %s, ",  // L10n
+                            firstPartySpec.get(), docSpec.get());
+        if (isScriptKnown && scriptFile.get()) {
+          msg += nsPrintfCString("script from %s:%u",  // L10n
+                                 scriptFile.get(), scriptLine);
+        } else {
+          msg += nsPrintfCString("unknown script");  // L10n
+        }
         nsCOMPtr<nsIConsoleService> console
                               (do_GetService(NS_CONSOLESERVICE_CONTRACTID));
         if (console)
