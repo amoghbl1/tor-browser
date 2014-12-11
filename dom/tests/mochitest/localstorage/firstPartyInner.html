@@ -1,0 +1,25 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <body>
+    <div>firstPartyInner.html</div>
+    <pre id="result"></pre>
+    <script>
+      var request = new URLSearchParams(location.search.substring(1)),
+          expected = request.get("expected"),
+          prescribed = request.get("prescribed"),
+          host = decodeURIComponent(request.get("host")),
+          found = localStorage.getItem("firstPartyTest"),
+          resultDiv = document.getElementById("result"),
+          show = function (x) { resultDiv.innerHTML += x + "\n"; };
+      show("host: " + host);
+      if (expected) {
+        show("expected: " + expected);
+        show("found: " + found);
+      }
+      if (prescribed) {
+        localStorage.setItem("firstPartyTest", prescribed);
+        show("wrote: " + prescribed);
+      }
+      parent.postMessage(expected ? (found === expected) : true, host);
+    </script>
+  </body>
+</html>
