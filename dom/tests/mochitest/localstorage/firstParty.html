@@ -1,0 +1,16 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <script>
+    window.onload = function () {
+      var inner = document.getElementById("inner");
+      window.addEventListener("message", function (event) {
+        opener.postMessage(event.data, "http://mochi.test:8888");
+      });
+      inner.src = "http://example.net/tests/dom/tests/mochitest/localstorage/firstPartyInner.html" +
+                  location.search + "&host=" + encodeURIComponent(location.protocol + "//" + location.host);
+    };
+  </script>
+  <body>
+    <div>firstParty.html</div>
+    <iframe id="inner" width=400 height=200></iframe>
+  </body>
+</html>
