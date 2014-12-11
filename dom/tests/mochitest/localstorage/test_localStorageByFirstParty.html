@@ -1,0 +1,73 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>localStorage by first party test</title>
+
+<script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+<link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+
+<script type="application/javascript;version=1.7">
+
+// This series of unit tests ensures that, when the "privacy.thirdparty.isolate" pref
+// is set to 2 (active), we should have a separate localStorage for each first-party
+// (URL bar domain). If the pref is set to 0 (inactive), then two iframes with the
+// same origin but different first-party domains will share localStorage.
+
+let originalPrefValue = SpecialPowers.getIntPref("privacy.thirdparty.isolate");
+
+let mapToUriParameters = aMap =>
+  Object.keys(aMap).map(k => encodeURIComponent(k) + "=" +
+                             encodeURIComponent(aMap[k])).join("&");
+
+let steps = [
+  // When first party isolation is turned off, we expect that DOM storage will be
+  // the same for two iframes at http://example.net.
+  { domain : "example.com", prescribed : "test1", pref : 0 },
+  { domain : "example.org", prescribed : "test2" },
+  { domain : "example.com", expected : "test2", prescribed : "test3" },
+  { domain : "example.org", expected : "test3", prescribed : "test4" },
+  // When first party isolation is turned on, we expect two separate DOM storage
+  // silos for two iframes both at http://example.net but contained in pages
+  // with different first party domains.
+  { domain : "example.com", prescribed : "test1", pref : 2 },
+  { domain : "example.org", prescribed : "test2" },
+  { domain : "example.com", expected : "test1", prescribed : "test3" },
+  { domain : "example.org", expected : "test2", prescribed : "test4" }
+];
+
+let runStep = function (i) {
+  if (i < steps.length) {
+    let step = steps[i],
+        { domain, pref } = step;
+    if (pref !== undefined) {
+      SpecialPowers.setIntPref("privacy.thirdparty.isolate", pref);
+    }
+    window.open("http://" + domain +
+                "/tests/dom/tests/mochitest/localstorage/firstParty.html?" +
+                mapToUriParameters(step), "_blank");
+  } else if (i == steps.length) {
+    SpecialPowers.setIntPref("privacy.thirdparty.isolate", originalPrefValue);
+    SimpleTest.finish();
+  }
+};
+
+let startTest = function () {
+  let i = 0;
+  window.addEventListener("message", function (event) {
+    // Get the result of the last step.
+    is(event.data, true, "correct DOM storage isolation");
+    // Run the next step.
+    runStep(++i);
+  });
+  runStep(0);
+};
+
+SimpleTest.waitForExplicitFinish();
+
+</script>
+
+</head>
+
+<body onload="startTest();">
+
+</body>
+</html>
