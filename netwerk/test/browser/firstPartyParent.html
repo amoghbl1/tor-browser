@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<!-- The parent page, used by browser_cacheFirstParty.js -->
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<head>
+  <link rel="stylesheet" type="text/css"
+        href="http://example.net/browser/netwerk/test/browser/thirdPartyChild.link.css">
+</head>
+<body>
+<div>firstPartyParent.html</div>
+
+<iframe src="http://example.net/browser/netwerk/test/browser/thirdPartyChild.iframe.html">
+</iframe>
+
+<script src="http://example.net/browser/netwerk/test/browser/thirdPartyChild.script.js">
+</script>
+
+<img src="http://example.net/browser/netwerk/test/browser/thirdPartyChild.img.png">
+
+<embed src="http://example.net/browser/netwerk/test/browser/thirdPartyChild.embed.png">
+
+<object data="http://example.net/browser/netwerk/test/browser/thirdPartyChild.object.png"
+        type="image/png"></object>
+
+<audio id="audio" autoplay>
+  <source src="http://example.net/browser/netwerk/test/browser/thirdPartyChild.audio.ogg"
+          type="audio/ogg">
+  <track src="http://example.net/browser/netwerk/test/browser/thirdPartyChild.track.vtt"
+         kind="subtitles"> 
+</audio>
+
+<video id="video"
+       src="http://example.net/browser/netwerk/test/browser/thirdPartyChild.video.ogv"
+       type="video/ogg">
+</video>
+
+</body>
+</html>
