@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<!-- The child page, used by browser_cacheFirstParty.js -->
+<body>
+<div>thirdPartyChild.html</div>
+<script>
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "http://example.net/browser/netwerk/test/browser/thirdPartyChild.xhr.html", true);
+  xhr.send();
+</script>
+</body>
+</html>
