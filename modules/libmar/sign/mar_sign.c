@@ -95,7 +95,12 @@ NSSSignBegin(const char *certName,
     return -1;
   }
 
-  *ctx = SGN_NewContext (SEC_OID_ISO_SHA1_WITH_RSA_SIGNATURE, *privKey);
+#ifdef MAR_USE_SHA512_RSA_SIG
+  SECOidTag sigAlg = SEC_OID_PKCS1_SHA512_WITH_RSA_ENCRYPTION;
+#else
+  SECOidTag sigAlg = SEC_OID_ISO_SHA1_WITH_RSA_SIGNATURE;
+#endif
+  *ctx = SGN_NewContext (sigAlg, *privKey);
   if (!*ctx) {
     fprintf(stderr, "ERROR: Could not create signature context\n");
     return -1;
@@ -991,8 +996,12 @@ mar_repackage_and_sign(const char *NSSConfigDir,
   signaturePlaceholderOffset = ftello(fpDest);
 
   for (k = 0; k < certCount; k++) {
-    /* Write out the signature algorithm ID, Only an ID of 1 is supported */
-    signatureAlgorithmID = htonl(1);
+    /* Write out the signature algorithm ID. */
+#ifdef MAR_USE_SHA512_RSA_SIG
+    signatureAlgorithmID = htonl(SIGNATURE_ALGORITHM_ID_SHA512_RSA);
+#else
+    signatureAlgorithmID = htonl(SIGNATURE_ALGORITHM_ID_SHA1_RSA);
+#endif
     if (WriteAndUpdateSignatures(fpDest, &signatureAlgorithmID,
                                  sizeof(signatureAlgorithmID),
                                  ctxs, certCount, "num signatures")) {

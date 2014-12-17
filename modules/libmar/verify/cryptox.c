@@ -64,8 +64,12 @@ NSS_VerifyBegin(VFYContext **ctx,
     return CryptoX_Error;
   }
 
-  *ctx = VFY_CreateContext(*publicKey, NULL, 
-                           SEC_OID_ISO_SHA1_WITH_RSA_SIGNATURE, NULL);
+#ifdef MAR_USE_SHA512_RSA_SIG
+  SECOidTag sigAlg = SEC_OID_PKCS1_SHA512_WITH_RSA_ENCRYPTION;
+#else
+  SECOidTag sigAlg = SEC_OID_ISO_SHA1_WITH_RSA_SIGNATURE;
+#endif
+  *ctx = VFY_CreateContext(*publicKey, NULL, sigAlg, NULL);
   if (*ctx == NULL) {
     return CryptoX_Error;
   }
