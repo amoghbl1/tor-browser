@@ -44,6 +44,5 @@ include $(topsrcdir)/config/rules.mk
 ifdef CROSS_COMPILE
 ifdef HOST_NSPR_MDCPUCFG
 HOST_CFLAGS += -DMDCPUCFG=$(HOST_NSPR_MDCPUCFG)
-CFLAGS += -DMDCPUCFG=$(HOST_NSPR_MDCPUCFG)
 endif
 endif

@@ -57,6 +57,7 @@ if have_progressui == 0:
         'progressui_null.cpp',
     ]
 
+DEFINES['MAR_NSS'] = True
 DEFINES['NS_NO_XPCOM'] = True
 DISABLE_STL_WRAPPING = True
 for var in ('MAR_CHANNEL_ID', 'MOZ_APP_VERSION'):

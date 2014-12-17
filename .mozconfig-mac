@@ -38,8 +38,8 @@ ac_add_options --disable-debug
 
 ac_add_options --enable-tor-browser-update
 ac_add_options --enable-update-packaging
-# We do not use signed MAR files yet (Mozilla uses them on Windows only).
-ac_add_options --disable-verify-mar
+ac_add_options --enable-signmar
+ac_add_options --enable-verify-mar
 
 # ICU seems still to have cross-compiling issues:
 ac_add_options --without-intl-api

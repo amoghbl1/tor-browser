@@ -17,6 +17,7 @@
 #include "prproces.h"
 #include "prlog.h"
 #include "prenv.h"
+#include "prprf.h"
 #include "nsVersionComparator.h"
 #include "nsXREDirProvider.h"
 #include "SpecialSystemDirectory.h"
@@ -39,7 +40,6 @@
 # include <windows.h>
 # include <shlwapi.h>
 # include "nsWindowsHelpers.h"
-# include "prprf.h"
 # define getcwd(path, size) _getcwd(path, size)
 # define getpid() GetCurrentProcessId()
 #elif defined(XP_UNIX)
@@ -134,25 +134,39 @@ GetCurrentWorkingDir(char *buf, size_t size)
 }
 
 
+// In Tor Browser, updater(.exe) depends on some shared libraries that are
+// located in the app directory.  To allow the updater to run when it has been
+// copied into the update directory, we prepend the app directory to the
+// appropriate environment variable so it will be searched by the dynamic
+// linker.
+
 #if defined(XP_WIN)
 #define PATH_SEPARATOR ";"
+#define LD_LIBRARY_PATH_ENVVAR_NAME "PATH"
+#else
+#define PATH_SEPARATOR ":"
+#if defined(XP_MACOSX)
+#define LD_LIBRARY_PATH_ENVVAR_NAME "DYLD_LIBRARY_PATH"
+#else
+#define LD_LIBRARY_PATH_ENVVAR_NAME "LD_LIBRARY_PATH"
+#endif
+#endif
 
-// In Tor Browser, updater.exe depends on some DLLs that are located in the
-// app directory.  To allow the updater to run when it has been copied into
-// the update directory, we append the app directory to the PATH.
 static nsresult
-AdjustPathForUpdater(nsIFile *appDir)
+AdjustLibSearchPathForUpdater(nsIFile *appDir)
 {
   nsAutoCString appPath;
   nsresult rv = appDir->GetNativePath(appPath);
   NS_ENSURE_SUCCESS(rv, rv);
 
   char *s = nullptr;
-  char *pathValue = PR_GetEnv("PATH");
+  char *pathValue = PR_GetEnv(LD_LIBRARY_PATH_ENVVAR_NAME);
   if ((nullptr == pathValue) || ('\0' == *pathValue)) {
-    s = PR_smprintf("PATH=%s", appPath.get());
+    s = PR_smprintf("%s=%s",
+                    LD_LIBRARY_PATH_ENVVAR_NAME, appPath.get());
   } else {
-    s = PR_smprintf("PATH=%s" PATH_SEPARATOR "%s", pathValue, appPath.get());
+    s = PR_smprintf("%s=%s" PATH_SEPARATOR "%s",
+                    LD_LIBRARY_PATH_ENVVAR_NAME, appPath.get(), pathValue);
   }
 
   // We intentionally leak the value that is passed into PR_SetEnv() because
@@ -162,7 +176,7 @@ AdjustPathForUpdater(nsIFile *appDir)
 
   return NS_OK;
 }
-#endif
+
 
 #ifdef DEBUG
 static void
@@ -623,12 +637,10 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
     PR_SetEnv("MOZ_SAFE_MODE_RESTART=1");
   }
 
-#if defined(XP_WIN)
-  nsresult rv2 = AdjustPathForUpdater(appDir);
+  nsresult rv2 = AdjustLibSearchPathForUpdater(appDir);
   if (NS_FAILED(rv2)) {
-    LOG(("SwitchToUpdatedApp -- AdjustPathForUpdater failed (0x%x)\n", rv2));
+    LOG(("SwitchToUpdatedApp -- AdjustLibSearchPathForUpdater failed (0x%x)\n", rv2));
   }
-#endif
 
   LOG(("spawning updater process for replacing [%s]\n", updaterPath.get()));
 
@@ -920,12 +932,10 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
     PR_SetEnv("MOZ_OS_UPDATE=1");
   }
 
-#if defined(XP_WIN)
-  nsresult rv2 = AdjustPathForUpdater(appDir);
+  nsresult rv2 = AdjustLibSearchPathForUpdater(appDir);
   if (NS_FAILED(rv2)) {
-    LOG(("ApplyUpdate -- AdjustPathForUpdater failed (0x%x)\n", rv2));
+    LOG(("ApplyUpdate -- AdjustLibSearchPathForUpdater failed (0x%x)\n", rv2));
   }
-#endif
 
 #if defined(MOZ_WIDGET_GONK)
   // We want the updater to be CPU friendly and not subject to being killed by

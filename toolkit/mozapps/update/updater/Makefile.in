@@ -3,6 +3,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+# Use NSS for MAR signature verification on all platforms:
+MAR_NSS=1
+
 # Don't link the updater against libmozglue. See bug 687139
 MOZ_GLUE_LDFLAGS =
 MOZ_GLUE_PROGRAM_LDFLAGS =
@@ -22,7 +25,14 @@ LIBS += $(call EXPAND_LIBNAME_PATH,signmar,$(DEPTH)/modules/libmar/sign)
 LIBS += $(call EXPAND_LIBNAME_PATH,verifymar,$(DEPTH)/modules/libmar/verify)
 ifeq ($(OS_ARCH),WINNT)
 OS_LIBS += $(call EXPAND_LIBNAME,comctl32 ws2_32 shell32 shlwapi)
+ifdef MAR_NSS
+LINK_UPDATER_WITH_NSS=1
+endif
 else
+LINK_UPDATER_WITH_NSS=1
+endif
+
+ifdef LINK_UPDATER_WITH_NSS
 LIBS += $(DIST)/lib/$(LIB_PREFIX)nss3.$(LIB_SUFFIX) \
 	$(DIST)/lib/$(LIB_PREFIX)nssutil3.$(LIB_SUFFIX) \
 	$(NSPR_LIBS)
@@ -49,7 +59,7 @@ endif
 
 include $(topsrcdir)/config/rules.mk
 
-ifneq (,$(filter beta release esr,$(MOZ_UPDATE_CHANNEL)))
+ifneq (,$(filter alpha beta release esr,$(MOZ_UPDATE_CHANNEL)))
 	PRIMARY_CERT = release_primary.der
 	SECONDARY_CERT = release_secondary.der
 else ifneq (,$(filter nightly aurora nightly-elm nightly-profiling nightly-oak nightly-ux,$(MOZ_UPDATE_CHANNEL)))
@@ -81,9 +91,11 @@ libs::
 	rm -f $(DIST)/bin/updater
 endif
 
+ifndef LINK_UPDATER_WITH_NSS
 ifeq ($(OS_ARCH),WINNT)
 EXTRA_LIBS += $(call EXPAND_LIBNAME,crypt32)
 EXTRA_LIBS += $(call EXPAND_LIBNAME,advapi32)
+endif
 endif
 
 CXXFLAGS += $(MOZ_BZ2_CFLAGS)
