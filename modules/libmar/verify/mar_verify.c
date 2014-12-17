@@ -274,8 +274,25 @@ mar_extract_and_verify_signatures_fp(FILE *fp,
     }
 
     /* We don't try to verify signatures we don't know about */
-    if (signatureAlgorithmIDs[i] != 1) {
-      fprintf(stderr, "ERROR: Unknown signature algorithm ID.\n");
+#ifdef MAR_USE_SHA512_RSA_SIG
+    const uint32_t kSupportedAlgID = SIGNATURE_ALGORITHM_ID_SHA512_RSA;
+#else
+    const uint32_t kSupportedAlgID = SIGNATURE_ALGORITHM_ID_SHA1_RSA;
+#endif
+
+    if (signatureAlgorithmIDs[i] != kSupportedAlgID) {
+#ifdef MAR_USE_SHA512_RSA_SIG
+      if (signatureAlgorithmIDs[i] == SIGNATURE_ALGORITHM_ID_SHA1_RSA) {
+        fprintf(stderr,
+                "ERROR: Unsupported signature algorithm (SHA1 with RSA).\n");
+      } else {
+        fprintf(stderr, "ERROR: Unknown signature algorithm ID %u.\n",
+                        signatureAlgorithmIDs[i]);
+      }
+#else
+      fprintf(stderr, "ERROR: Unknown signature algorithm ID %u.\n",
+                      signatureAlgorithmIDs[i]);
+#endif
       for (i = 0; i < signatureCount; ++i) {
         free(extractedSignatures[i]);
       }

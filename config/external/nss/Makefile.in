@@ -299,11 +299,11 @@ endif
 NSS_DIRS += \
   nss/cmd/lib \
   nss/cmd/shlibsign \
+  nss/cmd/certutil \
   $(NULL)
 
 ifdef ENABLE_TESTS
 NSS_DIRS += \
-  nss/cmd/certutil \
   nss/cmd/pk12util \
   nss/cmd/modutil \
   $(NULL)

@@ -29,7 +29,13 @@ for var in ('MAR_CHANNEL_ID', 'MOZ_APP_VERSION'):
     DEFINES[var] = '"%s"' % CONFIG[var]
     HOST_DEFINES[var] = DEFINES[var]
 
+if CONFIG['TOR_BROWSER_UPDATE']:
+    DEFINES['TOR_BROWSER_UPDATE'] = '%s' % CONFIG['TOR_BROWSER_UPDATE']
+if CONFIG['TOR_BROWSER_VERSION']:
+    DEFINES['TOR_BROWSER_VERSION'] = '"%s"' % CONFIG['TOR_BROWSER_VERSION']
+
 if CONFIG['MOZ_ENABLE_SIGNMAR']:
+    DEFINES['MAR_NSS'] = True
     USE_LIBS += [
         'nspr',
         'nss',
@@ -43,12 +49,12 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     OS_LIBS += [
         'ws2_32',
     ]
-    if CONFIG['MOZ_ENABLE_SIGNMAR']:
+    if CONFIG['MOZ_ENABLE_SIGNMAR'] and not DEFINES['MAR_NSS']:
         OS_LIBS += [
             'crypt32',
             'advapi32',
         ]
-elif CONFIG['OS_ARCH'] == 'Darwin':
+elif CONFIG['OS_ARCH'] == 'Darwin' and not DEFINES['MAR_NSS']:
     OS_LIBS += [
       '-framework Security',
     ]
