@@ -15,7 +15,7 @@ endif
 
 include $(topsrcdir)/config/rules.mk
 
-ifneq (,$(filter beta release esr,$(MOZ_UPDATE_CHANNEL)))
+ifneq (,$(filter alpha beta release esr,$(MOZ_UPDATE_CHANNEL)))
 	PRIMARY_CERT = release_primary.der
 	SECONDARY_CERT = release_secondary.der
 else ifneq (,$(filter nightly aurora nightly-elm nightly-profiling nightly-oak nightly-ux,$(MOZ_UPDATE_CHANNEL)))

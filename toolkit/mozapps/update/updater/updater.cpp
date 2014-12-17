@@ -116,9 +116,11 @@ static bool sUseHardLinks = true;
 # define MAYBE_USE_HARD_LINKS 0
 #endif
 
-#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && !defined(XP_MACOSX)
+#if defined(MOZ_VERIFY_MAR_SIGNATURE)
+#if defined(MAR_NSS) || (!defined(XP_WIN) && !defined(XP_MACOSX))
 #include "nss.h"
 #include "prerror.h"
+#endif
 #endif
 
 #ifdef XP_WIN
@@ -2481,8 +2483,13 @@ UpdateThreadFunc(void *param)
           MARStrings.MARChannelID[0] = '\0';
         }
 
+#ifdef TOR_BROWSER_UPDATE
+        const char *appVersion = TOR_BROWSER_VERSION;
+#else
+        const char *appVersion = MOZ_APP_VERSION;
+#endif
         rv = gArchiveReader.VerifyProductInformation(MARStrings.MARChannelID,
-                                                     MOZ_APP_VERSION);
+                                                     appVersion);
       }
     }
 #endif
@@ -2563,17 +2570,17 @@ int NS_main(int argc, NS_tchar **argv)
   }
 #endif
 
-#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && !defined(XP_MACOSX)
-  // On Windows and Mac we rely on native APIs to do verifications so we don't
-  // need to initialize NSS at all there.
-  // Otherwise, minimize the amount of NSS we depend on by avoiding all the NSS
-  // databases.
+#if defined(MOZ_VERIFY_MAR_SIGNATURE)
+#if defined(MAR_NSS) || (!defined(XP_WIN) && !defined(XP_MACOSX))
+  // If using NSS for signature verification, initialize NSS but minimize
+  // the portion we depend on by avoiding all of the NSS databases.
   if (NSS_NoDB_Init(NULL) != SECSuccess) {
    PRErrorCode error = PR_GetError();
    fprintf(stderr, "Could not initialize NSS: %s (%d)",
            PR_ErrorToName(error), (int) error);
     _exit(1);
   }
+#endif
 #endif
 
   InitProgressUI(&argc, &argv);
