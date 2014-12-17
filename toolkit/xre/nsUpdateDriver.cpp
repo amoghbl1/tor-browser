@@ -39,7 +39,6 @@
 # include <windows.h>
 # include <shlwapi.h>
 # include "nsWindowsHelpers.h"
-# include "prprf.h"
 # define getcwd(path, size) _getcwd(path, size)
 # define getpid() GetCurrentProcessId()
 #elif defined(XP_UNIX)
@@ -168,36 +167,6 @@ GetInstallDirPath(nsIFile *appDir, nsACString& installDirPath)
   }
   return NS_OK;
 }
-
-#if defined(TOR_BROWSER_UPDATE) && defined(XP_WIN)
-#define PATH_SEPARATOR ";"
-
-// In Tor Browser, updater.exe depends on some DLLs that are located in the
-// app directory.  To allow the updater to run when it has been copied into
-// the update directory, we append the app directory to the PATH.
-static nsresult
-AdjustPathForUpdater(nsIFile *appDir)
-{
-  nsAutoCString appPath;
-  nsresult rv = appDir->GetNativePath(appPath);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  char *s = nullptr;
-  char *pathValue = PR_GetEnv("PATH");
-  if ((nullptr == pathValue) || ('\0' == *pathValue)) {
-    s = PR_smprintf("PATH=%s", appPath.get());
-  } else {
-    s = PR_smprintf("PATH=%s" PATH_SEPARATOR "%s", pathValue, appPath.get());
-  }
-
-  // We intentionally leak the value that is passed into PR_SetEnv() because
-  // the environment will hold a pointer to it.
-  if ((nullptr == s) || (PR_SUCCESS != PR_SetEnv(s)))
-    return NS_ERROR_FAILURE;
-
-  return NS_OK;
-}
-#endif
 
 #ifdef DEBUG
 static void
@@ -500,13 +469,22 @@ CopyUpdaterIntoUpdateDir(nsIFile *greDir, nsIFile *appDir, nsIFile *updateDir,
  * Appends the specified path to the library path.
  * This is used so that updater can find libmozsqlite3.so and other shared libs.
  *
- * @param pathToAppend A new library path to prepend to LD_LIBRARY_PATH
+ * @param pathToAppend A new library path to prepend to the dynamic linker's search path.
  */
-#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && \
-    !defined(XP_MACOSX) && !defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_VERIFY_MAR_SIGNATURE) && (defined(MAR_NSS) || \
+    (!defined(XP_WIN) && !defined(XP_MACOSX) && !defined(MOZ_WIDGET_GONK)))
 #include "prprf.h"
+#if defined(XP_WIN)
+#define PATH_SEPARATOR ";"
+#define LD_LIBRARY_PATH_ENVVAR_NAME "PATH"
+#else
 #define PATH_SEPARATOR ":"
+#if defined(XP_MACOSX)
+#define LD_LIBRARY_PATH_ENVVAR_NAME "DYLD_LIBRARY_PATH"
+#else
 #define LD_LIBRARY_PATH_ENVVAR_NAME "LD_LIBRARY_PATH"
+#endif
+#endif
 static void
 AppendToLibPath(const char *pathToAppend)
 {
@@ -732,16 +710,20 @@ SwitchToUpdatedApp(nsIFile *greDir, nsIFile *updateDir,
   if (gSafeMode) {
     PR_SetEnv("MOZ_SAFE_MODE_RESTART=1");
   }
-#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && \
-    !defined(XP_MACOSX) && !defined(MOZ_WIDGET_GONK)
+
+#if defined(MOZ_VERIFY_MAR_SIGNATURE) && (defined(MAR_NSS) || \
+    (!defined(XP_WIN) && !defined(XP_MACOSX) && !defined(MOZ_WIDGET_GONK)))
+#ifdef TOR_BROWSER_UPDATE
+  nsAutoCString appPath;
+  nsresult rv2 = appDir->GetNativePath(appPath);
+  if (NS_SUCCEEDED(rv2)) {
+    AppendToLibPath(appPath.get());
+  } else {
+    LOG(("SwitchToUpdatedApp -- appDir->GetNativePath() failed (0x%x)\n", rv2));
+  }
+#else
   AppendToLibPath(installDirPath.get());
 #endif
-
-#if defined(TOR_BROWSER_UPDATE) && defined(XP_WIN)
-  nsresult rv2 = AdjustPathForUpdater(appDir);
-  if (NS_FAILED(rv2)) {
-    LOG(("SwitchToUpdatedApp -- AdjustPathForUpdater failed (0x%x)\n", rv2));
-  }
 #endif
 
   LOG(("spawning updater process for replacing [%s]\n", updaterPath.get()));
@@ -1020,21 +1002,24 @@ ApplyUpdate(nsIFile *greDir, nsIFile *updateDir, nsIFile *statusFile,
   if (gSafeMode) {
     PR_SetEnv("MOZ_SAFE_MODE_RESTART=1");
   }
-#if defined(MOZ_VERIFY_MAR_SIGNATURE) && !defined(XP_WIN) && \
-    !defined(XP_MACOSX) && !defined(MOZ_WIDGET_GONK)
+#if defined(MOZ_VERIFY_MAR_SIGNATURE) && (defined(MAR_NSS) || \
+    (!defined(XP_WIN) && !defined(XP_MACOSX) && !defined(MOZ_WIDGET_GONK)))
+#ifdef TOR_BROWSER_UPDATE
+  nsAutoCString appPath;
+  nsresult rv2 = appDir->GetNativePath(appPath);
+  if (NS_SUCCEEDED(rv2)) {
+    AppendToLibPath(appPath.get());
+  } else {
+    LOG(("ApplyUpdate -- appDir->GetNativePath() failed (0x%x)\n", rv2));
+  }
+#else
   AppendToLibPath(installDirPath.get());
+#endif
 #endif
 
   if (isOSUpdate) {
     PR_SetEnv("MOZ_OS_UPDATE=1");
   }
-
-#if defined(TOR_BROWSER_UPDATE) && defined(XP_WIN)
-  nsresult rv2 = AdjustPathForUpdater(appDir);
-  if (NS_FAILED(rv2)) {
-    LOG(("ApplyUpdate -- AdjustPathForUpdater failed (0x%x)\n", rv2));
-  }
-#endif
 
 #if defined(MOZ_WIDGET_GONK)
   // We want the updater to be CPU friendly and not subject to being killed by
