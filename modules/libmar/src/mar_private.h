@@ -21,6 +21,14 @@
    which is 16 bytes */
 #define SIGNATURE_BLOCK_OFFSET 16
 
+/* Signature algorithm IDs. */
+#define SIGNATURE_ALGORITHM_ID_SHA1_RSA 1
+#ifdef MAR_USE_SHA512_RSA_SIG
+/* Use 512 as the algorithm ID so it is less likely that we will conflict with
+   whatever Mozilla chooses when they add support for a stronger signature. */
+#define SIGNATURE_ALGORITHM_ID_SHA512_RSA 512
+#endif
+
 /* Make sure the file is less than 500MB.  We do this to protect against
    invalid MAR files. */
 #define MAX_SIZE_OF_MAR_FILE ((int64_t)524288000)

@@ -4,6 +4,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+DEFINES['MAR_NSS'] = True
+
+link_with_nss = DEFINES['MAR_NSS'] or (CONFIG['OS_ARCH'] == 'Linux' and CONFIG['MOZ_VERIFY_MAR_SIGNATURE'])
+
 srcs = [
     'archivereader.cpp',
     'bspatch.cpp',
@@ -42,19 +46,23 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'ws2_32',
         'shell32',
         'shlwapi',
-        'crypt32',
-        'advapi32',
     ]
-elif CONFIG['OS_ARCH'] == 'Linux' and CONFIG['MOZ_VERIFY_MAR_SIGNATURE']:
-    USE_LIBS += [
-        'nss',
-        'signmar',
-        'updatecommon',
-    ]
-    OS_LIBS += CONFIG['NSPR_LIBS']
+
+    if not link_with_nss:
+        OS_LIBS += [
+            'crypt32',
+            'advapi32',
+        ]
 else:
     USE_LIBS += [
         'updatecommon',
+    ]
+
+if link_with_nss:
+    USE_LIBS += [
+        'nspr',
+        'nss',
+        'signmar',
     ]
 
 USE_LIBS += [
@@ -82,8 +90,12 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     ]
     OS_LIBS += [
         '-framework Cocoa',
-        '-framework Security',
     ]
+
+    if not link_with_nss:
+        OS_LIBS += [
+            '-framework Security',
+        ]
 elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
     have_progressui = 1
     srcs += [
