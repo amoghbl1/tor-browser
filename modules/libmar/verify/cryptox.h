@@ -59,6 +59,10 @@ CryptoX_Result NSS_VerifySignature(VFYContext * const *ctx ,
 
 #elif XP_MACOSX
 
+#ifdef MAR_USE_SHA512_RSA_SIG
+#error MAR_USE_SHA512_RSA_SIG is not implemented.
+#endif
+
 #define CryptoX_InvalidHandleValue NULL
 #define CryptoX_ProviderHandle void*
 #define CryptoX_SignatureHandle void*
@@ -105,6 +109,11 @@ void CryptoMac_FreePublicKey(CryptoX_PublicKey* aPublicKey);
 #define CryptoX_FreeCertificate(aCertificate)
 
 #elif defined(XP_WIN) 
+
+#ifdef MAR_USE_SHA512_RSA_SIG
+#error MAR_USE_SHA512_RSA_SIG is not implemented.
+#endif
+
 
 #include <windows.h>
 #include <wincrypt.h>

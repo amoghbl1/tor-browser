@@ -25,7 +25,8 @@ ac_add_options --with-macos-private-frameworks="$CROSS_PRIVATE_FRAMEWORKS"
 
 ac_add_options --enable-tor-browser-update
 ac_add_options --enable-update-packaging
-ac_add_options --disable-verify-mar
+ac_add_options --enable-signmar
+ac_add_options --enable-verify-mar
 
 ac_add_options --disable-crashreporter
 ac_add_options --disable-maintenance-service
