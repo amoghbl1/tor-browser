@@ -764,6 +764,12 @@ nsJARChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctx)
     if (NS_FAILED(rv))
         return rv;
 
+    // Check preferences to see if all remote jar support should be disabled
+    if (!mJarFile && Preferences::GetBool("network.jar.block-remote-files", true)) {
+        mIsUnsafe = true;
+        return NS_ERROR_UNSAFE_CONTENT_TYPE;
+    }
+
     // These variables must only be set if we're going to trigger an
     // OnStartRequest, either from AsyncRead or OnDownloadComplete.
     // 
@@ -896,6 +902,13 @@ nsJARChannel::OnDownloadComplete(nsIDownloader *downloader,
 
         channel->GetContentDispositionHeader(mContentDispositionHeader);
         mContentDisposition = NS_GetContentDispositionFromHeader(mContentDispositionHeader, this);
+    }
+
+    // This is a defense-in-depth check for the preferences to see if all remote jar
+    // support should be disabled. This check may not be needed.
+    if (Preferences::GetBool("network.jar.block-remote-files", true)) {
+        mIsUnsafe = true;
+        status = NS_ERROR_UNSAFE_CONTENT_TYPE;
     }
 
     if (NS_SUCCEEDED(status) && mIsUnsafe &&
