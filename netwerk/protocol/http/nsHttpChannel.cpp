@@ -4594,6 +4594,8 @@ nsHttpChannel::BeginConnect()
     // notify "http-on-modify-request" observers
     CallOnModifyRequestObservers();
 
+    RemoveAuthorizationHeaderIfAppropriate();
+
     // Check to see if we should redirect this channel elsewhere by
     // nsIHttpChannel.redirectTo API request
     if (mAPIRedirectToURI) {
@@ -5727,6 +5729,72 @@ nsHttpChannel::ResumeAt(uint64_t aStartPos,
     return NS_OK;
 }
 
+// Remove the Authorization header if first party isolation is active and
+// this channel is processing a third party request. This prevents user
+// tracking via HTTP Basic Authentication.
+// Note that this approach disables authentication for 3rd party domains. It
+// would be better if we could isolate the authentication while still allowing
+// it to be transmitted... but HTTP authentication is rarely used anyway.
+void
+nsHttpChannel::RemoveAuthorizationHeaderIfAppropriate()
+{
+    if (!mRequestHead.PeekHeader(nsHttp::Authorization)) {
+        return; // No Authorization header is present.
+    }
+
+    nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
+                                = do_GetService(THIRDPARTYUTIL_CONTRACTID);
+    bool isolationActive = true;
+    (void)thirdPartySvc->IsFirstPartyIsolationActive(this, nullptr,
+                                                     &isolationActive);
+    if (!isolationActive)
+        return; // First party isolation is disabled for this channel.
+
+    bool isAuthAllowed = false;
+    nsCOMPtr<nsIURI> firstPartyURI;
+    nsresult rv = thirdPartySvc->GetFirstPartyURIFromChannel(this, false,
+                                               getter_AddRefs(firstPartyURI));
+    if (NS_SUCCEEDED(rv) && firstPartyURI) {
+        isAuthAllowed = (mURI == firstPartyURI)
+                        || HostPartIsTheSame(firstPartyURI);
+    } else {
+        // We failed to get the first party URI. Check the document URI so
+        // that we can allow authentication if the request originates from the
+        // the browser chrome, e.g., some favicon requests. If there is no
+        // document URI associated with this request, it cannot be associated
+        // with a content document, so it must be a special request (e.g.,
+        // favicon fetch or OSCP), for which we also allow authenication.
+        nsCOMPtr<nsIURI> docURI;
+        rv = GetDocumentURI(getter_AddRefs(docURI));
+        if (NS_FAILED(rv) || !docURI) {
+            isAuthAllowed = true;
+        } else {
+            nsAutoCString docURISpec;
+            docURI->GetAsciiSpec(docURISpec);
+            if (docURISpec == "chrome://browser/content/browser.xul")
+                isAuthAllowed = true;
+        }
+    }
+
+    if (!isAuthAllowed) {
+        mRequestHead.ClearHeader(nsHttp::Authorization);
+        mRequestHead.ClearHeader(nsHttp::Cache_Control);
+        mRequestHead.ClearHeader(nsHttp::Pragma);
+
+#ifdef PR_LOGGING
+        nsAutoCString requestURIStr, firstPartyURIStr;
+        mURI->GetAsciiSpec(requestURIStr);
+        if (firstPartyURI)
+            firstPartyURI->GetAsciiSpec(firstPartyURIStr);
+        else
+            firstPartyURIStr = "--N/A--";
+        LOG(("Removed Authorization header from third party request"
+              " [Request URI=%s, First Party URI=%s]\n",
+              requestURIStr.get(), firstPartyURIStr.get()));
+#endif
+    }
+}
+
 nsresult
 nsHttpChannel::DoAuthRetry(nsAHttpConnection *conn)
 {
@@ -5747,6 +5815,8 @@ nsHttpChannel::DoAuthRetry(nsAHttpConnection *conn)
 
     // notify "http-on-modify-request" observers
     CallOnModifyRequestObservers();
+
+    RemoveAuthorizationHeaderIfAppropriate();
 
     mIsPending = true;
 
