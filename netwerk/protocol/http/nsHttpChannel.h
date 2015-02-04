@@ -310,6 +310,7 @@ private:
     nsresult ProcessPartialContent();
     nsresult OnDoneReadingPartialCacheEntry(bool *streamDone);
 
+    void     RemoveAuthorizationHeaderIfAppropriate();
     nsresult DoAuthRetry(nsAHttpConnection *);
 
     void     HandleAsyncRedirectChannelToHttps();
