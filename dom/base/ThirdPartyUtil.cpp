@@ -492,20 +492,28 @@ ThirdPartyUtil::GetBaseDomain(nsIURI* aHostURI,
   return NS_OK;
 }
 
-// Returns true if First Party Isolation is currently active for the given nsIChannel.
-// Depends on Preference setting and possibly the state of Private Browsing mode.
-bool ThirdPartyUtil::IsFirstPartyIsolationActive(nsIChannel *aChannel, nsIDocument *aDoc)
+// Determine if First Party Isolation is currently active for the given
+// nsIChannel or nsIDocument.  Depends on preference setting and
+// possibly the state of Private Browsing mode.
+NS_IMETHODIMP
+ThirdPartyUtil::IsFirstPartyIsolationActive(nsIChannel *aChannel,
+                                            nsIDocument *aDoc,
+                                            bool* aResult)
 {
+  NS_ASSERTION(aResult, "null outparam pointer");
+
   int32_t isolationState = mozilla::Preferences::GetInt("privacy.thirdparty.isolate");
   if (isolationState == 1) {
     if (!aChannel && aDoc) {
       // No channel passed directly. Can we get a channel from aDoc?
       aChannel = aDoc->GetChannel();
     }
-    return aChannel && NS_UsePrivateBrowsing(aChannel);
+    *aResult = aChannel && NS_UsePrivateBrowsing(aChannel);
   } else { // (isolationState == 0) || (isolationState == 2)
-    return (isolationState == 2);
+    *aResult = (isolationState == 2);
   }
+
+  return NS_OK;
 }
 
 // Produces a URI that uniquely identifies the first party to which
@@ -515,7 +523,8 @@ bool ThirdPartyUtil::IsFirstPartyIsolationActive(nsIChannel *aChannel, nsIDocume
 NS_IMETHODIMP
 ThirdPartyUtil::GetFirstPartyIsolationURI(nsIChannel *aChannel, nsIDocument *aDoc, nsIURI **aOutput)
 {
-  bool isolationActive = IsFirstPartyIsolationActive(aChannel, aDoc);
+  bool isolationActive = false;
+  (void)IsFirstPartyIsolationActive(aChannel, aDoc, &isolationActive);
   if (isolationActive) {
     return GetFirstPartyURI(aChannel, aDoc, aOutput);
   } else {

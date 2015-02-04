@@ -13,7 +13,7 @@ interface nsIDocument;
  * Utility functions for determining whether a given URI, channel, or window
  * hierarchy is third party with respect to a known URI.
  */
-[scriptable, uuid(b711bd7f-0674-49be-ae77-f221db5f7b6c)]
+[scriptable, uuid(b538074d-5e00-40b3-b5c4-e060ae010b83)]
 interface mozIThirdPartyUtil : nsISupports
 {
   /**
@@ -177,6 +177,26 @@ interface mozIThirdPartyUtil : nsISupports
    */
   [noscript] nsIURI getFirstPartyURI(in nsIChannel aChannel,
                                      in nsIDocument aDoc);
+
+  /**
+   * isFirstPartyIsolationActive
+   *
+   * Determine if First Party Isolation is currently active for the given
+   * nsIChannel or nsIDocument.  Depends on preference setting and
+   * possibly the state of Private Browsing mode.
+   *
+   * @param aChannel
+   *        An arbitrary channel for some content element of a first party
+   *        load. Can be null.
+   *
+   * @param aDoc
+   *        An arbitrary third party document. Can be null.
+   *
+   * @return true if first party isolation is active.
+   */
+
+  [noscript] bool isFirstPartyIsolationActive(in nsIChannel aChannel,
+                                              in nsIDocument aDoc);
 
   /**
    * getFirstPartyIsolationURI
