@@ -215,6 +215,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "ReaderParent",
   "resource:///modules/ReaderParent.jsm");
 
 let gInitialPages = [
+  "about:tor",
   "about:blank",
   "about:newtab",
   "about:home",
