@@ -159,6 +159,7 @@ XPCOMUtils.defineLazyModuleGetter(this, "TabCrashReporter",
 #endif
 
 let gInitialPages = [
+  "about:tor",
   "about:blank",
   "about:newtab",
   "about:home",
