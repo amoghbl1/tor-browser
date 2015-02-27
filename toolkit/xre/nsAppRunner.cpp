@@ -1829,6 +1829,104 @@ static nsresult LaunchChild(nsINativeAppSupport* aNative,
   return NS_ERROR_LAUNCHED_CHILD_PROCESS;
 }
 
+static nsresult
+GetOverrideStringBundleForLocale(nsIStringBundleService* aSBS,
+                                 const char* aTorbuttonURI, const char* aLocale,
+                                 nsIStringBundle* *aResult)
+{
+  NS_ENSURE_ARG(aSBS);
+  NS_ENSURE_ARG(aTorbuttonURI);
+  NS_ENSURE_ARG(aLocale);
+  NS_ENSURE_ARG(aResult);
+
+  const char* kFormatStr = "jar:%s!/chrome/locale/%s/torbutton.properties";
+  nsPrintfCString strBundleURL(kFormatStr, aTorbuttonURI, aLocale);
+  nsresult rv = aSBS->CreateBundle(strBundleURL.get(), aResult);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // To ensure that we have a valid string bundle, try to retrieve a string
+  // that we know exists.
+  nsXPIDLString val;
+  rv = (*aResult)->GetStringFromName(MOZ_UTF16("profileProblemTitle"),
+                                     getter_Copies(val));
+  if (!NS_SUCCEEDED(rv))
+    *aResult = nullptr;  // No good.  Discard it.
+
+  return rv;
+}
+
+static void
+GetOverrideStringBundle(nsIStringBundleService* aSBS, nsIStringBundle* *aResult)
+{
+  if (!aSBS || !aResult)
+    return;
+
+  *aResult = nullptr;
+
+  // Build Torbutton file URI string by starting from the profiles directory.
+  nsXREDirProvider* dirProvider = nsXREDirProvider::GetSingleton();
+  if (!dirProvider)
+    return;
+
+  bool persistent = false; // ignored
+  nsCOMPtr<nsIFile> profilesDir;
+  nsresult rv = dirProvider->GetFile(NS_APP_USER_PROFILES_ROOT_DIR, &persistent,
+                                     getter_AddRefs(profilesDir));
+  if (NS_FAILED(rv))
+    return;
+
+  // Create file URI, extract as string, and append Torbutton xpi relative path.
+  nsCOMPtr<nsIURI> uri;
+  nsAutoCString uriString;
+  if (NS_FAILED(NS_NewFileURI(getter_AddRefs(uri), profilesDir)) ||
+      NS_FAILED(uri->GetSpec(uriString))) {
+    return;
+  }
+
+  uriString.Append("profile.default/extensions/torbutton@torproject.org.xpi");
+
+  nsCString userAgentLocale;
+  if (!NS_SUCCEEDED(Preferences::GetCString("general.useragent.locale",
+                                            &userAgentLocale))) {
+    return;
+  }
+
+  rv = GetOverrideStringBundleForLocale(aSBS, uriString.get(),
+                                   userAgentLocale.get(), aResult);
+  if (NS_FAILED(rv)) {
+    // Try again using base locale, e.g., "en" vs. "en-US".
+    int16_t offset = userAgentLocale.FindChar('-', 1);
+    if (offset > 0) {
+      nsAutoCString shortLocale(Substring(userAgentLocale, 0, offset));
+      rv = GetOverrideStringBundleForLocale(aSBS, uriString.get(),
+                                       shortLocale.get(), aResult);
+    }
+  }
+}
+
+static nsresult
+GetFormattedString(nsIStringBundle* aOverrideBundle,
+                   nsIStringBundle* aMainBundle,
+                   const char16_t* aName,
+                   const char16_t** aParams, uint32_t aLength,
+                   char16_t* *aResult)
+{
+  NS_ENSURE_ARG(aName);
+  NS_ENSURE_ARG(aResult);
+
+  nsresult rv = NS_ERROR_FAILURE;
+  if (aOverrideBundle) {
+    rv = aOverrideBundle->FormatStringFromName(aName, aParams, aLength,
+                                               aResult);
+  }
+
+  // If string was not found in override bundle, use main (browser) bundle.
+  if (NS_FAILED(rv) && aMainBundle)
+    rv = aMainBundle->FormatStringFromName(aName, aParams, aLength, aResult);
+
+  return rv;
+}
+
 enum ProfileStatus {
   PROFILE_STATUS_OK,
   PROFILE_STATUS_ACCESS_DENIED,
@@ -1899,7 +1997,10 @@ ProfileErrorDialog(nsIFile* aProfileDir, nsIFile* aProfileLocalDir,
     sbs->CreateBundle(kProfileProperties, getter_AddRefs(sb));
     NS_ENSURE_TRUE_LOG(sbs, NS_ERROR_FAILURE);
 
-    NS_ConvertUTF8toUTF16 appName(gAppData->name);
+    nsCOMPtr<nsIStringBundle> overrideSB;
+    GetOverrideStringBundle(sbs, getter_AddRefs(overrideSB));
+
+    NS_ConvertUTF8toUTF16 appName(MOZ_APP_DISPLAYNAME);
     const char16_t* params[] = {appName.get(), appName.get()};
 
     nsXPIDLString killMessage;
@@ -1914,21 +2015,23 @@ ProfileErrorDialog(nsIFile* aProfileDir, nsIFile* aProfileLocalDir,
 #endif
     static const char16_t kAccessDenied[] = MOZ_UTF16("profileAccessDenied");
  
-    const char16_t *errorKey = aUnlocker ? kRestartUnlocker
+    const char16_t* errorKey = aUnlocker ? kRestartUnlocker
                                          : kRestartNoUnlocker;
     if (PROFILE_STATUS_READ_ONLY == aStatus)
       errorKey = kReadOnly;
     else if (PROFILE_STATUS_ACCESS_DENIED == aStatus)
       errorKey = kAccessDenied;
-    sb->FormatStringFromName(errorKey, params, 2, getter_Copies(killMessage));
+    GetFormattedString(overrideSB, sb, errorKey, params, 2,
+                       getter_Copies(killMessage));
 
-    const char16_t *titleKey = ((PROFILE_STATUS_READ_ONLY == aStatus) ||
+    const char16_t* titleKey = ((PROFILE_STATUS_READ_ONLY == aStatus) ||
                                 (PROFILE_STATUS_ACCESS_DENIED == aStatus))
                                    ? MOZ_UTF16("profileProblemTitle")
                                    : MOZ_UTF16("restartTitle");
 
     nsXPIDLString killTitle;
-    sb->FormatStringFromName(titleKey, params, 1, getter_Copies(killTitle));
+    GetFormattedString(overrideSB, sb, titleKey, params, 1,
+                       getter_Copies(killTitle));
 
     if (!killMessage || !killTitle)
       return NS_ERROR_FAILURE;
@@ -2004,7 +2107,7 @@ ProfileMissingDialog(nsINativeAppSupport* aNative)
     sbs->CreateBundle(kProfileProperties, getter_AddRefs(sb));
     NS_ENSURE_TRUE_LOG(sbs, NS_ERROR_FAILURE);
   
-    NS_ConvertUTF8toUTF16 appName(gAppData->name);
+    NS_ConvertUTF8toUTF16 appName(MOZ_APP_DISPLAYNAME);
     const char16_t* params[] = {appName.get(), appName.get()};
   
     nsXPIDLString missingMessage;
