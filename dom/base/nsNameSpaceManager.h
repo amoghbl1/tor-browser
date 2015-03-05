@@ -9,6 +9,7 @@
 
 #include "nsDataHashtable.h"
 #include "nsTArray.h"
+#include "nsIObserver.h"
 
 #include "mozilla/StaticPtr.h"
 
@@ -66,10 +67,11 @@ private:
  *
  */
 
-class nsNameSpaceManager final
+class nsNameSpaceManager final : public nsIObserver
 {
 public:
-  virtual ~nsNameSpaceManager() {}
+  NS_DECL_ISUPPORTS
+  NS_DECL_NSIOBSERVER
 
   virtual nsresult RegisterNameSpace(const nsAString& aURI,
                                      int32_t& aNameSpaceID);
@@ -80,14 +82,16 @@ public:
   virtual bool HasElementCreator(int32_t aNameSpaceID);
 
   static nsNameSpaceManager* GetInstance();
+  bool mIsMathMLDisabled;
 private:
   bool Init();
   nsresult AddNameSpace(const nsAString& aURI, const int32_t aNameSpaceID);
+  virtual ~nsNameSpaceManager();
 
   nsDataHashtable<nsNameSpaceKey,int32_t> mURIToIDTable;
   nsTArray< nsAutoPtr<nsString> > mURIArray;
 
-  static mozilla::StaticAutoPtr<nsNameSpaceManager> sInstance;
+  static mozilla::StaticRefPtr<nsNameSpaceManager> sInstance;
 };
  
 #endif // nsNameSpaceManager_h___
