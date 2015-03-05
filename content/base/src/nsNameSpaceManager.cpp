@@ -21,6 +21,7 @@
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/XBLChildrenElement.h"
 #include "mozilla/dom/Element.h"
+#include "mozilla/Preferences.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -36,7 +37,14 @@ using namespace mozilla::dom;
 #define kXULNameSpaceURI "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 #define kSVGNameSpaceURI "http://www.w3.org/2000/svg"
 
-StaticAutoPtr<nsNameSpaceManager> nsNameSpaceManager::sInstance;
+static const char kMathMLDisabledPrefName[] = "mathml.disabled";
+
+static const char* kObservedPrefs[] = {
+  kMathMLDisabledPrefName,
+  nullptr
+};
+
+StaticRefPtr<nsNameSpaceManager> nsNameSpaceManager::sInstance;
 
 /* static */ nsNameSpaceManager*
 nsNameSpaceManager::GetInstance() {
@@ -51,6 +59,10 @@ nsNameSpaceManager::GetInstance() {
   }
 
   return sInstance;
+}
+
+nsNameSpaceManager::~nsNameSpaceManager() {
+  mozilla::Preferences::RemoveObservers(this, kObservedPrefs);
 }
 
 bool nsNameSpaceManager::Init()
@@ -73,6 +85,9 @@ bool nsNameSpaceManager::Init()
   REGISTER_NAMESPACE(kSVGNameSpaceURI, kNameSpaceID_SVG);
 
 #undef REGISTER_NAMESPACE
+
+  mozilla::Preferences::AddStrongObservers(this, kObservedPrefs);
+  mIsMathMLDisabled = mozilla::Preferences::GetBool(kMathMLDisabledPrefName);
 
   return true;
 }
@@ -152,7 +167,18 @@ NS_NewElement(Element** aResult,
   }
 #endif
   if (ns == kNameSpaceID_MathML) {
-    return NS_NewMathMLElement(aResult, ni.forget());
+    // If the mathml.disabled pref. is true, convert all MathML nodes into
+    // generic XML nodes by swapping the namespace.
+    nsNameSpaceManager* nsmgr = nsNameSpaceManager::GetInstance();
+    if (nsmgr && !nsmgr->mIsMathMLDisabled) {
+      return NS_NewMathMLElement(aResult, ni.forget());
+    }
+
+    nsNodeInfoManager *niMgr = ni->NodeInfoManager();
+    nsCOMPtr<nsINodeInfo> genericXMLNI = niMgr->GetNodeInfo(ni->NameAtom(),
+                                     ni->GetPrefixAtom(), kNameSpaceID_XML,
+                                     ni->NodeType(), ni->GetExtraName());
+    return NS_NewXMLElement(aResult, genericXMLNI.forget());
   }
   if (ns == kNameSpaceID_SVG && NS_SVGEnabled(ni->GetDocument())) {
     return NS_NewSVGElement(aResult, ni.forget(), aFromParser);
@@ -196,5 +222,18 @@ nsresult nsNameSpaceManager::AddNameSpace(const nsAString& aURI,
 
   mURIToIDTable.Put(uri, aNameSpaceID);
 
+  return NS_OK;
+}
+
+// nsISupports
+NS_IMPL_ISUPPORTS(nsNameSpaceManager,
+                  nsIObserver)
+
+// nsIObserver
+NS_IMETHODIMP
+nsNameSpaceManager::Observe(nsISupports* aObject, const char* aTopic,
+                            const char16_t* aMessage)
+{
+  mIsMathMLDisabled = mozilla::Preferences::GetBool(kMathMLDisabledPrefName);
   return NS_OK;
 }
