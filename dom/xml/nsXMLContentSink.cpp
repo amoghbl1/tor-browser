@@ -476,8 +476,10 @@ nsXMLContentSink::CreateElement(const char16_t** aAtts, uint32_t aAttsCount,
       || aNodeInfo->Equals(nsGkAtoms::script, kNameSpaceID_SVG)
     ) {
     nsCOMPtr<nsIScriptElement> sele = do_QueryInterface(content);
-    sele->SetScriptLineNumber(aLineNumber);
-    sele->SetCreatorParser(GetParser());
+    if (sele) {
+      sele->SetScriptLineNumber(aLineNumber);
+      sele->SetCreatorParser(GetParser());
+    }
   }
 
   // XHTML needs some special attention
@@ -557,12 +559,16 @@ nsXMLContentSink::CloseElement(nsIContent* aContent)
     nsCOMPtr<nsIScriptElement> sele = do_QueryInterface(aContent);
 
     if (mPreventScriptExecution) {
-      sele->PreventExecution();
+      if (sele)
+        sele->PreventExecution();
       return NS_OK;
     }
 
     // Always check the clock in nsContentSink right after a script
     StopDeflecting();
+
+    if (!sele)
+      return NS_OK;
 
     // Now tell the script that it's ready to go. This may execute the script
     // or return true, or neither if the script doesn't need executing.

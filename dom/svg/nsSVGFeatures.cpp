@@ -13,6 +13,7 @@
  */
 
 #include "nsSVGFeatures.h"
+#include "nsSVGUtils.h"
 #include "nsIContent.h"
 #include "nsIDocument.h"
 #include "nsNameSpaceManager.h"
@@ -23,6 +24,11 @@ using namespace mozilla;
 /*static*/ bool
 nsSVGFeatures::HasExtension(const nsAString& aExtension, const bool aIsInChrome)
 {
+  // Since we do not have access to the document here we pass nullptr, which
+  // means only the svg.in-content.enabled pref is checked.
+  if (!aIsInChrome && !NS_SVGEnabled(nullptr)) {
+    return false;
+  }
 #define SVG_SUPPORTED_EXTENSION(str) if (aExtension.EqualsLiteral(str)) return true;
   SVG_SUPPORTED_EXTENSION("http://www.w3.org/1999/xhtml")
   nsNameSpaceManager* nameSpaceManager = nsNameSpaceManager::GetInstance();
