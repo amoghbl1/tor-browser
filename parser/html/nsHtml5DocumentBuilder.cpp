@@ -67,18 +67,18 @@ nsHtml5DocumentBuilder::UpdateStyleSheet(nsIContent* aElement)
   }
 
   nsCOMPtr<nsIStyleSheetLinkingElement> ssle(do_QueryInterface(aElement));
-  NS_ASSERTION(ssle, "Node didn't QI to style.");
+  if (ssle) {
+    ssle->SetEnableUpdates(true);
 
-  ssle->SetEnableUpdates(true);
-
-  bool willNotify;
-  bool isAlternate;
-  nsresult rv = ssle->UpdateStyleSheet(mRunsToCompletion ? nullptr : this,
-                                       &willNotify,
-                                       &isAlternate);
-  if (NS_SUCCEEDED(rv) && willNotify && !isAlternate && !mRunsToCompletion) {
-    ++mPendingSheetCount;
-    mScriptLoader->AddExecuteBlocker();
+    bool willNotify;
+    bool isAlternate;
+    nsresult rv = ssle->UpdateStyleSheet(mRunsToCompletion ? nullptr : this,
+                                         &willNotify,
+                                         &isAlternate);
+    if (NS_SUCCEEDED(rv) && willNotify && !isAlternate && !mRunsToCompletion) {
+      ++mPendingSheetCount;
+      mScriptLoader->AddExecuteBlocker();
+    }
   }
 
   if (aElement->IsHTMLElement(nsGkAtoms::link)) {

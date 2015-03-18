@@ -296,13 +296,14 @@ txMozillaXMLOutput::endElement()
         } else if (element->IsSVGElement(nsGkAtoms::script) ||
                    element->IsHTMLElement(nsGkAtoms::script)) {
             nsCOMPtr<nsIScriptElement> sele = do_QueryInterface(element);
-            MOZ_ASSERT(sele, "script elements need to implement nsIScriptElement");
-            bool block = sele->AttemptToExecute();
-            // If the act of insertion evaluated the script, we're fine.
-            // Else, add this script element to the array of loading scripts.
-            if (block) {
-                rv = mNotifier->AddScriptElement(sele);
-                NS_ENSURE_SUCCESS(rv, rv);
+            if (sele) {
+                bool block = sele->AttemptToExecute();
+                // If the act of insertion evaluated the script, we're fine.
+                // Else, add this script element to the array of loading scripts.
+                if (block) {
+                    rv = mNotifier->AddScriptElement(sele);
+                    NS_ENSURE_SUCCESS(rv, rv);
+                }
             }
         } else if (element->IsAnyOfHTMLElements(nsGkAtoms::input,
                                                 nsGkAtoms::button,
