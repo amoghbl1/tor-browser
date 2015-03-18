@@ -13,6 +13,7 @@
  */
 
 #include "nsSVGFeatures.h"
+#include "nsSVGUtils.h"
 #include "nsIContent.h"
 #include "nsIDocument.h"
 #include "mozilla/Preferences.h"
@@ -22,6 +23,12 @@ using namespace mozilla;
 /*static*/ bool
 nsSVGFeatures::HasFeature(nsISupports* aObject, const nsAString& aFeature)
 {
+  // Since we do not have access to the document here we pass nullptr, which
+  // means only the svg.in-content.enabled pref is checked. This is OK since
+  // we do not expect chrome code to use the HasFeature() API.
+  if (!NS_SVGEnabled(nullptr))
+    return false;
+
   if (aFeature.EqualsLiteral("http://www.w3.org/TR/SVG11/feature#Script")) {
     nsCOMPtr<nsIContent> content(do_QueryInterface(aObject));
     if (content) {
@@ -44,6 +51,12 @@ nsSVGFeatures::HasFeature(nsISupports* aObject, const nsAString& aFeature)
 /*static*/ bool
 nsSVGFeatures::HasExtension(const nsAString& aExtension)
 {
+  // Since we do not have access to the document here we pass nullptr, which
+  // means only the svg.in-content.enabled pref is checked. This is OK since
+  // we do not expect chrome code to use the HasExtension() API.
+  if (!NS_SVGEnabled(nullptr))
+    return false;
+
 #define SVG_SUPPORTED_EXTENSION(str) if (aExtension.EqualsLiteral(str)) return true;
   SVG_SUPPORTED_EXTENSION("http://www.w3.org/1999/xhtml")
   SVG_SUPPORTED_EXTENSION("http://www.w3.org/1998/Math/MathML")

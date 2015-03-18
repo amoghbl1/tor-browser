@@ -151,6 +151,12 @@ template<typename> class Sequence;
 template<typename, typename> class CallbackObjectHolder;
 typedef CallbackObjectHolder<NodeFilter, nsIDOMNodeFilter> NodeFilterHolder;
 
+typedef enum {
+  SVGStatus_Unknown = 0,
+  SVGStatus_Enabled,
+  SVGStatus_Disabled
+} SVGStatus;
+
 } // namespace dom
 } // namespace mozilla
 
@@ -644,6 +650,22 @@ public:
   void SetSandboxFlags(uint32_t sandboxFlags)
   {
     mSandboxFlags = sandboxFlags;
+  }
+
+  /**
+   * Get the cached SVG status for this document.
+   */
+  mozilla::dom::SVGStatus GetSVGStatus() const
+  {
+    return mSVGStatus;
+  }
+
+  /**
+   * Set the cached SVG status for this document.
+   */
+  void SetSVGStatus(mozilla::dom::SVGStatus svgStatus)
+  {
+    mSVGStatus = svgStatus;
   }
 
   /**
@@ -3049,6 +3071,9 @@ protected:
 
   // Our live MediaQueryLists
   PRCList mDOMMediaQueryLists;
+
+  // Cached value that indicates whether SVG is enabled for this document.
+  mozilla::dom::SVGStatus mSVGStatus;
 
   // Flags for use counters used directly by this document.
   std::bitset<mozilla::eUseCounter_Count> mUseCounters;

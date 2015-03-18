@@ -1435,6 +1435,7 @@ nsIDocument::nsIDocument()
     mPostedFlushUserFontSet(false),
     mPartID(0),
     mDidFireDOMContentLoaded(true),
+    mSVGStatus(mozilla::dom::SVGStatus_Unknown),
     mUserHasInteracted(false)
 {
   SetInDocument();
@@ -2238,6 +2239,8 @@ nsDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
   mReferrer.Truncate();
 
   mXMLDeclarationBits = 0;
+
+  mSVGStatus = SVGStatus_Unknown;
 
   // Now get our new principal
   if (aPrincipal) {
