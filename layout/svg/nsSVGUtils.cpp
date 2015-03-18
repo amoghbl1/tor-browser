@@ -50,6 +50,8 @@
 #include "nsSVGPaintServerFrame.h"
 #include "mozilla/dom/SVGSVGElement.h"
 #include "nsTextFrame.h"
+#include "nsNetUtil.h"
+#include "nsContentUtils.h"
 #include "SVGContentUtils.h"
 #include "mozilla/unused.h"
 
@@ -57,10 +59,42 @@ using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::gfx;
 
+static bool sSVGEnabledInContent;
 static bool sSVGPathCachingEnabled;
 static bool sSVGDisplayListHitTestingEnabled;
 static bool sSVGDisplayListPaintingEnabled;
 static bool sSVGNewGetBBoxEnabled;
+
+// Determine if SVG should be enabled for aDoc.  The svg.in-content.enabled
+// preference is checked as well as whether aDoc is a content or chrome doc.
+// If aChannel is NULL, the pref. value is returned.
+bool
+NS_SVGEnabled(nsIDocument *aDoc)
+{
+  return NS_SVGEnabledForChannel(aDoc ? aDoc->GetChannel() : nullptr);
+}
+
+// Determine if SVG should be enabled for aChannel.  The svg.in-content.enabled
+// preference is checked as well as whether the load context associated with
+// aChannel is content or chrome.
+// If aChannel is NULL, the pref. value is returned.
+bool
+NS_SVGEnabledForChannel(nsIChannel *aChannel)
+{
+  if (sSVGEnabledInContent)
+    return true;
+
+  if (!aChannel)
+    return false;
+
+  bool isContent = true;
+  nsCOMPtr<nsILoadContext> ctx;
+  NS_QueryNotificationCallbacks(aChannel, ctx);
+  if (ctx)
+    ctx->GetIsContent(&isContent);
+
+  return !isContent;
+}
 
 bool
 NS_SVGPathCachingEnabled()
@@ -132,6 +166,9 @@ SVGAutoRenderState::IsPaintingToWindow(DrawTarget* aDrawTarget)
 void
 nsSVGUtils::Init()
 {
+  Preferences::AddBoolVarCache(&sSVGEnabledInContent,
+                               "svg.in-content.enabled");
+
   Preferences::AddBoolVarCache(&sSVGPathCachingEnabled,
                                "svg.path-caching.enabled");
 

@@ -82,6 +82,9 @@ bool NS_SVGDisplayListHitTestingEnabled();
 bool NS_SVGDisplayListPaintingEnabled();
 bool NS_SVGNewGetBBoxEnabled();
 
+bool NS_SVGEnabled(nsIDocument *aDoc);
+bool NS_SVGEnabledForChannel(nsIChannel *aChannel);
+
 /**
  * Sometimes we need to distinguish between an empty box and a box
  * that contains an element that has no size e.g. a point at the origin.
