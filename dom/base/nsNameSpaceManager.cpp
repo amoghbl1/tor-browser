@@ -18,6 +18,7 @@
 #include "nsContentCreatorFunctions.h"
 #include "nsString.h"
 #include "mozilla/dom/NodeInfo.h"
+#include "nsSVGUtils.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/XBLChildrenElement.h"
 #include "mozilla/dom/Element.h"
@@ -175,12 +176,12 @@ NS_NewElement(Element** aResult,
     }
 
     nsNodeInfoManager *niMgr = ni->NodeInfoManager();
-    nsRefPtr<mozilla::dom::NodeInfo> genericXMLNI
+    RefPtr<mozilla::dom::NodeInfo> genericXMLNI
       = niMgr->GetNodeInfo(ni->NameAtom(), ni->GetPrefixAtom(),
           kNameSpaceID_XML, ni->NodeType(), ni->GetExtraName());
     return NS_NewXMLElement(aResult, genericXMLNI.forget());
   }
-  if (ns == kNameSpaceID_SVG) {
+  if (ns == kNameSpaceID_SVG && NS_SVGEnabled(ni->GetDocument())) {
     return NS_NewSVGElement(aResult, ni.forget(), aFromParser);
   }
   if (ns == kNameSpaceID_XBL && ni->Equals(nsGkAtoms::children)) {
