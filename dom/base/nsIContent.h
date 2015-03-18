@@ -274,15 +274,9 @@ public:
     return mNodeInfo->Equals(aTag, kNameSpaceID_XHTML);
   }
 
-  inline bool IsSVG() const
-  {
-    return IsInNamespace(kNameSpaceID_SVG);
-  }
+  bool IsSVG() const;
 
-  inline bool IsSVG(nsIAtom* aTag) const
-  {
-    return mNodeInfo->Equals(aTag, kNameSpaceID_SVG);
-  }
+  bool IsSVG(nsIAtom* aTag) const;
 
   inline bool IsXUL() const
   {

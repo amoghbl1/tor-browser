@@ -1575,7 +1575,8 @@ nsIDocument::nsIDocument()
     mIsBeingUsedAsImage(false),
     mHasLinksToUpdate(false),
     mPartID(0),
-    mDidFireDOMContentLoaded(true)
+    mDidFireDOMContentLoaded(true),
+    mSVGStatus(mozilla::dom::SVGStatus_Unknown)
 {
   SetInDocument();
 
@@ -2419,6 +2420,8 @@ nsDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
   mReferrer.Truncate();
 
   mXMLDeclarationBits = 0;
+
+  mSVGStatus = SVGStatus_Unknown;
 
   // Now get our new principal
   if (aPrincipal) {
