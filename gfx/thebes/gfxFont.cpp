@@ -38,6 +38,7 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/Telemetry.h"
+#include "nsSVGUtils.h"
 #include "gfxSVGGlyphs.h"
 #include "gfxMathTable.h"
 #include "gfx2DGlue.h"
@@ -364,7 +365,10 @@ gfxFontEntry::RenderSVGGlyph(gfxContext *aContext, uint32_t aGlyphId,
 bool
 gfxFontEntry::TryGetSVGData(gfxFont* aFont)
 {
-    if (!gfxPlatform::GetPlatform()->OpenTypeSVGEnabled()) {
+    // For the NS_SVGEnabled() check, we pass nullptr because we do not have
+    // access to the document here. That is OK because we do not expect
+    // chrome documents to use custom fonts that contain embedded SVG glyphs.
+    if (!gfxPlatform::GetPlatform()->OpenTypeSVGEnabled() || !NS_SVGEnabled(nullptr)) {
         return false;
     }
 

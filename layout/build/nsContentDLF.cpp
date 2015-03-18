@@ -25,6 +25,7 @@
 #include "nsCRT.h"
 #include "nsIViewSourceChannel.h"
 #include "nsContentUtils.h"
+#include "nsSVGUtils.h"
 #include "imgLoader.h"
 #include "nsCharsetSource.h"
 #include "nsMimeTypes.h"
@@ -171,9 +172,11 @@ nsContentDLF::CreateInstance(const char* aCommand,
       }
     }
 
-    for (typeIndex = 0; gSVGTypes[typeIndex] && !knownType; ++typeIndex) {
-      if (type.Equals(gSVGTypes[typeIndex])) {
-        knownType = true;
+    if (NS_SVGEnabledForChannel(aChannel)) {
+      for (typeIndex = 0; gSVGTypes[typeIndex] && !knownType; ++typeIndex) {
+        if (type.Equals(gSVGTypes[typeIndex])) {
+          knownType = true;
+        }
       }
     }
 
@@ -218,14 +221,16 @@ nsContentDLF::CreateInstance(const char* aCommand,
     }
   }
 
-  // Try SVG
-  typeIndex = 0;
-  while(gSVGTypes[typeIndex]) {
-    if (!PL_strcmp(gSVGTypes[typeIndex++], aContentType)) {
-      return CreateDocument(aCommand,
-                            aChannel, aLoadGroup,
-                            aContainer, kSVGDocumentCID,
-                            aDocListener, aDocViewer);
+  if (NS_SVGEnabledForChannel(aChannel)) {
+    // Try SVG
+    typeIndex = 0;
+    while(gSVGTypes[typeIndex]) {
+      if (!PL_strcmp(gSVGTypes[typeIndex++], aContentType)) {
+        return CreateDocument(aCommand,
+                              aChannel, aLoadGroup,
+                              aContainer, kSVGDocumentCID,
+                              aDocListener, aDocViewer);
+      }
     }
   }
 

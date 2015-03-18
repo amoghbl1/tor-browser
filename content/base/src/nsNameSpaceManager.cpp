@@ -17,6 +17,7 @@
 #include "nsContentCreatorFunctions.h"
 #include "nsString.h"
 #include "nsINodeInfo.h"
+#include "nsSVGUtils.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/dom/XBLChildrenElement.h"
 #include "mozilla/dom/Element.h"
@@ -153,7 +154,7 @@ NS_NewElement(Element** aResult,
   if (ns == kNameSpaceID_MathML) {
     return NS_NewMathMLElement(aResult, ni.forget());
   }
-  if (ns == kNameSpaceID_SVG) {
+  if (ns == kNameSpaceID_SVG && NS_SVGEnabled(ni->GetDocument())) {
     return NS_NewSVGElement(aResult, ni.forget(), aFromParser);
   }
   if (ns == kNameSpaceID_XBL && ni->Equals(nsGkAtoms::children)) {
