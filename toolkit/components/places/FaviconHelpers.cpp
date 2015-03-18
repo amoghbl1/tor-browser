@@ -22,6 +22,7 @@
 #include "nsISupportsPriority.h"
 #include "nsContentUtils.h"
 #include <algorithm>
+#include "nsSVGUtils.h"
 
 using namespace mozilla::places;
 using namespace mozilla::storage;
@@ -569,8 +570,11 @@ AsyncFetchAndSetIconForPage::OnStopRequest(nsIRequest* aRequest,
                     mIcon.mimeType);
   }
 
-  // If the icon does not have a valid MIME type, add it to the failed cache.
-  if (mIcon.mimeType.IsEmpty()) {
+  // If the icon does not have a valid MIME type, or if it is an SVG and
+  // SVG images are disabled for content, add it to the failed cache.
+  if (mIcon.mimeType.IsEmpty() ||
+      (mIcon.mimeType.EqualsLiteral("image/svg+xml")
+       && !NS_SVGEnabled(nullptr))) {
     nsCOMPtr<nsIURI> iconURI;
     rv = NS_NewURI(getter_AddRefs(iconURI), mIcon.spec);
     NS_ENSURE_SUCCESS(rv, rv);

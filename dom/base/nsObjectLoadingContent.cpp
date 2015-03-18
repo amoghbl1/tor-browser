@@ -59,6 +59,7 @@
 #include "nsMimeTypes.h"
 #include "nsStyleUtil.h"
 #include "nsUnicharUtils.h"
+#include "nsSVGUtils.h"
 #include "mozilla/Preferences.h"
 #include "nsSandboxFlags.h"
 
@@ -2874,8 +2875,18 @@ nsObjectLoadingContent::GetTypeOfContent(const nsCString& aMIMEType)
     return eType_Document;
   }
 
-  if ((caps & eSupportDocuments) && IsSupportedDocument(aMIMEType)) {
-    return eType_Document;
+  bool isSVG = aMIMEType.LowerCaseEqualsLiteral("image/svg+xml");
+  bool isSVGEnabled = false;
+  if (isSVG) {
+    nsCOMPtr<nsIContent> thisContent =
+              do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
+    isSVGEnabled = NS_SVGEnabled(thisContent->OwnerDoc());
+  }
+
+  if (isSVGEnabled || !isSVG) {
+    if ((caps & eSupportDocuments) && IsSupportedDocument(aMIMEType)) {
+      return eType_Document;
+    }
   }
 
   RefPtr<nsPluginHost> pluginHost = nsPluginHost::GetInst();

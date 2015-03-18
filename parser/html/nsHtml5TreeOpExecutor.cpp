@@ -639,6 +639,8 @@ nsHtml5TreeOpExecutor::RunScript(nsIContent* aScriptElement)
 
   NS_ASSERTION(aScriptElement, "No script to run");
   nsCOMPtr<nsIScriptElement> sele = do_QueryInterface(aScriptElement);
+  if (!sele)
+    return;
   
   if (!mParser) {
     NS_ASSERTION(sele->IsMalformed(), "Script wasn't marked as malformed.");

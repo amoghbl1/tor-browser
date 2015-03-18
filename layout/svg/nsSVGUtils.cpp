@@ -51,18 +51,163 @@
 #include "nsSVGPaintServerFrame.h"
 #include "mozilla/dom/SVGSVGElement.h"
 #include "nsTextFrame.h"
+#include "nsNetUtil.h"
+#include "nsContentUtils.h"
 #include "SVGContentUtils.h"
 #include "SVGTextFrame.h"
 #include "mozilla/Unused.h"
+#include "nsIDocument.h"
+#include "mozIThirdPartyUtil.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::gfx;
 
+static bool sSVGEnabledInContent;
 static bool sSVGPathCachingEnabled;
 static bool sSVGDisplayListHitTestingEnabled;
 static bool sSVGDisplayListPaintingEnabled;
 static bool sSVGNewGetBBoxEnabled;
+
+static bool IsWhitelisted(nsIURI *aURI);
+
+// Determine if SVG should be enabled for aDoc.  The svg.in-content.enabled
+// preference is checked, then we check whether aDoc is a chrome doc, and
+// finally as a fallback we check whether the top-level document is
+// whitelisted (e.g., about:preferences).
+// If aDoc is NULL, the pref. value is returned.
+// Once we determine whether SVG is allowed for a given document, we record
+// that fact inside the document.  This is necessary to avoid crashes due
+// to code that uses static_cast to cast an element object to an nsSVGElement
+// object.  When SVG is disabled, <svg> and related tags are not represented
+// by nsSVGElement objects.
+bool
+NS_SVGEnabled(nsIDocument *aDoc)
+{
+  if (!aDoc)
+    return NS_SVGEnabledForChannel(nullptr);
+
+  mozilla::dom::SVGStatus svgStatus = aDoc->GetSVGStatus();
+  if (svgStatus == mozilla::dom::SVGStatus_Unknown)
+  {
+    svgStatus = NS_SVGEnabledForChannel(aDoc->GetChannel()) ?
+           mozilla::dom::SVGStatus_Enabled : mozilla::dom::SVGStatus_Disabled;
+    aDoc->SetSVGStatus(svgStatus);
+  }
+
+  return (svgStatus == mozilla::dom::SVGStatus_Enabled);
+}
+
+// Determine if SVG should be enabled for aChannel.  The svg.in-content.enabled
+// preference is checked, then we check whether the load context associated
+// with aChannel is a chrome doc, and finally as a fallback we check whether
+// the top-level document is whitelisted (e.g., about:preferences).
+// If aChannel is NULL, the pref. value is returned.
+bool
+NS_SVGEnabledForChannel(nsIChannel *aChannel)
+{
+  if (sSVGEnabledInContent)
+    return true;
+
+  if (!aChannel)
+    return false;
+
+#ifdef DEBUG_SVG_ENABLE
+  nsAutoCString topDocSpec;  // Set if approved via a whitelisted top doc.
+  bool checkedSystemPrincipal = false;
+#endif
+
+  bool isSVGAllowed = false;
+  nsCOMPtr<nsILoadContext> ctx;
+  NS_QueryNotificationCallbacks(aChannel, ctx);
+  if (ctx) {
+    bool isContent = true;
+    ctx->GetIsContent(&isContent);
+    if (!isContent) {
+      isSVGAllowed = true;
+    } else {
+      // Disallowed.  As a fallback, check for whitelisted URLs.
+      uint32_t loadFlags = 0;
+      aChannel->GetLoadFlags(&loadFlags);
+      if (loadFlags & nsIChannel::LOAD_INITIAL_DOCUMENT_URI) {
+        // This is the top-level load; just check the channel's URL.
+        nsCOMPtr<nsIURI> uri;
+        aChannel->GetOriginalURI(getter_AddRefs(uri));
+        isSVGAllowed = IsWhitelisted(uri);
+#ifdef DEBUG_SVG_ENABLE
+        if (isSVGAllowed)
+          uri->GetSpec(topDocSpec);
+#endif
+      } else {
+        // Obtain the top window and check it's URI.
+        nsCOMPtr<mozIDOMWindowProxy> topWin;
+        ctx->GetTopWindow(getter_AddRefs(topWin));
+        nsCOMPtr<nsIURI> topDocURI;
+        if (topWin) {
+          nsCOMPtr<mozIThirdPartyUtil> util = do_GetService(THIRDPARTYUTIL_CONTRACTID);
+          if (util) {
+            nsresult rv = util->GetURIFromWindow(topWin, getter_AddRefs(topDocURI));
+            if (NS_SUCCEEDED(rv) && topDocURI) {
+              isSVGAllowed = IsWhitelisted(topDocURI);
+#ifdef DEBUG_SVG_ENABLE
+              if (isSVGAllowed)
+                topDocURI->GetSpec(topDocSpec);
+#endif
+            } else {
+              // Unable to retrieve the top window's URI. Fallback to checking
+              // the system principal (see bug 21962).
+#ifdef DEBUG_SVG_ENABLE
+              checkedSystemPrincipal = true;
+#endif
+              nsCOMPtr<nsIScriptObjectPrincipal> scriptObjPrin =
+                                                    do_QueryInterface(topWin);
+              if (scriptObjPrin) {
+                isSVGAllowed = nsContentUtils::IsSystemPrincipal(
+                                               scriptObjPrin->GetPrincipal());
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+#ifdef DEBUG_SVG_ENABLE
+  nsAutoCString spec;
+  nsCOMPtr<nsIURI> uri;
+  aChannel->GetOriginalURI(getter_AddRefs(uri));
+  if (uri)
+    uri->GetSpec(spec);
+
+  if (checkedSystemPrincipal) {
+    printf("NS_SVGEnabledForChannel for %s: %s (via system principal check)\n",
+           spec.get(), isSVGAllowed ? "YES" : "NO");
+  } else if (topDocSpec.IsEmpty()) {
+    printf("NS_SVGEnabledForChannel for %s: %s\n", spec.get(),
+           isSVGAllowed ? "YES" : "NO");
+  } else {
+    printf("NS_SVGEnabledForChannel for %s: %s (via whitelisted top doc %s)\n",
+           spec.get(), isSVGAllowed ? "YES" : "NO", topDocSpec.get());
+  }
+#endif
+
+  return isSVGAllowed;
+}
+
+// Always allow SVG for about: URLs so that about:preferences and other
+// built-in browser pages function correctly.  Exclude about:blank because
+// iframes initially contain about:blank documents, and since we cache the
+// SVG status we must avoid enabling SVG in that case.
+static bool
+IsWhitelisted(nsIURI *aURI)
+{
+  if (!aURI)
+    return false;
+
+  nsAutoCString scheme;
+  aURI->GetScheme(scheme);
+  return scheme.EqualsLiteral("about") && !NS_IsAboutBlank(aURI);
+}
 
 bool
 NS_SVGPathCachingEnabled()
@@ -134,6 +279,9 @@ SVGAutoRenderState::IsPaintingToWindow(DrawTarget* aDrawTarget)
 void
 nsSVGUtils::Init()
 {
+  Preferences::AddBoolVarCache(&sSVGEnabledInContent,
+                               "svg.in-content.enabled");
+
   Preferences::AddBoolVarCache(&sSVGPathCachingEnabled,
                                "svg.path-caching.enabled");
 
@@ -1093,9 +1241,10 @@ nsSVGUtils::GetBBox(nsIFrame *aFrame, uint32_t aFlags)
       // needs investigation to check that we won't break too much content.
       // NOTE: When changing this to apply to other frame types, make sure to
       // also update nsSVGUtils::FrameSpaceInCSSPxToUserSpaceOffset.
-      MOZ_ASSERT(content->IsSVGElement(), "bad cast");
-      nsSVGElement *element = static_cast<nsSVGElement*>(content);
-      matrix = element->PrependLocalTransformsTo(matrix, eChildToUserSpace);
+      if (content->IsSVGElement()) {
+        nsSVGElement *element = static_cast<nsSVGElement*>(content);
+        matrix = element->PrependLocalTransformsTo(matrix, eChildToUserSpace);
+      }
     }
     bbox = svg->GetBBoxContribution(ToMatrix(matrix), aFlags).ToThebesRect();
     // Account for 'clipped'.
@@ -1301,7 +1450,9 @@ nsSVGUtils::GetNonScalingStrokeTransform(nsIFrame *aFrame,
   }
 
   nsIContent *content = aFrame->GetContent();
-  MOZ_ASSERT(content->IsSVGElement(), "bad cast");
+  if (!content->IsSVGElement()) {
+    return false;
+  }
 
   *aUserToOuterSVG = ThebesMatrix(SVGContentUtils::GetCTM(
                        static_cast<nsSVGElement*>(content), true));
@@ -1597,6 +1748,10 @@ nsSVGUtils::GetStrokeWidth(nsIFrame* aFrame, SVGContextPaint* aContextPaint)
     content = content->GetParent();
   }
 
+  if (!aFrame->GetContent()->IsSVGElement()) {
+    return 0.0;
+  }
+
   nsSVGElement *ctx = static_cast<nsSVGElement*>(content);
 
   return SVGContentUtils::CoordToFloat(ctx, style->mStrokeWidth);
@@ -1610,6 +1765,9 @@ GetStrokeDashData(nsIFrame* aFrame,
 {
   const nsStyleSVG* style = aFrame->StyleSVG();
   nsIContent *content = aFrame->GetContent();
+  if (!content->IsSVGElement()) {
+    return false;
+  }
   nsSVGElement *ctx = static_cast<nsSVGElement*>
     (content->IsNodeOfType(nsINode::eTEXT) ?
      content->GetParent() : content);
