@@ -19,6 +19,7 @@
 #include "Image.h"
 #include "nsMediaFragmentURIParser.h"
 #include "nsContentUtils.h"
+#include "nsSVGUtils.h"
 #include "nsIScriptSecurityManager.h"
 
 #include "ImageFactory.h"
@@ -98,6 +99,17 @@ ComputeImageFlags(ImageURL* uri, const nsCString& aMimeType, bool isMultiPart)
   return imageFlags;
 }
 
+// Marks an image as having an error before returning it. Used with macros like
+// NS_ENSURE_SUCCESS, since we guarantee to always return an image even if an
+// error occurs, but callers need to be able to tell that this happened.
+template <typename T>
+static already_AddRefed<Image>
+BadImage(nsRefPtr<T>& image)
+{
+  image->SetHasError();
+  return image.forget();
+}
+
 /* static */ already_AddRefed<Image>
 ImageFactory::CreateImage(nsIRequest* aRequest,
                           ProgressTracker* aProgressTracker,
@@ -114,23 +126,22 @@ ImageFactory::CreateImage(nsIRequest* aRequest,
 
   // Select the type of image to create based on MIME type.
   if (aMimeType.EqualsLiteral(IMAGE_SVG_XML)) {
+    nsCOMPtr<nsIChannel> channel(do_QueryInterface(aRequest));
+    if (!NS_SVGEnabledForChannel(channel)) {
+      // SVG is disabled.  We must return an image object that is marked
+      // "bad", but we want to avoid invoking the VectorImage class (SVG code),
+      // so we return a PNG with the error flag set.
+      nsRefPtr<RasterImage> badImage = new RasterImage(aProgressTracker, aURI);
+      (void)badImage->Init(IMAGE_PNG, Image::INIT_FLAG_NONE);
+      return BadImage(badImage);
+    }
+
     return CreateVectorImage(aRequest, aProgressTracker, aMimeType,
                              aURI, imageFlags, aInnerWindowId);
   } else {
     return CreateRasterImage(aRequest, aProgressTracker, aMimeType,
                              aURI, imageFlags, aInnerWindowId);
   }
-}
-
-// Marks an image as having an error before returning it. Used with macros like
-// NS_ENSURE_SUCCESS, since we guarantee to always return an image even if an
-// error occurs, but callers need to be able to tell that this happened.
-template <typename T>
-static already_AddRefed<Image>
-BadImage(nsRefPtr<T>& image)
-{
-  image->SetHasError();
-  return image.forget();
 }
 
 /* static */ already_AddRefed<Image>

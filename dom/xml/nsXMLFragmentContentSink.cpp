@@ -230,8 +230,8 @@ nsXMLFragmentContentSink::CloseElement(nsIContent* aContent)
   if (mPreventScriptExecution && aContent->Tag() == nsGkAtoms::script &&
       (aContent->IsHTML() || aContent->IsSVG())) {
     nsCOMPtr<nsIScriptElement> sele = do_QueryInterface(aContent);
-    NS_ASSERTION(sele, "script did QI correctly!");
-    sele->PreventExecution();
+    if (sele)
+      sele->PreventExecution();
   }
   return NS_OK;
 }

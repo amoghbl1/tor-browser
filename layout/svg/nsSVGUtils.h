@@ -30,6 +30,7 @@
 class gfxContext;
 class gfxPattern;
 class nsFrameList;
+class nsIChannel;
 class nsIContent;
 class nsIDocument;
 class nsIFrame;
@@ -81,6 +82,9 @@ bool NS_SVGPathCachingEnabled();
 bool NS_SVGDisplayListHitTestingEnabled();
 bool NS_SVGDisplayListPaintingEnabled();
 bool NS_SVGNewGetBBoxEnabled();
+
+bool NS_SVGEnabled(nsIDocument *aDoc);
+bool NS_SVGEnabledForChannel(nsIChannel *aChannel);
 
 /**
  * Sometimes we need to distinguish between an empty box and a box
