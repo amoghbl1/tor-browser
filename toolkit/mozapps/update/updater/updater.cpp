@@ -3033,6 +3033,16 @@ int NS_main(int argc, NS_tchar **argv)
       // using the service is because we are testing. 
       if (!useService && !noServiceFallback && 
           updateLockFileHandle == INVALID_HANDLE_VALUE) {
+#ifdef TOR_BROWSER_UPDATE
+        // Because the user profile is contained within the Tor Browser
+        // installation directory, the user almost certainly has permission to
+        // apply updates. Therefore, to avoid potential security issues such
+        // as CVE-2015-0833, do not attempt to elevate privileges. Instead,
+        // write a "failed" message to the update status file (this function
+        // will return immediately after the CloseHandle(elevatedFileHandle)
+        // call below).
+        WriteStatusFile(WRITE_ERROR_ACCESS_DENIED);
+#else
         SHELLEXECUTEINFO sinfo;
         memset(&sinfo, 0, sizeof(SHELLEXECUTEINFO));
         sinfo.cbSize       = sizeof(SHELLEXECUTEINFO);
@@ -3054,6 +3064,7 @@ int NS_main(int argc, NS_tchar **argv)
         } else {
           WriteStatusFile(ELEVATION_CANCELED);
         }
+#endif
       }
 
       if (argc > callbackIndex) {
