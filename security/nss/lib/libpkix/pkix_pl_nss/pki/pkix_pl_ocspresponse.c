@@ -491,7 +491,7 @@ pkix_pl_OcspResponse_Create(
 			}
 
                         rv = (*hcv1->createFcn)(serverSession, "http",
-                                                sessionPath, httpMethod,
+                                                sessionPath, httpMethod, NULL,
                                                 PR_SecondsToInterval(timeout),
                                                 &sessionRequest);
 			sessionPath = NULL;
