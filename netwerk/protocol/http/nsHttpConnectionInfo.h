@@ -37,6 +37,7 @@ public:
                          const nsACString &npnToken,
                          const nsACString &username,
                          nsProxyInfo *proxyInfo,
+                         const nsACString &isolationKey,
                          bool endToEndSSL = false);
 
     // this version must use TLS and you may supply the domain
@@ -46,6 +47,7 @@ public:
                          const nsACString &npnToken,
                          const nsACString &username,
                          nsProxyInfo *proxyInfo,
+                         const nsACString &isolationKey,
                          const nsACString &logicalHost,
                          int32_t logicalPort);
 
@@ -88,6 +90,7 @@ public:
     int32_t       Port() const           { return mPort; }
     const char   *Username() const       { return mUsername.get(); }
     nsProxyInfo  *ProxyInfo()            { return mProxyInfo; }
+    const char   *IsolationKey() const   { return mIsolationKey.get(); }
     int32_t       DefaultPort() const    { return mEndToEndSSL ? NS_HTTPS_DEFAULT_PORT : NS_HTTP_DEFAULT_PORT; }
     void          SetAnonymous(bool anon)
                                          { mHashKey.SetCharAt(anon ? 'A' : '.', 2); }
@@ -133,6 +136,7 @@ private:
               const nsACString &npnToken,
               const nsACString &username,
               nsProxyInfo* proxyInfo,
+              const nsACString &isolationKey,
               bool EndToEndSSL);
     void SetOriginServer(const nsACString &host, int32_t port);
 
@@ -143,6 +147,7 @@ private:
     nsCString              mAuthenticationHost;
     int32_t                mAuthenticationPort;
     nsCOMPtr<nsProxyInfo>  mProxyInfo;
+    nsCString              mIsolationKey;
     bool                   mUsingHttpProxy;
     bool                   mUsingHttpsProxy;
     bool                   mEndToEndSSL;

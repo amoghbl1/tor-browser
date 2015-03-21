@@ -300,7 +300,7 @@ pkix_pl_AIAMgr_GetHTTPCerts(
 
 			/* create request session */
                         rv = (*hcv1->createFcn)(serverSession, "http", path,
-                        	"GET", PR_SecondsToInterval(timeout),
+                               "GET", NULL, PR_SecondsToInterval(timeout),
                                  &requestSession);
                 	if (rv != SECSuccess) {
                         	PKIX_ERROR(PKIX_HTTPSERVERERROR);

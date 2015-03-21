@@ -171,7 +171,16 @@ ThirdPartyUtil::GetOriginatingURI(nsIChannel *aChannel, nsIURI **aURI)
 
   // case 3)
   if (!topWin)
+  {
+    if (httpChannelInternal)
+    {
+      httpChannelInternal->GetDocumentURI(aURI);
+      if (*aURI) {
+        return NS_OK;
+      }
+    }
     return NS_ERROR_INVALID_ARG;
+  }
 
   // case 4)
   if (ourWin == topWin) {

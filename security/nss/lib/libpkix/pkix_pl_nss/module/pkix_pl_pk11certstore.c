@@ -827,7 +827,7 @@ DownloadCrl(pkix_pl_CrlDp *dp, PKIX_PL_CRL **crl,
                 break;
             }
 
-            if ((*hcv1->createFcn)(pServerSession, "http", path, "GET",
+            if ((*hcv1->createFcn)(pServerSession, "http", path, "GET", NULL,
                 /* Users with slow connections might not get CRL revocation 
                    checking for certs that use big CRLs because of the timeout
                    We absolutely need code that limits our retry attempts.

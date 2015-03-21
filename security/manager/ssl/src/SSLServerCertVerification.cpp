@@ -1189,6 +1189,7 @@ AuthCertificate(CertVerifier& certVerifier,
   rv = certVerifier.VerifySSLServerCert(cert, stapledOCSPResponse,
                                         time, infoObject,
                                         infoObject->GetHostNameRaw(),
+                                        infoObject->GetIsolationKeyRaw(),
                                         saveIntermediates, 0, &certList,
                                         &evOidPolicy, &ocspStaplingStatus,
                                         &keySizeStatus);

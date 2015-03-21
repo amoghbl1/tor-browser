@@ -52,7 +52,7 @@ namespace mozilla { namespace psm {
 // is computationally infeasible to find collisions that would subvert this
 // cache (given that SHA384 is a cryptographically-secure hash function).
 static SECStatus
-CertIDHash(SHA384Buffer& buf, const CertID& certID)
+CertIDHash(SHA384Buffer& buf, const CertID& certID, const char* aIsolationKey)
 {
   ScopedPK11Context context(PK11_CreateDigestContext(SEC_OID_SHA384));
   if (!context) {
@@ -81,6 +81,13 @@ CertIDHash(SHA384Buffer& buf, const CertID& certID)
   if (rv != SECSuccess) {
     return rv;
   }
+  if (aIsolationKey) {
+    rv = PK11_DigestOp(context.get(), (const unsigned char*) aIsolationKey,
+                       strlen(aIsolationKey));
+    if (rv != SECSuccess) {
+      return rv;
+    }
+  }
   uint32_t outLen = 0;
   rv = PK11_DigestFinal(context.get(), buf, &outLen, SHA384_LENGTH);
   if (outLen != SHA384_LENGTH) {
@@ -90,9 +97,9 @@ CertIDHash(SHA384Buffer& buf, const CertID& certID)
 }
 
 Result
-OCSPCache::Entry::Init(const CertID& aCertID)
+OCSPCache::Entry::Init(const CertID& aCertID, const char* aIsolationKey)
 {
-  SECStatus srv = CertIDHash(mIDHash, aCertID);
+  SECStatus srv = CertIDHash(mIDHash, aCertID, aIsolationKey);
   if (srv != SECSuccess) {
     return MapPRErrorCodeToResult(PR_GetError());
   }
@@ -112,7 +119,9 @@ OCSPCache::~OCSPCache()
 // Returns false with index in an undefined state if no matching entry was
 // found.
 bool
-OCSPCache::FindInternal(const CertID& aCertID, /*out*/ size_t& index,
+OCSPCache::FindInternal(const CertID& aCertID,
+                        const char* aIsolationKey,
+                        /*out*/ size_t& index,
                         const MutexAutoLock& /* aProofOfLock */)
 {
   if (mEntries.length() == 0) {
@@ -120,7 +129,7 @@ OCSPCache::FindInternal(const CertID& aCertID, /*out*/ size_t& index,
   }
 
   SHA384Buffer idHash;
-  SECStatus rv = CertIDHash(idHash, aCertID);
+  SECStatus rv = CertIDHash(idHash, aCertID, aIsolationKey);
   if (rv != SECSuccess) {
     return false;
   }
@@ -155,12 +164,13 @@ OCSPCache::MakeMostRecentlyUsed(size_t aIndex,
 }
 
 bool
-OCSPCache::Get(const CertID& aCertID, Result& aResult, Time& aValidThrough)
+OCSPCache::Get(const CertID& aCertID, const char* aIsolationKey,
+               Result& aResult, Time& aValidThrough)
 {
   MutexAutoLock lock(mMutex);
 
   size_t index;
-  if (!FindInternal(aCertID, index, lock)) {
+  if (!FindInternal(aCertID, aIsolationKey, index, lock)) {
     LogWithCertID("OCSPCache::Get(%p) not in cache", aCertID);
     return false;
   }
@@ -172,13 +182,15 @@ OCSPCache::Get(const CertID& aCertID, Result& aResult, Time& aValidThrough)
 }
 
 Result
-OCSPCache::Put(const CertID& aCertID, Result aResult,
+OCSPCache::Put(const CertID& aCertID,
+               const char* aIsolationKey,
+               Result aResult,
                Time aThisUpdate, Time aValidThrough)
 {
   MutexAutoLock lock(mMutex);
 
   size_t index;
-  if (FindInternal(aCertID, index, lock)) {
+  if (FindInternal(aCertID, aIsolationKey, index, lock)) {
     // Never replace an entry indicating a revoked certificate.
     if (mEntries[index]->mResult == Result::ERROR_REVOKED_CERTIFICATE) {
       LogWithCertID("OCSPCache::Put(%p) already in cache as revoked - "
@@ -249,7 +261,7 @@ OCSPCache::Put(const CertID& aCertID, Result aResult,
   if (!newEntry) {
     return Result::FATAL_ERROR_NO_MEMORY;
   }
-  Result rv = newEntry->Init(aCertID);
+  Result rv = newEntry->Init(aCertID, aIsolationKey);
   if (rv != Success) {
     delete newEntry;
     return rv;

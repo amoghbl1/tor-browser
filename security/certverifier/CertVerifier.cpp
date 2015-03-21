@@ -170,6 +170,7 @@ static const unsigned int MINIMUM_NON_ECC_BITS_WEAK = 1024;
 SECStatus
 CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
                          Time time, void* pinArg, const char* hostname,
+                         const char* isolationKey,
                          const Flags flags,
             /*optional*/ const SECItem* stapledOCSPResponseSECItem,
         /*optional out*/ ScopedCERTCertList* builtChain,
@@ -248,8 +249,8 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
       // just use trustEmail as it is the closest alternative.
       NSSCertDBTrustDomain trustDomain(trustEmail, ocspFetching, mOCSPCache,
                                        pinArg, ocspGETConfig, pinningDisabled,
-                                       MINIMUM_NON_ECC_BITS_WEAK, nullptr,
-                                       builtChain);
+                                       MINIMUM_NON_ECC_BITS_WEAK, isolationKey,
+                                       nullptr, builtChain);
       rv = BuildCertChain(trustDomain, certDER, time,
                           EndEntityOrCA::MustBeEndEntity,
                           KeyUsage::digitalSignature,
@@ -275,7 +276,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
                         ? NSSCertDBTrustDomain::LocalOnlyOCSPForEV
                         : NSSCertDBTrustDomain::FetchOCSPForEV,
                       mOCSPCache, pinArg, ocspGETConfig, mPinningMode,
-                      MINIMUM_NON_ECC_BITS, hostname, builtChain);
+                      MINIMUM_NON_ECC_BITS, isolationKey, hostname, builtChain);
         rv = BuildCertChainForOneKeyUsage(trustDomain, certDER, time,
                                           KeyUsage::digitalSignature,// (EC)DHE
                                           KeyUsage::keyEncipherment, // RSA
@@ -300,7 +301,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
       // Now try non-EV.
       NSSCertDBTrustDomain trustDomain(trustSSL, ocspFetching, mOCSPCache,
                                        pinArg, ocspGETConfig, mPinningMode,
-                                       MINIMUM_NON_ECC_BITS, hostname,
+                                       MINIMUM_NON_ECC_BITS, isolationKey, hostname,
                                        builtChain);
       rv = BuildCertChainForOneKeyUsage(trustDomain, certDER, time,
                                         KeyUsage::digitalSignature, // (EC)DHE
@@ -320,7 +321,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
       // If that failed, try again with a smaller minimum key size.
       NSSCertDBTrustDomain trustDomainWeak(trustSSL, ocspFetching, mOCSPCache,
                                            pinArg, ocspGETConfig, mPinningMode,
-                                           MINIMUM_NON_ECC_BITS_WEAK, hostname,
+                                           MINIMUM_NON_ECC_BITS_WEAK, isolationKey, hostname,
                                            builtChain);
       rv = BuildCertChainForOneKeyUsage(trustDomainWeak, certDER, time,
                                         KeyUsage::digitalSignature, // (EC)DHE
@@ -344,8 +345,8 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
     case certificateUsageSSLCA: {
       NSSCertDBTrustDomain trustDomain(trustSSL, ocspFetching, mOCSPCache,
                                        pinArg, ocspGETConfig, pinningDisabled,
-                                       MINIMUM_NON_ECC_BITS_WEAK, nullptr,
-                                       builtChain);
+                                       MINIMUM_NON_ECC_BITS_WEAK, isolationKey,
+                                       nullptr, builtChain);
       rv = BuildCertChain(trustDomain, certDER, time,
                           EndEntityOrCA::MustBeCA, KeyUsage::keyCertSign,
                           KeyPurposeId::id_kp_serverAuth,
@@ -356,8 +357,8 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
     case certificateUsageEmailSigner: {
       NSSCertDBTrustDomain trustDomain(trustEmail, ocspFetching, mOCSPCache,
                                        pinArg, ocspGETConfig, pinningDisabled,
-                                       MINIMUM_NON_ECC_BITS_WEAK, nullptr,
-                                       builtChain);
+                                       MINIMUM_NON_ECC_BITS_WEAK, isolationKey,
+                                       nullptr, builtChain);
       rv = BuildCertChain(trustDomain, certDER, time,
                           EndEntityOrCA::MustBeEndEntity,
                           KeyUsage::digitalSignature,
@@ -379,8 +380,8 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
       // based on the result of the verification(s).
       NSSCertDBTrustDomain trustDomain(trustEmail, ocspFetching, mOCSPCache,
                                        pinArg, ocspGETConfig, pinningDisabled,
-                                       MINIMUM_NON_ECC_BITS_WEAK, nullptr,
-                                       builtChain);
+                                       MINIMUM_NON_ECC_BITS_WEAK, isolationKey,
+                                       nullptr, builtChain);
       rv = BuildCertChain(trustDomain, certDER, time,
                           EndEntityOrCA::MustBeEndEntity,
                           KeyUsage::keyEncipherment, // RSA
@@ -400,8 +401,8 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
       NSSCertDBTrustDomain trustDomain(trustObjectSigning, ocspFetching,
                                        mOCSPCache, pinArg, ocspGETConfig,
                                        pinningDisabled,
-                                       MINIMUM_NON_ECC_BITS_WEAK, nullptr,
-                                       builtChain);
+                                       MINIMUM_NON_ECC_BITS_WEAK, isolationKey,
+                                       nullptr, builtChain);
       rv = BuildCertChain(trustDomain, certDER, time,
                           EndEntityOrCA::MustBeEndEntity,
                           KeyUsage::digitalSignature,
@@ -430,7 +431,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
 
       NSSCertDBTrustDomain sslTrust(trustSSL, ocspFetching, mOCSPCache, pinArg,
                                     ocspGETConfig, pinningDisabled,
-                                    MINIMUM_NON_ECC_BITS_WEAK, nullptr,
+                                    MINIMUM_NON_ECC_BITS_WEAK, isolationKey, nullptr,
                                     builtChain);
       rv = BuildCertChain(sslTrust, certDER, time, endEntityOrCA,
                           keyUsage, eku, CertPolicyId::anyPolicy,
@@ -438,7 +439,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
       if (rv == Result::ERROR_UNKNOWN_ISSUER) {
         NSSCertDBTrustDomain emailTrust(trustEmail, ocspFetching, mOCSPCache,
                                         pinArg, ocspGETConfig, pinningDisabled,
-                                        MINIMUM_NON_ECC_BITS_WEAK, nullptr,
+                                        MINIMUM_NON_ECC_BITS_WEAK, isolationKey, nullptr,
                                         builtChain);
         rv = BuildCertChain(emailTrust, certDER, time, endEntityOrCA,
                             keyUsage, eku, CertPolicyId::anyPolicy,
@@ -449,6 +450,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert, SECCertificateUsage usage,
                                                   pinArg, ocspGETConfig,
                                                   pinningDisabled,
                                                   MINIMUM_NON_ECC_BITS_WEAK,
+                                                  isolationKey,
                                                   nullptr, builtChain);
           rv = BuildCertChain(objectSigningTrust, certDER, time,
                               endEntityOrCA, keyUsage, eku,
@@ -477,6 +479,7 @@ CertVerifier::VerifySSLServerCert(CERTCertificate* peerCert,
                                   Time time,
                      /*optional*/ void* pinarg,
                                   const char* hostname,
+                                  const char* isolationKey,
                                   bool saveIntermediatesInPermanentDatabase,
                                   Flags flags,
                  /*optional out*/ ScopedCERTCertList* builtChain,
@@ -505,7 +508,7 @@ CertVerifier::VerifySSLServerCert(CERTCertificate* peerCert,
   // CreateCertErrorRunnable assumes that CheckCertHostname is only called
   // if VerifyCert succeeded.
   SECStatus rv = VerifyCert(peerCert, certificateUsageSSLServer, time, pinarg,
-                            hostname, flags, stapledOCSPResponse,
+                            hostname, isolationKey, flags, stapledOCSPResponse,
                             &builtChainTemp, evOidPolicy, ocspStaplingStatus,
                             keySizeStatus);
   if (rv != SECSuccess) {
