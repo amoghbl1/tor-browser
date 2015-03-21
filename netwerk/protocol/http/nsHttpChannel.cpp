@@ -2710,7 +2710,7 @@ nsHttpChannel::OpenCacheEntry(bool isHttps)
     nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
          = do_GetService(THIRDPARTYUTIL_CONTRACTID);
     rv = thirdPartySvc->GetFirstPartyIsolationURI(this, nullptr,
-                                           getter_AddRefs(firstPartyIsolationURI));
+                                       getter_AddRefs(firstPartyIsolationURI));
     if (NS_SUCCEEDED(rv) && firstPartyIsolationURI) {
         thirdPartySvc->GetFirstPartyHostForIsolation(firstPartyIsolationURI,
                 cacheDomain);
@@ -4877,7 +4877,19 @@ nsHttpChannel::BeginConnect()
         Telemetry::Accumulate(Telemetry::HTTP_TRANSACTION_USE_ALTSVC_OE, !isHttps);
     } else {
         LOG(("nsHttpChannel %p Using default connection info", this));
-        mConnectionInfo = new nsHttpConnectionInfo(host, port, EmptyCString(), mUsername, proxyInfo, isHttps);
+        /* Obtain optional third party isolation domain */
+        nsAutoCString isolationKey;
+        nsCOMPtr<nsIURI> firstPartyIsolationURI;
+        nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
+            = do_GetService(THIRDPARTYUTIL_CONTRACTID);
+        rv = thirdPartySvc->GetFirstPartyIsolationURI(this, nullptr,
+                                           getter_AddRefs(firstPartyIsolationURI));
+        if (NS_SUCCEEDED(rv) && firstPartyIsolationURI) {
+            firstPartyIsolationURI->GetSpec(isolationKey);
+        }
+
+        mConnectionInfo = new nsHttpConnectionInfo(host, port, EmptyCString(), mUsername, proxyInfo, isolationKey, isHttps);
+
         Telemetry::Accumulate(Telemetry::HTTP_TRANSACTION_USE_ALTSVC, false);
     }
 
