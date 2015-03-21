@@ -44,11 +44,13 @@ NSSCertDBTrustDomain::NSSCertDBTrustDomain(SECTrustType certDBTrustType,
                                            OCSPFetching ocspFetching,
                                            OCSPCache& ocspCache,
                                            void* pinArg,
+                                           const char* isolationKey,
                                            CERTChainVerifyCallback* checkChainCallback)
   : mCertDBTrustType(certDBTrustType)
   , mOCSPFetching(ocspFetching)
   , mOCSPCache(ocspCache)
   , mPinArg(pinArg)
+  , mIsolationKey(isolationKey)
   , mCheckChainCallback(checkChainCallback)
 {
 }
@@ -236,7 +238,7 @@ NSSCertDBTrustDomain::CheckRevocation(
 
   PRErrorCode cachedResponseErrorCode = 0;
   PRTime cachedResponseValidThrough = 0;
-  bool cachedResponsePresent = mOCSPCache.Get(cert, issuerCert,
+  bool cachedResponsePresent = mOCSPCache.Get(cert, issuerCert, mIsolationKey,
                                               cachedResponseErrorCode,
                                               cachedResponseValidThrough);
   if (cachedResponsePresent) {
@@ -355,7 +357,7 @@ NSSCertDBTrustDomain::CheckRevocation(
       return SECFailure;
     }
 
-    response = DoOCSPRequest(arena.get(), url.get(), request,
+    response = DoOCSPRequest(arena.get(), url.get(), mIsolationKey, request,
                              OCSPFetchingTypeToTimeoutTime(mOCSPFetching));
   }
 
@@ -365,7 +367,9 @@ NSSCertDBTrustDomain::CheckRevocation(
       error = cachedResponseErrorCode;
     }
     PRTime timeout = time + ServerFailureDelay;
-    if (mOCSPCache.Put(cert, issuerCert, error, time, timeout) != SECSuccess) {
+    if (mOCSPCache.Put(cert, issuerCert, mIsolationKey,
+                       error, time, timeout)
+          != SECSuccess) {
       return SECFailure;
     }
     PR_SetError(error, 0);
@@ -463,7 +467,8 @@ NSSCertDBTrustDomain::VerifyAndMaybeCacheEncodedOCSPResponse(
       error == SEC_ERROR_OCSP_UNKNOWN_CERT) {
     PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
            ("NSSCertDBTrustDomain: caching OCSP response"));
-    if (mOCSPCache.Put(cert, issuerCert, error, thisUpdate, validThrough)
+    if (mOCSPCache.Put(cert, issuerCert, mIsolationKey,
+                       error, thisUpdate, validThrough)
           != SECSuccess) {
       return SECFailure;
     }

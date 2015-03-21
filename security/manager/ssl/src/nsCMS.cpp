@@ -267,7 +267,8 @@ nsresult nsCMSMessage::CommonVerifySignature(unsigned char* aDigestData, uint32_
     SECStatus srv = certVerifier->VerifyCert(si->cert,
                                              certificateUsageEmailSigner,
                                              PR_Now(), nullptr /*XXX pinarg*/,
-                                             nullptr /*hostname*/);
+                                             nullptr /*hostname*/,
+                                             nullptr /*isolationKey*/);
     if (srv != SECSuccess) {
       PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
              ("nsCMSMessage::CommonVerifySignature - signing cert not trusted now\n"));

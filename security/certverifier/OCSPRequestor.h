@@ -13,6 +13,7 @@ namespace mozilla { namespace psm {
 
 // The memory returned is owned by the given arena.
 SECItem* DoOCSPRequest(PLArenaPool* arena, const char* url,
+                       const char* isolationKey,
                        const SECItem* encodedRequest, PRIntervalTime timeout);
 
 } } // namespace mozilla::psm

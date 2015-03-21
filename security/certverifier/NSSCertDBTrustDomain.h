@@ -58,6 +58,7 @@ public:
   };
   NSSCertDBTrustDomain(SECTrustType certDBTrustType, OCSPFetching ocspFetching,
                        OCSPCache& ocspCache, void* pinArg,
+                       const char* isolationKey = nullptr,
                        CERTChainVerifyCallback* checkChainCallback = nullptr);
 
   virtual SECStatus FindPotentialIssuers(
@@ -96,6 +97,7 @@ private:
   const OCSPFetching mOCSPFetching;
   OCSPCache& mOCSPCache; // non-owning!
   void* mPinArg; // non-owning!
+  const char* mIsolationKey; // non-owning!
   CERTChainVerifyCallback* mCheckChainCallback; // non-owning!
 };
 

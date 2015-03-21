@@ -26,6 +26,7 @@ public:
     nsHttpConnectionInfo(const nsACString &host, int32_t port,
                          const nsACString &username,
                          nsProxyInfo* proxyInfo,
+                         const nsACString &isolationKey,
                          bool usingSSL=false);
 
     virtual ~nsHttpConnectionInfo()
@@ -67,6 +68,7 @@ public:
     int32_t       Port() const           { return mPort; }
     const char   *Username() const       { return mUsername.get(); }
     nsProxyInfo  *ProxyInfo()            { return mProxyInfo; }
+    const char   *IsolationKey() const   { return mIsolationKey.get(); }
     bool          UsingHttpProxy() const { return mUsingHttpProxy; }
     bool          UsingSSL() const       { return mUsingSSL; }
     bool          UsingConnect() const   { return mUsingConnect; }
@@ -91,6 +93,7 @@ private:
     int32_t                mPort;
     nsCString              mUsername;
     nsCOMPtr<nsProxyInfo>  mProxyInfo;
+    nsCString              mIsolationKey;
     bool                   mUsingHttpProxy;
     bool                   mUsingSSL;
     bool                   mUsingConnect;  // if will use CONNECT with http proxy

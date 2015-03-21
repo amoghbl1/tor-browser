@@ -89,6 +89,7 @@ public:
                              const char *http_protocol_variant,
                              const char *path_and_query_string,
                              const char *http_request_method, 
+                             const char *isolation_key,
                              const PRIntervalTime timeout, 
                              SEC_HTTP_REQUEST_SESSION *pRequest);
 
@@ -119,6 +120,8 @@ public:
   nsCString mPostData;
   nsCString mPostContentType;
   
+  nsCString mIsolationKey;
+
   PRIntervalTime mTimeoutInterval;
   
   nsRefPtr<nsHTTPListener> mListener;
@@ -164,11 +167,13 @@ public:
                              const char *http_protocol_variant,
                              const char *path_and_query_string,
                              const char *http_request_method, 
+                             const char *isolation_key,
                              const PRIntervalTime timeout, 
                              SEC_HTTP_REQUEST_SESSION *pRequest)
   {
     return nsNSSHttpRequestSession::createFcn(session, http_protocol_variant,
                                      path_and_query_string, http_request_method, 
+                                     isolation_key,
                                      timeout, pRequest);
   }
 

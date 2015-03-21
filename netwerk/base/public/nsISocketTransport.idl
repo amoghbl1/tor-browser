@@ -56,6 +56,12 @@ interface nsISocketTransport : nsITransport
     [noscript] NetAddr getSelfAddr();
 
     /**
+     * Get the port for the underlying socket connection.
+     * For Unix domain sockets, this is zero.
+     */
+    attribute AUTF8String isolationKey;
+
+    /**
      * Returns a scriptable version of getPeerAddr. This attribute is defined
      * only once a connection has been established.
      */

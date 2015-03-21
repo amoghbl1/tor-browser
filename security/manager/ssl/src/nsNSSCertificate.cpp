@@ -833,6 +833,7 @@ nsNSSCertificate::GetChain(nsIArray** _rvChain)
                            certificateUsageSSLServer, PR_Now(),
                            nullptr, /*XXX fixme*/
                            nullptr, /* hostname */
+                           nullptr, /* isolationKey */
                            CertVerifier::FLAG_LOCAL_ONLY,
                            nullptr, /* stapledOCSPResponse */
                            &nssChain);
@@ -857,6 +858,7 @@ nsNSSCertificate::GetChain(nsIArray** _rvChain)
                              usage, PR_Now(),
                              nullptr, /*XXX fixme*/
                              nullptr, /*hostname*/
+                             nullptr, /*isolationKey*/
                              CertVerifier::FLAG_LOCAL_ONLY,
                              nullptr, /* stapledOCSPResponse */
                              &nssChain);
@@ -1475,6 +1477,7 @@ nsNSSCertificate::hasValidEVOidTag(SECOidTag& resultOidTag, bool& validEV)
     certificateUsageSSLServer, PR_Now(),
     nullptr /* XXX pinarg */,
     nullptr /* hostname */,
+    nullptr /* isolationKey */,
     flags, nullptr /* stapledOCSPResponse */ , nullptr, &resultOidTag);
 
   if (rv != SECSuccess) {

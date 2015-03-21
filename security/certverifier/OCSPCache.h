@@ -47,7 +47,8 @@ public:
   // If it is in the cache, returns by reference the error code of the cached
   // status and the time through which the status is considered trustworthy.
   bool Get(const CERTCertificate* aCert, const CERTCertificate* aIssuerCert,
-           /* out */ PRErrorCode& aErrorCode, /* out */ PRTime& aValidThrough);
+           const char* aIsolationKey, /* out */ PRErrorCode& aErrorCode,
+           /* out */ PRTime& aValidThrough);
 
   // Caches the status of the given certificate (issued by the given issuer).
   // The status is considered trustworthy through the given time.
@@ -60,6 +61,7 @@ public:
   // indicates the certificate is revoked.
   SECStatus Put(const CERTCertificate* aCert,
                 const CERTCertificate* aIssuerCert,
+                const char* aIsolationKey,
                 PRErrorCode aErrorCode,
                 PRTime aThisUpdate,
                 PRTime aValidThrough);
@@ -73,6 +75,7 @@ private:
   public:
     SECStatus Init(const CERTCertificate* aCert,
                    const CERTCertificate* aIssuerCert,
+                   const char* aIsolationKey,
                    PRErrorCode aErrorCode, PRTime aThisUpdate,
                    PRTime aValidThrough);
 
@@ -87,6 +90,7 @@ private:
 
   int32_t FindInternal(const CERTCertificate* aCert,
                        const CERTCertificate* aIssuerCert,
+                       const char* aIsolationKey,
                        const MutexAutoLock& aProofOfLock);
   void MakeMostRecentlyUsed(size_t aIndex, const MutexAutoLock& aProofOfLock);
   void LogWithCerts(const char* aMessage, const CERTCertificate* aCert,

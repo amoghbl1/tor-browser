@@ -2571,7 +2571,7 @@ nsHttpChannel::OpenCacheEntry(bool usingSSL)
     nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
          = do_GetService(THIRDPARTYUTIL_CONTRACTID);
     rv = thirdPartySvc->GetFirstPartyIsolationURI(this, nullptr,
-                                           getter_AddRefs(firstPartyIsolationURI));
+                                       getter_AddRefs(firstPartyIsolationURI));
     if (NS_SUCCEEDED(rv) && firstPartyIsolationURI) {
         thirdPartySvc->GetFirstPartyHostForIsolation(firstPartyIsolationURI,
                 cacheDomain);
@@ -4578,7 +4578,18 @@ nsHttpChannel::BeginConnect()
     if (mProxyInfo)
         proxyInfo = do_QueryInterface(mProxyInfo);
 
-    mConnectionInfo = new nsHttpConnectionInfo(host, port, username, proxyInfo, usingSSL);
+    /* Obtain optional third party isolation domain */
+    nsAutoCString isolationKey;
+    nsCOMPtr<nsIURI> firstPartyIsolationURI;
+    nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc
+         = do_GetService(THIRDPARTYUTIL_CONTRACTID);
+    rv = thirdPartySvc->GetFirstPartyIsolationURI(this, nullptr,
+                                       getter_AddRefs(firstPartyIsolationURI));
+    if (NS_SUCCEEDED(rv) && firstPartyIsolationURI) {
+        firstPartyIsolationURI->GetSpec(isolationKey);
+    }
+
+    mConnectionInfo = new nsHttpConnectionInfo(host, port, username, proxyInfo, isolationKey, usingSSL);
 
     mAuthProvider =
         do_CreateInstance("@mozilla.org/network/http-channel-auth-provider;1",

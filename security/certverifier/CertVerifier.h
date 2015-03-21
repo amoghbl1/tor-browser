@@ -30,6 +30,7 @@ public:
                        const PRTime time,
                        void* pinArg,
                        const char* hostname,
+                       const char* isolationKey,
                        const Flags flags = 0,
        /*optional in*/ const SECItem* stapledOCSPResponse = nullptr,
       /*optional out*/ mozilla::pkix::ScopedCERTCertList* validationChain = nullptr,
@@ -42,6 +43,7 @@ public:
                     PRTime time,
        /*optional*/ void* pinarg,
                     const char* hostname,
+                    const char* isolationKey,
                     bool saveIntermediatesInPermanentDatabase = false,
    /*optional out*/ mozilla::pkix::ScopedCERTCertList* certChainOut = nullptr,
    /*optional out*/ SECOidTag* evOidPolicy = nullptr);
@@ -96,6 +98,7 @@ private:
       const SECCertificateUsage usage,
       const PRTime time,
       void* pinArg,
+      const char* isolationKey,
       const Flags flags,
       ChainValidationCallbackState* callbackState,
       /*optional*/ const SECItem* stapledOCSPResponse,
