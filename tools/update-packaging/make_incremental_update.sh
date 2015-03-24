@@ -69,18 +69,12 @@ if [ $# = 0 ]; then
   exit 1
 fi
 
-# The last .xpi is NoScript.
-ext_path='TorBrowser/Data/Browser/profile.default/extensions';
-# TODO: it would be better to pass this as a command line option.
-exts='https-everywhere@eff.org/* tor-launcher@torproject.org.xpi torbutton@torproject.org.xpi uriloader@pdf.js.xpi {73a6fe31-595d-460b-a920-fcc0f8843232}.xpi'
-requested_forced_updates='Contents/MacOS/TorBrowser.app/Contents/MacOS/firefox'
-for ext in $exts; do
-  requested_forced_updates="$requested_forced_updates $ext_path/$ext"
-done
-
-
-# TODO: it would be better to pass this as a command line option.
-directories_to_remove='TorBrowser/Data/Browser/profile.default/extensions/https-everywhere@eff.org'
+# TODO: it would be better to pass these paths via command line options.
+ext_path='TorBrowser/Data/Browser/profile.default/extensions'
+https_everywhere='https-everywhere@eff.org'
+noscript='{73a6fe31-595d-460b-a920-fcc0f8843232}.xpi'
+requested_forced_updates="$ext_path/$https_everywhere/* $ext_path/$noscript"
+directories_to_remove="$ext_path/$https_everywhere"
 
 while getopts "hqf:" flag
 do
