@@ -880,6 +880,20 @@ var gViewController = {
       }
     },
 
+    cmd_pluginEnable: {
+      isEnabled: function cmd_pluginEnable_isEnabled() true,
+      doCommand: function cmd_pluginEnable_doCommand() {
+        Services.prefs.setBoolPref("plugin.disable", false);
+      }
+    },
+
+    cmd_pluginDisable: {
+      isEnabled: function cmd_pluginDisable_isEnabled() true,
+      doCommand: function cmd_pluginDisable_doCommand() {
+        Services.prefs.setBoolPref("plugin.disable", true);
+      }
+    },
+
     cmd_toggleAutoUpdateDefault: {
       isEnabled: function() {
         return true;
@@ -2642,12 +2656,16 @@ var gListView = {
   node: null,
   _listBox: null,
   _emptyNotice: null,
+  _pluginEnableButton: null,
+  _pluginHeader: null,
   _type: null,
 
   initialize: function() {
     this.node = document.getElementById("list-view");
     this._listBox = document.getElementById("addon-list");
     this._emptyNotice = document.getElementById("addon-list-empty");
+    this._pluginEnableButton = document.getElementById("plugin-enable-button");
+    this._pluginHeader = document.getElementsByClassName("plugin-info-container")[0];
 
     this._listBox.addEventListener("keydown", (aEvent) => {
       if (aEvent.keyCode == aEvent.DOM_VK_RETURN) {
@@ -2676,6 +2694,11 @@ var gListView = {
     }
   },
 
+  shutdown: function gListView_shutdown() {
+    AddonManager.removeAddonListener(this);
+    AddonManager.removeManagerListener(this);
+  },
+
   show: function(aType, aRequest) {
     let showOnlyDisabledUnsigned = false;
     if (aType.endsWith("?unsigned=true")) {
@@ -2689,6 +2712,8 @@ var gListView = {
     this._type = aType;
     this.node.setAttribute("type", aType);
     this.showEmptyNotice(false);
+    this.showPluginHeader(false);
+    this.showPluginEnableButton(false);
 
     while (this._listBox.itemCount > 0)
       this._listBox.removeItemAt(0);
@@ -2715,16 +2740,21 @@ var gListView = {
         for (let element of elements)
           this._listBox.appendChild(element);
       }
+      this.showPluginButton();
 
       this.filterDisabledUnsigned(showOnlyDisabledUnsigned);
 
       gEventManager.registerInstallListener(this);
       gViewController.updateCommands();
       gViewController.notifyViewChanged();
+      AddonManager.addAddonListener(this); /* for onUninstalled */
+      AddonManager.addManagerListener(this); /* for onPluginPolicyChanged */
     });
   },
 
   hide: function() {
+    AddonManager.removeAddonListener(this);
+    AddonManager.removeManagerListener(this);
     gEventManager.unregisterInstallListener(this);
     doPendingUninstalls(this._listBox);
   },
@@ -2796,6 +2826,44 @@ var gListView = {
         item.endDate = getExperimentEndDate(aInstall.addon);
       }
     }
+  },
+
+  onUninstalled: function gListView_onUninstalled()  {
+    this.showEmptyNotice(this._listBox.itemCount == 0);
+  },
+
+  showPluginEnableButton: function gListView_showPluginEnableButton(aShow) {
+    if (this._pluginEnableButton)
+      this._pluginEnableButton.hidden = !aShow;
+  },
+
+  showPluginHeader: function gListView_showPluginHeader(aShow) {
+    if (this._pluginHeader)
+      this._pluginHeader.hidden = !aShow;
+  },
+
+  showPluginButton: function gListView_showPluginButton() {
+    if (this._type == "plugin") {
+      var plugin_disable = false;
+
+      try {
+        plugin_disable = Services.prefs.getBoolPref("plugin.disable")
+      } catch (e) {}
+
+      if (plugin_disable == true) {
+        this.showPluginHeader(false);
+        this.showEmptyNotice(false);
+        this.showPluginEnableButton(true);
+      } else {
+        this.showPluginHeader(true);
+        this.showEmptyNotice(this._listBox.itemCount == 0);
+        this.showPluginEnableButton(false);
+      }
+    }
+  },
+
+  onPluginPolicyChanged: function gListView_onPluginPolicyChanged() {
+    this.showPluginButton();
   },
 
   addItem: function(aObj, aIsInstall) {
