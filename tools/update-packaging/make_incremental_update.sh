@@ -69,12 +69,8 @@ if [ $# = 0 ]; then
   exit 1
 fi
 
-# TODO: it would be better to pass these paths via command line options.
-ext_path='TorBrowser/Data/Browser/profile.default/extensions'
-https_everywhere='https-everywhere@eff.org'
-noscript='{73a6fe31-595d-460b-a920-fcc0f8843232}.xpi'
-requested_forced_updates="$ext_path/$https_everywhere/* $ext_path/$noscript"
-directories_to_remove="$ext_path/$https_everywhere"
+requested_forced_updates=""
+directories_to_remove=""
 
 while getopts "hqf:" flag
 do
@@ -108,6 +104,39 @@ workdir="$newdir.work"
 updatemanifestv2="$workdir/updatev2.manifest"
 updatemanifestv3="$workdir/updatev3.manifest"
 archivefiles="updatev2.manifest updatev3.manifest"
+
+# If the NoScript or HTTPS Everywhere extensions have changed between
+# releases, add them to the "force updates" list.
+ext_path='TorBrowser/Data/Browser/profile.default/extensions'
+https_everywhere='https-everywhere@eff.org'
+noscript='{73a6fe31-595d-460b-a920-fcc0f8843232}.xpi'
+
+# NoScript is a packed extension, so we simply compare the old and the new
+# .xpi files.
+noscript_path="$ext_path/$noscript"
+diff -a "$olddir/$noscript_path" "$newdir/$noscript_path" > /dev/null
+rc=$?
+if [ $rc -gt 1 ]; then
+  notice "Unexpected exit $rc from $noscript_path diff command"
+  exit 2
+elif [ $rc -eq 1 ]; then
+  requested_forced_updates="$requested_forced_updates $noscript_path"
+fi
+
+# HTTPS Everywhere is an unpacked extension, so we need to determine if any of
+# the unpacked files have changed. Since that is messy, we simply compare the
+# old extension's install.rdf file to the new one.
+https_everywhere_install_rdf="$ext_path/$https_everywhere/install.rdf"
+diff "$olddir/$https_everywhere_install_rdf"     \
+      "$newdir/$https_everywhere_install_rdf" > /dev/null
+rc=$?
+if [ $rc -gt 1 ]; then
+  notice "Unexpected exit $rc from $https_everywhere_install_rdf diff command"
+  exit 2
+elif [ $rc -eq 1 ]; then
+  requested_forced_updates="$requested_forced_updates $ext_path/$https_everywhere/*"
+  directories_to_remove="$directories_to_remove $ext_path/$https_everywhere"
+fi
 
 mkdir -p "$workdir"
 
