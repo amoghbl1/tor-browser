@@ -10,8 +10,6 @@ MOZ_PHOENIX=1
 
 if test "$OS_ARCH" = "WINNT"; then
   MOZ_VERIFY_MAR_SIGNATURE=1
-elif test "$OS_ARCH" = "Linux"; then
-  MOZ_VERIFY_MAR_SIGNATURE=1
 elif test "$OS_ARCH" = "Darwin"; then
   MOZ_VERIFY_MAR_SIGNATURE=1
 fi
