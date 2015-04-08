@@ -99,6 +99,14 @@ pref("app.update.log", false);
 // the failure.
 pref("app.update.backgroundMaxErrors", 10);
 
+// The aus update xml certificate checks for application update are disabled on
+// Windows and Mac OS X since the mar signature check are implemented on these
+// platforms and is sufficient to prevent us from applying a mar that is not
+// valid.
+#if defined(XP_WIN) || defined(XP_MACOSX)
+pref("app.update.cert.requireBuiltIn", false);
+pref("app.update.cert.checkAttributes", false);
+#else
 // When |app.update.cert.requireBuiltIn| is true or not specified the
 // final certificate and all certificates the connection is redirected to before
 // the final certificate for the url specified in the |app.update.url|
@@ -136,6 +144,7 @@ pref("app.update.cert.maxErrors", 5);
 
 pref("app.update.certs.1.issuerName", "CN=DigiCert SHA2 High Assurance Server CA,OU=www.digicert.com,O=DigiCert Inc,C=US");
 pref("app.update.certs.1.commonName", "*.torproject.org");
+#endif
 
 // Whether or not app updates are enabled
 pref("app.update.enabled", true);
