@@ -894,6 +894,13 @@ URL::CreateObjectURL(const GlobalObject& aGlobal, JSObject* aBlob,
   JSContext* cx = aGlobal.GetContext();
   WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(cx);
 
+  if (!workerPrivate->IsChromeWorker()) {
+    workerPrivate->ReportError(cx, "Worker attempted to use createObjectURL; denied.", nullptr);
+    NS_NAMED_LITERAL_STRING(argStr, "URL.createObjectURL");
+    aRv.ThrowTypeError(MSG_METHOD_THIS_UNWRAPPING_DENIED, &argStr);
+    return;
+  }
+
   nsCOMPtr<nsIDOMBlob> blob = file::GetDOMBlobFromJSObject(aBlob);
   if (!blob) {
     SetDOMStringToNull(aResult);

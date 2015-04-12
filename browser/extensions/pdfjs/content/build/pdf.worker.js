@@ -1048,7 +1048,14 @@ PDFJS.createObjectURL = (function createObjectURLClosure() {
     if (!PDFJS.disableCreateObjectURL &&
         typeof URL !== 'undefined' && URL.createObjectURL) {
       var blob = PDFJS.createBlob(data, contentType);
-      return URL.createObjectURL(blob);
+      try {
+        return URL.createObjectURL(blob);
+      } catch(e) {
+        // URL.createObjectURL has thrown an error; continue to
+        // data schema fallback.
+        // TODO: Remove this try-catch when we re-enable
+        // createObjectURL in workers.
+      }
     }
 
     var buffer = 'data:' + contentType + ';base64,';

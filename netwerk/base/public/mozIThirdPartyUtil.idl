@@ -246,6 +246,21 @@ interface mozIThirdPartyUtil : nsISupports
    *         for which we generate a pseudo host.
    */
   AUTF8String getFirstPartyHostForIsolation(in nsIURI aFirstPartyURI);
+
+  /**
+   * getFirstPartyHostFromCaller
+   *
+   * Obtain the host or pseudo-host for the first party URI belonging
+   * to the calling document. See getFirstPartyHostForIsolation(...) for
+   * examples.
+   *
+   * @return host or pseudo host.
+   *
+   * @throws if the calling document's first party URI lacks a host
+   *         and the scheme is not a whitelisted one for which we
+   *         generate a pseudo host.
+   */
+  AUTF8String getFirstPartyHostFromCaller();
 };
 
 %{ C++
