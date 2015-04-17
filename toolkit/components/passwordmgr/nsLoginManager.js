@@ -331,6 +331,10 @@ LoginManager.prototype = {
     if (logins.some(function(l) login.matches(l, true)))
       throw "This login already exists.";
 
+        if (!this._storage) {
+            throw "No storage to add login";
+        }
+
     log("Adding login");
     return this._storage.addLogin(login);
   },
@@ -343,6 +347,12 @@ LoginManager.prototype = {
    */
   removeLogin : function (login) {
     log("Removing login");
+
+        if (!this._storage) {
+            log("No storage to remove login");
+            return null;
+        }
+
     return this._storage.removeLogin(login);
   },
 
@@ -354,6 +364,12 @@ LoginManager.prototype = {
    */
   modifyLogin : function (oldLogin, newLogin) {
     log("Modifying login");
+
+        if (!this._storage) {
+            log("No storage to modify login");
+            return null;
+        }
+
     return this._storage.modifyLogin(oldLogin, newLogin);
   },
 
@@ -369,6 +385,12 @@ LoginManager.prototype = {
    */
   getAllLogins : function (count) {
     log("Getting a list of all logins");
+
+        if (!this._storage) {
+            log("No storage to get all logins");
+            return null;
+        }
+
     return this._storage.getAllLogins(count);
   },
 
@@ -380,7 +402,10 @@ LoginManager.prototype = {
    */
   removeAllLogins : function () {
     log("Removing all logins");
-    this._storage.removeAllLogins();
+        if (!this._storage)
+            log("No storage to remove all logins");
+        else
+            this._storage.removeAllLogins();
   },
 
   /*
@@ -395,6 +420,12 @@ LoginManager.prototype = {
    */
   getAllDisabledHosts : function (count) {
     log("Getting a list of all disabled hosts");
+
+        if (!this._storage) {
+            log("No storage to get all disabled hosts");
+            return null;
+        }
+
     return this._storage.getAllDisabledHosts(count);
   },
 
@@ -407,6 +438,11 @@ LoginManager.prototype = {
   findLogins : function (count, hostname, formSubmitURL, httpRealm) {
     log("Searching for logins matching host:", hostname,
         "formSubmitURL:", formSubmitURL, "httpRealm:", httpRealm);
+
+        if (!this._storage) {
+            log("No storage to find logins");
+            return null;
+        }
 
     return this._storage.findLogins(count, hostname, formSubmitURL,
                                     httpRealm);
@@ -424,6 +460,11 @@ LoginManager.prototype = {
   searchLogins : function(count, matchData) {
    log("Searching for logins");
 
+        if (!this._storage) {
+            log("No storage to search logins");
+            return null;
+        }
+
     return this._storage.searchLogins(count, matchData);
   },
 
@@ -438,6 +479,9 @@ LoginManager.prototype = {
     log("Counting logins matching host:", hostname,
         "formSubmitURL:", formSubmitURL, "httpRealm:", httpRealm);
 
+        if (!this._storage)
+            return 0;
+
     return this._storage.countLogins(hostname, formSubmitURL, httpRealm);
   },
 
@@ -446,6 +490,9 @@ LoginManager.prototype = {
    * uiBusy
    */
   get uiBusy() {
+        if (!this._storage)
+            return false;
+
     return this._storage.uiBusy;
   },
 
@@ -454,6 +501,9 @@ LoginManager.prototype = {
    * isLoggedIn
    */
   get isLoggedIn() {
+        if (!this._storage)
+            return false;
+
     return this._storage.isLoggedIn;
   },
 
@@ -465,7 +515,7 @@ LoginManager.prototype = {
    */
   getLoginSavingEnabled : function (host) {
     log("Checking if logins to", host, "can be saved.");
-    if (!this._remember)
+        if (!this._remember || !this._storage)
       return false;
 
     return this._storage.getLoginSavingEnabled(host);
@@ -481,6 +531,9 @@ LoginManager.prototype = {
     // Nulls won't round-trip with getAllDisabledHosts().
     if (hostname.indexOf("\0") != -1)
       throw "Invalid hostname";
+
+        if (!this._storage)
+            throw "No storage to set login saving enabled";
 
     log("Login saving for", hostname, "now enabled?", enabled);
     return this._storage.setLoginSavingEnabled(hostname, enabled);
