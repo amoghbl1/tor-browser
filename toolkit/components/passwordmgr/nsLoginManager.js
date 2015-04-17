@@ -129,9 +129,25 @@ LoginManager.prototype = {
       log.debug("No alternate nsILoginManagerStorage registered");
     }
 
-    this._storage = Cc[contractID].
-                    createInstance(Ci.nsILoginManagerStorage);
-    this.initializationPromise = this._storage.initialize();
+    // If the security.nocertdb pref. is true, we skip initialization of
+    // login manager storage since we know it will fail.  In this case we
+    // pretend that initialization succeeded in order to avoid a cascade of
+    // initialization errors.
+    if (Services.prefs.getBoolPref("security.nocertdb")) {
+      this._storage = null;
+      this.initializationPromise = Promise.resolve();
+    } else {
+      this._storage = Cc[contractID].
+                      createInstance(Ci.nsILoginManagerStorage);
+      try {
+        this.initializationPromise = this._storage.initialize();
+      } catch (e) {
+        // If storage is not available, set _storage to null so that we can
+        // cleanly check for a lack of storage elsewhere in this file.
+        this._storage = null;
+        this.initializationPromise = Promise.reject(e);
+      }
+    }
   },
 
 
@@ -167,7 +183,8 @@ LoginManager.prototype = {
         this._pwmgr = null;
       } else if (topic == "passwordmgr-storage-replace") {
         Task.spawn(function* () {
-          yield this._pwmgr._storage.terminate();
+          if (this._pwmgr._storage)
+            yield this._pwmgr._storage.terminate();
           this._pwmgr._initStorage();
           yield this._pwmgr.initializationPromise;
           Services.obs.notifyObservers(null,
@@ -308,6 +325,9 @@ LoginManager.prototype = {
       throw new Error("This login already exists.");
     }
 
+    if (!this._storage)
+      throw new Error("No storage to add login");
+
     log.debug("Adding login");
     return this._storage.addLogin(login);
   },
@@ -317,6 +337,12 @@ LoginManager.prototype = {
    */
   removeLogin(login) {
     log.debug("Removing login");
+
+    if (!this._storage) {
+      log.debug("No storage to remove login");
+      return null;
+    }
+
     return this._storage.removeLogin(login);
   },
 
@@ -326,6 +352,12 @@ LoginManager.prototype = {
    */
   modifyLogin(oldLogin, newLogin) {
     log.debug("Modifying login");
+
+    if (!this._storage) {
+      log.debug("No storage to modify login");
+      return null;
+    }
+
     return this._storage.modifyLogin(oldLogin, newLogin);
   },
 
@@ -338,6 +370,12 @@ LoginManager.prototype = {
    */
   getAllLogins(count) {
     log.debug("Getting a list of all logins");
+
+    if (!this._storage) {
+      log.debug("No storage to get all logins");
+      return null;
+    }
+
     return this._storage.getAllLogins(count);
   },
 
@@ -347,7 +385,10 @@ LoginManager.prototype = {
    */
   removeAllLogins() {
     log.debug("Removing all logins");
-    this._storage.removeAllLogins();
+    if (!this._storage)
+      log.debug("No storage to remove all logins");
+    else
+      this._storage.removeAllLogins();
   },
 
   /**
@@ -386,6 +427,11 @@ LoginManager.prototype = {
     log.debug("Searching for logins matching origin:", origin,
               "formActionOrigin:", formActionOrigin, "httpRealm:", httpRealm);
 
+    if (!this._storage) {
+      log.debug("No storage to find logins");
+      return null;
+    }
+
     return this._storage.findLogins(count, origin, formActionOrigin,
                                     httpRealm);
   },
@@ -399,6 +445,11 @@ LoginManager.prototype = {
    */
   searchLogins(count, matchData) {
     log.debug("Searching for logins");
+
+    if (!this._storage) {
+      log.debug("No storage to search logins");
+      return null;
+    }
 
     matchData.QueryInterface(Ci.nsIPropertyBag2);
     if (!matchData.hasKey("guid")) {
@@ -423,16 +474,27 @@ LoginManager.prototype = {
     log.debug("Counting logins matching origin:", origin,
               "formActionOrigin:", formActionOrigin, "httpRealm:", httpRealm);
 
+    if (!this._storage) {
+      log.debug("No storage to count logins");
+      return 0;
+    }
+
     return this._storage.countLogins(origin, formActionOrigin, httpRealm);
   },
 
 
   get uiBusy() {
+    if (!this._storage)
+      return false;
+
     return this._storage.uiBusy;
   },
 
 
   get isLoggedIn() {
+    if (!this._storage)
+      return false;
+
     return this._storage.isLoggedIn;
   },
 
@@ -442,7 +504,7 @@ LoginManager.prototype = {
    */
   getLoginSavingEnabled(origin) {
     log.debug("Checking if logins to", origin, "can be saved.");
-    if (!this._remember) {
+    if (!this._remember || !this._storage) {
       return false;
     }
 
@@ -457,6 +519,10 @@ LoginManager.prototype = {
   setLoginSavingEnabled(origin, enabled) {
     // Throws if there are bogus values.
     LoginHelper.checkHostnameValue(origin);
+
+    if (!this._storage) {
+      throw new Error("No storage to set login saving enabled");
+    }
 
     let uri = Services.io.newURI(origin, null, null);
     if (enabled) {
