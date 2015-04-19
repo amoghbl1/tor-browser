@@ -1,0 +1,30 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugs.torproject.org/15502
+-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Worker deblobifier for Tor Browser Bug 15502</title>
+  <script type="text/javascript;version=1.7" src="bug15502_utils.js"></script>
+</head>
+<body>
+<div id="display" style="white-space:pre; font-family:monospace; display:inline;"></div>
+
+<pre id="test">
+<script type="text/javascript;version=1.7">
+
+Task.spawn(function* () {
+  sendMessage(window.parent, "ready");
+  let blobURL = yield receiveMessage(window.parent),
+      result = yield workerIO("bug15502_worker_deblobify.js", blobURL);
+  sendMessage(window.parent, result);
+  appendLine("display", blobURL + " -> " + result);
+});
+
+
+
+</script>
+</pre>
+</body>
+</html>
