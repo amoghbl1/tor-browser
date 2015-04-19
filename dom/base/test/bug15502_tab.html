@@ -1,0 +1,40 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugs.torproject.org/15502
+-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Tab for Tor Browser Bug 15502</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript;version=1.7" src="bug15502_utils.js"></script>
+</head>
+<body>
+
+<div id="display"></div>
+<iframe id="child" width="100%"></iframe>
+
+<script type="text/javascript;version=1.7">
+
+let iframe = document.getElementById("child");
+
+let connect = function (sourceObject, destinationObject) {
+  spawn_task(function* () {
+    for (;;) {
+      let message = yield receiveMessage(sourceObject);
+      sendMessage(destinationObject, message);
+    }
+  });
+};
+
+spawn_task(function* () {
+  sendMessage(window.opener, "ready");
+  let firstParentMessage = yield receiveMessage(window.opener);
+  iframe.src = firstParentMessage;
+  connect(window.opener, iframe.contentWindow);
+  connect(iframe.contentWindow, window.opener);
+});
+</script>
+
+</body>
+</html>
