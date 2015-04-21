@@ -187,9 +187,11 @@ public:
     return mEvent->mFlags.mIsSynthesizedForTests;
   }
 
+  // XXX: We could change this resolution in other subclasses..
+  // Keypress in particular..
   uint64_t TimeStamp() const
   {
-    return mEvent->time;
+    return (mEvent->time / 100)*100;
   }
 
   void InitEvent(const nsAString& aType, bool aBubbles, bool aCancelable,

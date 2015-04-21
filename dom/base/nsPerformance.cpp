@@ -424,7 +424,11 @@ nsPerformance::Navigation()
 DOMHighResTimeStamp
 nsPerformance::Now()
 {
-  return GetDOMTiming()->TimeStampToDOMHighRes(mozilla::TimeStamp::Now());
+  // "Implementations that cannot get the required precision (for example, if
+  //  the underlying system doesn't support it) are allowed to only be accurate
+  //  to one millisecond."
+  //    -- https://developer.mozilla.org/en-US/docs/Web/API/DOMHighResTimeStamp
+  return floor(GetDOMTiming()->TimeStampToDOMHighRes(mozilla::TimeStamp::Now())/100.0)*100.0;
 }
 
 JSObject*

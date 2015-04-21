@@ -11,6 +11,7 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "nscore.h"
+#include <math.h>
 
 namespace IPC {
 template <typename T> struct ParamTraits;
@@ -58,11 +59,12 @@ public:
   // be significant.  This method should be used when displaying a
   // time to humans.
   double ToSecondsSigDigits() const;
+  // Truncate all timers to microsecond accuracy
   double ToMilliseconds() const {
-    return ToSeconds() * 1000.0;
+    return ToMicroseconds() / 1000.0;
   }
   double ToMicroseconds() const {
-    return ToMilliseconds() * 1000.0;
+    return floor(ToSeconds() * 1000000.0);
   }
 
   // Using a double here is safe enough; with 53 bits we can represent
