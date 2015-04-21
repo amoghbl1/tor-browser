@@ -228,10 +228,10 @@ Performance::ClearResourceTimings()
 DOMHighResTimeStamp
 Performance::RoundTime(double aTime) const
 {
-  // Round down to the nearest 5us, because if the timer is too accurate people
+  // Round down to the nearest 100 ms, because if the timer is too accurate people
   // can do nasty timing attacks with it.  See similar code in the worker
   // Performance implementation.
-  const double maxResolutionMs = 0.005;
+  const double maxResolutionMs = 100;
   return floor(aTime / maxResolutionMs) * maxResolutionMs;
 }
 
