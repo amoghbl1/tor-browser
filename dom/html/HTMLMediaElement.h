@@ -1527,6 +1527,9 @@ private:
   // initially be set to zero seconds. This time is used to allow the element to
   // be seeked even before the media is loaded.
   double mDefaultPlaybackStartPosition;
+
+  // The unrounded current time
+  double CurrentTimeImpl() const;
 };
 
 } // namespace dom
