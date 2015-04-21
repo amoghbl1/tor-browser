@@ -111,7 +111,7 @@ public:
   inline DOMHighResTimeStamp TimeStampToDOMHighRes(mozilla::TimeStamp aStamp)
   {
     mozilla::TimeDuration duration = aStamp - mNavigationStartTimeStamp;
-    return duration.ToMilliseconds();
+    return floor(duration.ToMilliseconds()); // Clamp to milliseconds at least
   }
 
 private:

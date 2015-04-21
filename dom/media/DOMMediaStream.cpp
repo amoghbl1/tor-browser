@@ -544,8 +544,9 @@ DOMMediaStream::CurrentTime()
   if (!mPlaybackStream) {
     return 0.0;
   }
-  return mPlaybackStream->
+  double currentTime = mPlaybackStream->
     StreamTimeToSeconds(mPlaybackStream->GetCurrentTime() - mLogicalStreamStartTime);
+  return floor(10 * currentTime) / 10;
 }
 
 void
