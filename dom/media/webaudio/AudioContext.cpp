@@ -672,8 +672,10 @@ double
 AudioContext::CurrentTime() const
 {
   MediaStream* stream = Destination()->Stream();
-  return stream->StreamTimeToSeconds(stream->GetCurrentTime() +
-                                     Destination()->ExtraCurrentTime());
+  double currentTime = stream->StreamTimeToSeconds(
+    stream->GetCurrentTime() + Destination()->ExtraCurrentTime());
+  // Round to the latest 100 ms.
+  return floor(10 * currentTime) / 10;
 }
 
 void
