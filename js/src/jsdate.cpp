@@ -1192,7 +1192,9 @@ date_parse(JSContext* cx, unsigned argc, Value* vp)
 static inline double
 NowAsMillis()
 {
-    return (double) (PRMJ_Now() / PRMJ_USEC_PER_MSEC);
+    // Truncate all date objects to 100ms precision
+    double now = (double) (PRMJ_Now() / PRMJ_USEC_PER_MSEC);
+    return floor(now/100.0)*100.0;
 }
 
 bool
