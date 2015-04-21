@@ -34,9 +34,8 @@ Performance::WrapObject(JSContext* aCx)
 double
 Performance::Now() const
 {
-  TimeDuration duration =
-    TimeStamp::Now() - mWorkerPrivate->NowBaseTimeStamp();
-  return duration.ToMilliseconds();
+  TimeDuration duration = TimeStamp::Now() - mWorkerPrivate->NowBaseTimeStamp();
+  return floor(duration.ToMilliseconds()/100.0)*100.0;
 }
 
 END_WORKERS_NAMESPACE
