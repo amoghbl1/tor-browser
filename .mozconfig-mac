@@ -36,8 +36,6 @@ ac_add_options --disable-debug
 # See above for a reason why this is currently disabled
 # ac_add_options --with-macos-private-frameworks=$CROSS_PRIVATE_FRAMEWORKS
 
-# ICU seems still to have cross-compiling issues:
-ac_add_options --without-intl-api
 ac_add_options --disable-crashreporter
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-webrtc
