@@ -41,8 +41,6 @@ ac_add_options --enable-update-packaging
 ac_add_options --enable-signmar
 ac_add_options --enable-verify-mar
 
-# ICU seems still to have cross-compiling issues:
-ac_add_options --without-intl-api
 ac_add_options --disable-crashreporter
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-webrtc
