@@ -11,6 +11,7 @@
 #include "nsICertBlocklist.h"
 #include "pkix/pkixtypes.h"
 #include "secmodt.h"
+#include "nsString.h"
 
 namespace mozilla { namespace psm {
 
@@ -129,7 +130,7 @@ private:
   const CertVerifier::OcspGetConfig mOCSPGetConfig;
   CertVerifier::PinningMode mPinningMode;
   const unsigned int mMinimumNonECCBits;
-  const char* mIsolationKey; // non-owning!
+  nsAutoCString mIsolationKey;
   const char* mHostname; // non-owning - only used for pinning checks
   ScopedCERTCertList* mBuiltChain; // non-owning
   nsCOMPtr<nsICertBlocklist> mCertBlocklist;
