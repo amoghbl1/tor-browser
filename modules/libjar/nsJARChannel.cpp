@@ -854,7 +854,7 @@ nsJARChannel::AsyncOpen(nsIStreamListener *listener, nsISupports *ctx)
         return rv;
 
     // Check preferences to see if all remote jar support should be disabled
-    if (!mJarFile && Preferences::GetBool("network.jar.block-remote-files", true)) {
+    if (!mJarFile && Preferences::GetBool("network.jar.block-remote-files", false)) {
         mIsUnsafe = true;
         return NS_ERROR_UNSAFE_CONTENT_TYPE;
     }
@@ -1044,7 +1044,7 @@ nsJARChannel::OnDownloadComplete(nsIDownloader *downloader,
 
     // This is a defense-in-depth check for the preferences to see if all remote jar
     // support should be disabled. This check may not be needed.
-    if (Preferences::GetBool("network.jar.block-remote-files", true)) {
+    if (Preferences::GetBool("network.jar.block-remote-files", false)) {
         mIsUnsafe = true;
         status = NS_ERROR_UNSAFE_CONTENT_TYPE;
     }
