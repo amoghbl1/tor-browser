@@ -639,6 +639,7 @@ NSSDetermineCertOverrideErrors(CertVerifier& certVerifier,
   // XXX TODO: get rid of error log
   certVerifier.VerifyCert(cert, certificateUsageSSLServer,
                           now, infoObject, infoObject->GetHostNameRaw(),
+                          infoObject->GetIsolationKey(),
                           0, stapledOCSPResponse, nullptr, nullptr, verify_log);
 
   // Check the name field against the desired hostname.
@@ -972,6 +973,7 @@ AuthCertificate(CertVerifier& certVerifier, TransportSecurityInfo* infoObject,
   rv = certVerifier.VerifySSLServerCert(cert, stapledOCSPResponse,
                                         time, infoObject,
                                         infoObject->GetHostNameRaw(),
+                                        infoObject->GetIsolationKey(),
                                         saveIntermediates, nullptr,
                                         &evOidPolicy);
 

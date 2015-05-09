@@ -3434,6 +3434,7 @@ fetchOcspHttpClientV1(PLArenaPool *arena,
             "http",
             path,
             encodedRequest ? "POST" : "GET",
+            NULL,
             PR_TicksPerSecond() * OCSP_Global.timeoutSeconds,
             &pRequestSession) != SECSuccess) {
         PORT_SetError(SEC_ERROR_OCSP_SERVER_ERROR);

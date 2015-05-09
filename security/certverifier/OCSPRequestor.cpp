@@ -34,6 +34,7 @@ typedef ScopedPtr<nsNSSHttpRequestSession, ReleaseHttpRequestSession>
   ScopedHTTPRequestSession;
 
 SECItem* DoOCSPRequest(PLArenaPool* arena, const char* url,
+                       const char* isolationKey,
                        const SECItem* encodedRequest, PRIntervalTime timeout)
 {
   nsCOMPtr<nsIURLParser> urlParser = do_GetService(NS_STDURLPARSER_CONTRACTID);
@@ -106,6 +107,7 @@ SECItem* DoOCSPRequest(PLArenaPool* arena, const char* url,
   SEC_HTTP_REQUEST_SESSION requestSessionPtr;
   if (nsNSSHttpInterface::createFcn(serverSession.get(), "http",
                                     path.BeginReading(), "POST",
+                                    isolationKey,
                                     timeout, &requestSessionPtr)
         != SECSuccess) {
     PR_SetError(SEC_ERROR_NO_MEMORY, 0);

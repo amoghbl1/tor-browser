@@ -59,6 +59,10 @@ public:
   nsresult GetPort(int32_t *aPort);
   nsresult SetPort(int32_t aPort);
 
+  nsresult GetIsolationKey(char **aIsolationKey);
+  const char* GetIsolationKey() const { return mIsolationKey.get(); }
+  nsresult SetIsolationKey(const char *aIsolationKey);
+
   PRErrorCode GetErrorCode() const;
   
   void GetErrorLogMessage(PRErrorCode errorCode,
@@ -95,6 +99,7 @@ private:
 
   int32_t mPort;
   nsXPIDLCString mHostName;
+  nsXPIDLCString mIsolationKey;
 
   /* SSL Status */
   mozilla::RefPtr<nsSSLStatus> mSSLStatus;

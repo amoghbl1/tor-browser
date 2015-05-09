@@ -1610,6 +1610,7 @@ nsSSLIOLayerNewSocket(int32_t family,
                       const char* host,
                       int32_t port,
                       nsIProxyInfo *proxy,
+                      const char* isolationKey,
                       PRFileDesc** fd,
                       nsISupports** info,
                       bool forSTARTTLS,
@@ -1619,7 +1620,7 @@ nsSSLIOLayerNewSocket(int32_t family,
   PRFileDesc* sock = PR_OpenTCPSocket(family);
   if (!sock) return NS_ERROR_OUT_OF_MEMORY;
 
-  nsresult rv = nsSSLIOLayerAddToSocket(family, host, port, proxy,
+  nsresult rv = nsSSLIOLayerAddToSocket(family, host, port, proxy, isolationKey,
                                         sock, info, forSTARTTLS, flags);
   if (NS_FAILED(rv)) {
     PR_Close(sock);
@@ -2373,6 +2374,7 @@ nsSSLIOLayerAddToSocket(int32_t family,
                         const char* host,
                         int32_t port,
                         nsIProxyInfo* proxy,
+                        const char* isolationKey,
                         PRFileDesc* fd,
                         nsISupports** info,
                         bool forSTARTTLS,
@@ -2393,6 +2395,7 @@ nsSSLIOLayerAddToSocket(int32_t family,
   infoObject->SetForSTARTTLS(forSTARTTLS);
   infoObject->SetHostName(host);
   infoObject->SetPort(port);
+  infoObject->SetIsolationKey(isolationKey);
 
   bool haveProxy = false;
   if (proxy) {

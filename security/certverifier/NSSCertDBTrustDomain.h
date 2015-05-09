@@ -10,6 +10,7 @@
 #include "pkix/pkixtypes.h"
 #include "secmodt.h"
 #include "CertVerifier.h"
+#include "nsString.h"
 
 namespace mozilla { namespace psm {
 
@@ -58,6 +59,7 @@ public:
   };
   NSSCertDBTrustDomain(SECTrustType certDBTrustType, OCSPFetching ocspFetching,
                        OCSPCache& ocspCache, void* pinArg,
+                       const char* isolationKey = nullptr,
                        CERTChainVerifyCallback* checkChainCallback = nullptr);
 
   virtual SECStatus FindPotentialIssuers(
@@ -96,6 +98,7 @@ private:
   const OCSPFetching mOCSPFetching;
   OCSPCache& mOCSPCache; // non-owning!
   void* mPinArg; // non-owning!
+  nsAutoCString mIsolationKey;
   CERTChainVerifyCallback* mCheckChainCallback; // non-owning!
 };
 

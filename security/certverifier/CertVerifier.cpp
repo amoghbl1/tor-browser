@@ -368,6 +368,7 @@ CertVerifier::MozillaPKIXVerifyCert(
                    const SECCertificateUsage usage,
                    const PRTime time,
                    void* pinArg,
+                   const char* isolationKey,
                    const Flags flags,
                    ChainValidationCallbackState* callbackState,
       /*optional*/ const SECItem* stapledOCSPResponse,
@@ -418,7 +419,7 @@ CertVerifier::MozillaPKIXVerifyCert(
       // XXX: We don't really have a trust bit for SSL client authentication so
       // just use trustEmail as it is the closest alternative.
       NSSCertDBTrustDomain trustDomain(trustEmail, ocspFetching, mOCSPCache,
-                                       pinArg);
+                                       pinArg, isolationKey);
       rv = BuildCertChain(trustDomain, cert, time, MustBeEndEntity,
                           KeyUsage::digitalSignature,
                           SEC_OID_EXT_KEY_USAGE_CLIENT_AUTH,
@@ -442,7 +443,7 @@ CertVerifier::MozillaPKIXVerifyCert(
                       ocspFetching == NSSCertDBTrustDomain::NeverFetchOCSP
                         ? NSSCertDBTrustDomain::LocalOnlyOCSPForEV
                         : NSSCertDBTrustDomain::FetchOCSPForEV,
-                      mOCSPCache, pinArg, &callbackContainer);
+                      mOCSPCache, pinArg, isolationKey, &callbackContainer);
         rv = BuildCertChainForOneKeyUsage(trustDomain, cert, time,
                                           KeyUsage::digitalSignature, // ECDHE/DHE
                                           KeyUsage::keyEncipherment, // RSA
@@ -468,7 +469,7 @@ CertVerifier::MozillaPKIXVerifyCert(
 
       // Now try non-EV.
       NSSCertDBTrustDomain trustDomain(trustSSL, ocspFetching, mOCSPCache,
-                                       pinArg, &callbackContainer);
+                                       pinArg, isolationKey, &callbackContainer);
       rv = BuildCertChainForOneKeyUsage(trustDomain, cert, time,
                                         KeyUsage::digitalSignature, // (EC)DHE
                                         KeyUsage::keyEncipherment, // RSA
@@ -481,7 +482,7 @@ CertVerifier::MozillaPKIXVerifyCert(
 
     case certificateUsageSSLCA: {
       NSSCertDBTrustDomain trustDomain(trustSSL, ocspFetching, mOCSPCache,
-                                       pinArg);
+                                       pinArg, isolationKey);
       rv = BuildCertChain(trustDomain, cert, time, MustBeCA,
                           KeyUsage::keyCertSign,
                           SEC_OID_EXT_KEY_USAGE_SERVER_AUTH,
@@ -492,7 +493,7 @@ CertVerifier::MozillaPKIXVerifyCert(
 
     case certificateUsageEmailSigner: {
       NSSCertDBTrustDomain trustDomain(trustEmail, ocspFetching, mOCSPCache,
-                                       pinArg);
+                                       pinArg, isolationKey);
       rv = BuildCertChain(trustDomain, cert, time, MustBeEndEntity,
                           KeyUsage::digitalSignature,
                           SEC_OID_EXT_KEY_USAGE_EMAIL_PROTECT,
@@ -506,7 +507,7 @@ CertVerifier::MozillaPKIXVerifyCert(
       // usage it is trying to verify for, and base its algorithm choices
       // based on the result of the verification(s).
       NSSCertDBTrustDomain trustDomain(trustEmail, ocspFetching, mOCSPCache,
-                                       pinArg);
+                                       pinArg, isolationKey);
       rv = BuildCertChain(trustDomain, cert, time, MustBeEndEntity,
                           KeyUsage::keyEncipherment, // RSA
                           SEC_OID_EXT_KEY_USAGE_EMAIL_PROTECT,
@@ -524,7 +525,7 @@ CertVerifier::MozillaPKIXVerifyCert(
 
     case certificateUsageObjectSigner: {
       NSSCertDBTrustDomain trustDomain(trustObjectSigning, ocspFetching,
-                                       mOCSPCache, pinArg);
+                                       mOCSPCache, pinArg, isolationKey);
       rv = BuildCertChain(trustDomain, cert, time, MustBeEndEntity,
                           KeyUsage::digitalSignature,
                           SEC_OID_EXT_KEY_USAGE_CODE_SIGN,
@@ -553,20 +554,20 @@ CertVerifier::MozillaPKIXVerifyCert(
       }
 
       NSSCertDBTrustDomain sslTrust(trustSSL, ocspFetching, mOCSPCache,
-                                    pinArg);
+                                    pinArg, isolationKey);
       rv = BuildCertChain(sslTrust, cert, time, endEntityOrCA,
                           keyUsage, eku, SEC_OID_X509_ANY_POLICY,
                           stapledOCSPResponse, builtChain);
       if (rv == SECFailure && PR_GetError() == SEC_ERROR_UNKNOWN_ISSUER) {
         NSSCertDBTrustDomain emailTrust(trustEmail, ocspFetching, mOCSPCache,
-                                        pinArg);
+                                        pinArg, isolationKey);
         rv = BuildCertChain(emailTrust, cert, time, endEntityOrCA, keyUsage,
                             eku, SEC_OID_X509_ANY_POLICY,
                             stapledOCSPResponse, builtChain);
         if (rv == SECFailure && PR_GetError() == SEC_ERROR_UNKNOWN_ISSUER) {
           NSSCertDBTrustDomain objectSigningTrust(trustObjectSigning,
                                                   ocspFetching, mOCSPCache,
-                                                  pinArg);
+                                                  pinArg, isolationKey);
           rv = BuildCertChain(objectSigningTrust, cert, time, endEntityOrCA,
                               keyUsage, eku, SEC_OID_X509_ANY_POLICY,
                               stapledOCSPResponse, builtChain);
@@ -600,6 +601,7 @@ CertVerifier::VerifyCert(CERTCertificate* cert,
                          const PRTime time,
                          void* pinArg,
                          const char* hostname,
+                         const char* isolationKey,
                          const Flags flags,
                          /*optional in*/ const SECItem* stapledOCSPResponse,
                          /*optional out*/ ScopedCERTCertList* validationChain,
@@ -612,7 +614,8 @@ CertVerifier::VerifyCert(CERTCertificate* cert,
                                                  time };
 
   if (mImplementation == mozillapkix) {
-    return MozillaPKIXVerifyCert(cert, usage, time, pinArg, flags,
+    return MozillaPKIXVerifyCert(cert, usage, time, pinArg,
+                                 isolationKey, flags,
                                  &callbackState, stapledOCSPResponse,
                                  validationChain, evOidPolicy);
   }
@@ -967,6 +970,7 @@ CertVerifier::VerifySSLServerCert(CERTCertificate* peerCert,
                                   PRTime time,
                      /*optional*/ void* pinarg,
                                   const char* hostname,
+                                  const char* isolationKey,
                                   bool saveIntermediatesInPermanentDatabase,
                  /*optional out*/ mozilla::pkix::ScopedCERTCertList* certChainOut,
                  /*optional out*/ SECOidTag* evOidPolicy)
@@ -992,8 +996,8 @@ CertVerifier::VerifySSLServerCert(CERTCertificate* peerCert,
   // if VerifyCert succeeded.
   ScopedCERTCertList validationChain;
   SECStatus rv = VerifyCert(peerCert, certificateUsageSSLServer, time, pinarg,
-                            hostname, 0, stapledOCSPResponse, &validationChain,
-                            evOidPolicy, nullptr);
+                            hostname, isolationKey, 0, stapledOCSPResponse,
+                            &validationChain, evOidPolicy, nullptr);
   if (rv != SECSuccess) {
     return rv;
   }

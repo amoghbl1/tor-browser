@@ -1862,8 +1862,9 @@ nsHttpHandler::Observe(nsISupports *subject,
     }
     else if (strcmp(topic, "net:failed-to-process-uri-content") == 0) {
         nsCOMPtr<nsIURI> uri = do_QueryInterface(subject);
+        // Ignore possibility of an isolation domain
         if (uri && mConnMgr)
-            mConnMgr->ReportFailedToProcess(uri);
+            mConnMgr->ReportFailedToProcess(uri, EmptyCString());
     }
     else if (strcmp(topic, "last-pb-context-exited") == 0) {
         mPrivateAuthCache.ClearAll();
@@ -1935,8 +1936,9 @@ nsHttpHandler::SpeculativeConnect(nsIURI *aURI,
     nsAutoCString username;
     aURI->GetUsername(username);
 
+    // Disregarding the possibility of an isolationDomain:
     nsHttpConnectionInfo *ci =
-        new nsHttpConnectionInfo(host, port, username, nullptr, usingSSL);
+        new nsHttpConnectionInfo(host, port, username, nullptr, EmptyCString(), usingSSL);
 
     return SpeculativeConnect(ci, aCallbacks);
 }

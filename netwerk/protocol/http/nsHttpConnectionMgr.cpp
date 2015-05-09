@@ -1194,7 +1194,7 @@ nsHttpConnectionMgr::PipelineFeedbackInfo(nsHttpConnectionInfo *ci,
 }
 
 void
-nsHttpConnectionMgr::ReportFailedToProcess(nsIURI *uri)
+nsHttpConnectionMgr::ReportFailedToProcess(nsIURI *uri, const nsACString& isolationDomain)
 {
     MOZ_ASSERT(uri);
 
@@ -1219,9 +1219,10 @@ nsHttpConnectionMgr::ReportFailedToProcess(nsIURI *uri)
         return;
 
     // report the event for all the permutations of anonymous and
-    // private versions of this host
+    // private versions of this host. We are ignoring the possibilities
+    // of proxies and isolation domains.
     nsRefPtr<nsHttpConnectionInfo> ci =
-        new nsHttpConnectionInfo(host, port, username, nullptr, usingSSL);
+        new nsHttpConnectionInfo(host, port, username, nullptr, EmptyCString(), usingSSL);
     ci->SetAnonymous(false);
     ci->SetPrivate(false);
     PipelineFeedbackInfo(ci, RedCorruptedContent, nullptr, 0);
@@ -2919,6 +2920,8 @@ nsHalfOpenSocket::SetupStreams(nsISocketTransport **transport,
     }
 
     socketTransport->SetConnectionFlags(tmpFlags);
+
+    socketTransport->SetIsolationKey(nsCString(mEnt->mConnInfo->IsolationKey()));
 
     socketTransport->SetQoSBits(gHttpHandler->GetQoSBits());
 

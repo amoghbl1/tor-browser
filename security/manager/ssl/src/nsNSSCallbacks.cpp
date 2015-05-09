@@ -101,6 +101,16 @@ nsHTTPDownloadEvent::Run()
 
   chan->SetLoadFlags(nsIRequest::LOAD_ANONYMOUS);
 
+  // If we have an isolation key, use it as the isolation key for this channel.
+  if (!mRequestSession->mIsolationKey.IsEmpty()) {
+    nsCOMPtr<nsIHttpChannelInternal> channelInternal(do_QueryInterface(chan));
+    if (channelInternal) {
+      nsCOMPtr<nsIURI> pageURI;
+      nsresult rv = NS_NewURI(getter_AddRefs(pageURI), mRequestSession->mIsolationKey.get());
+      channelInternal->SetDocumentURI(pageURI);
+    }
+  }
+
   // Create a loadgroup for this new channel.  This way if the channel
   // is redirected, we'll have a way to cancel the resulting channel.
   nsCOMPtr<nsILoadGroup> lg = do_CreateInstance(NS_LOADGROUP_CONTRACTID);
@@ -198,6 +208,7 @@ SECStatus nsNSSHttpRequestSession::createFcn(SEC_HTTP_SERVER_SESSION session,
                                              const char *http_protocol_variant,
                                              const char *path_and_query_string,
                                              const char *http_request_method, 
+                                             const char *isolationKey,
                                              const PRIntervalTime timeout, 
                                              SEC_HTTP_REQUEST_SESSION *pRequest)
 {
@@ -228,6 +239,8 @@ SECStatus nsNSSHttpRequestSession::createFcn(SEC_HTTP_SERVER_SESSION session,
   rs->mURL.AppendLiteral(":");
   rs->mURL.AppendInt(hss->mPort);
   rs->mURL.Append(path_and_query_string);
+
+  rs->mIsolationKey.Assign(isolationKey);
 
   rs->mRequestMethod = http_request_method;
 

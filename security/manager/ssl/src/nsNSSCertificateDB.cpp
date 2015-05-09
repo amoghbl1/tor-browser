@@ -636,7 +636,7 @@ nsNSSCertificateDB::ImportEmailCertificate(uint8_t * data, uint32_t length,
 
     SECStatus rv = certVerifier->VerifyCert(node->cert,
                                             certificateUsageEmailRecipient,
-                                            now, ctx, nullptr, 0,
+                                            now, ctx, nullptr, nullptr, 0,
                                             nullptr, &certChain);
 
     if (rv != SECSuccess) {
@@ -804,7 +804,7 @@ nsNSSCertificateDB::ImportValidCACertsInList(CERTCertList *certList, nsIInterfac
     mozilla::pkix::ScopedCERTCertList certChain;
     SECStatus rv = certVerifier->VerifyCert(node->cert,
                                             certificateUsageVerifyCA,
-                                            PR_Now(), ctx, nullptr, 0, nullptr,
+                                            PR_Now(), ctx, nullptr, nullptr, 0, nullptr,
                                             &certChain);
     if (rv != SECSuccess) {
       nsCOMPtr<nsIX509Cert> certToShow = nsNSSCertificate::Create(node->cert);
@@ -1386,7 +1386,8 @@ nsNSSCertificateDB::FindCertByEmailAddress(nsISupports *aToken, const char *aEma
     SECStatus srv = certVerifier->VerifyCert(node->cert,
                                              certificateUsageEmailRecipient,
                                              PR_Now(), nullptr /*XXX pinarg*/,
-                                             nullptr /*hostname*/);
+                                             nullptr /*hostname*/,
+					     nullptr /*isolationKey*/);
     if (srv == SECSuccess) {
       break;
     }
@@ -1779,6 +1780,7 @@ nsNSSCertificateDB::VerifyCertNow(nsIX509Cert* aCert,
                                  aUsage, PR_Now(),
                                  nullptr, // Assume no context
                                  nullptr, // hostname
+				 nullptr, // isolationKey
                                  aFlags,
                                  nullptr, // stapledOCSPResponse
                                  &resultChain,

@@ -50,7 +50,7 @@ typedef mozilla::pkix::ScopedPtr<PK11Context,
 // cache (given that SHA384 is a cryptographically-secure hash function).
 static SECStatus
 CertIDHash(SHA384Buffer& buf, const CERTCertificate* aCert,
-       const CERTCertificate* aIssuerCert)
+           const CERTCertificate* aIssuerCert, const char* aIsolationKey)
 {
   ScopedPK11Context context(PK11_CreateDigestContext(SEC_OID_SHA384));
   if (!context) {
@@ -75,6 +75,13 @@ CertIDHash(SHA384Buffer& buf, const CERTCertificate* aCert,
   if (rv != SECSuccess) {
     return rv;
   }
+  if (aIsolationKey) {
+    rv = PK11_DigestOp(context.get(), (const unsigned char*) aIsolationKey,
+                       strlen(aIsolationKey));
+    if (rv != SECSuccess) {
+      return rv;
+    }
+  }
   uint32_t outLen = 0;
   rv = PK11_DigestFinal(context.get(), buf, &outLen, SHA384_LENGTH);
   if (outLen != SHA384_LENGTH) {
@@ -86,6 +93,7 @@ CertIDHash(SHA384Buffer& buf, const CERTCertificate* aCert,
 SECStatus
 OCSPCache::Entry::Init(const CERTCertificate* aCert,
                        const CERTCertificate* aIssuerCert,
+                       const char* aIsolationKey,
                        PRErrorCode aErrorCode,
                        PRTime aThisUpdate,
                        PRTime aValidThrough)
@@ -93,7 +101,7 @@ OCSPCache::Entry::Init(const CERTCertificate* aCert,
   mErrorCode = aErrorCode;
   mThisUpdate = aThisUpdate;
   mValidThrough = aValidThrough;
-  return CertIDHash(mIDHash, aCert, aIssuerCert);
+  return CertIDHash(mIDHash, aCert, aIssuerCert, aIsolationKey);
 }
 
 OCSPCache::OCSPCache()
@@ -110,6 +118,7 @@ OCSPCache::~OCSPCache()
 int32_t
 OCSPCache::FindInternal(const CERTCertificate* aCert,
                         const CERTCertificate* aIssuerCert,
+                        const char* aIsolationKey,
                         const MutexAutoLock& /* aProofOfLock */)
 {
   if (mEntries.length() == 0) {
@@ -117,7 +126,7 @@ OCSPCache::FindInternal(const CERTCertificate* aCert,
   }
 
   SHA384Buffer idHash;
-  SECStatus rv = CertIDHash(idHash, aCert, aIssuerCert);
+  SECStatus rv = CertIDHash(idHash, aCert, aIssuerCert, aIsolationKey);
   if (rv != SECSuccess) {
     return -1;
   }
@@ -161,6 +170,7 @@ OCSPCache::MakeMostRecentlyUsed(size_t aIndex,
 bool
 OCSPCache::Get(const CERTCertificate* aCert,
                const CERTCertificate* aIssuerCert,
+               const char* aIsolationKey,
                PRErrorCode& aErrorCode,
                PRTime& aValidThrough)
 {
@@ -169,7 +179,7 @@ OCSPCache::Get(const CERTCertificate* aCert,
 
   MutexAutoLock lock(mMutex);
 
-  int32_t index = FindInternal(aCert, aIssuerCert, lock);
+  int32_t index = FindInternal(aCert, aIssuerCert, aIsolationKey, lock);
   if (index < 0) {
     LogWithCerts("OCSPCache::Get(%s, %s) not in cache", aCert, aIssuerCert);
     return false;
@@ -184,6 +194,7 @@ OCSPCache::Get(const CERTCertificate* aCert,
 SECStatus
 OCSPCache::Put(const CERTCertificate* aCert,
                const CERTCertificate* aIssuerCert,
+               const char* aIsolationKey,
                PRErrorCode aErrorCode,
                PRTime aThisUpdate,
                PRTime aValidThrough)
@@ -193,7 +204,7 @@ OCSPCache::Put(const CERTCertificate* aCert,
 
   MutexAutoLock lock(mMutex);
 
-  int32_t index = FindInternal(aCert, aIssuerCert, lock);
+  int32_t index = FindInternal(aCert, aIssuerCert, aIsolationKey, lock);
 
   if (index >= 0) {
     // Never replace an entry indicating a revoked certificate.
@@ -271,8 +282,8 @@ OCSPCache::Put(const CERTCertificate* aCert,
     PR_SetError(SEC_ERROR_NO_MEMORY, 0);
     return SECFailure;
   }
-  SECStatus rv = newEntry->Init(aCert, aIssuerCert, aErrorCode, aThisUpdate,
-                                aValidThrough);
+  SECStatus rv = newEntry->Init(aCert, aIssuerCert, aIsolationKey,
+                                aErrorCode, aThisUpdate, aValidThrough);
   if (rv != SECSuccess) {
     return rv;
   }

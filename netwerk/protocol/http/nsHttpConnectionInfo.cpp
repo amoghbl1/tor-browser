@@ -23,9 +23,11 @@ namespace net {
 nsHttpConnectionInfo::nsHttpConnectionInfo(const nsACString &host, int32_t port,
                                            const nsACString &username,
                                            nsProxyInfo* proxyInfo,
+                                           const nsACString &isolationKey,
                                            bool usingSSL)
     : mUsername(username)
     , mProxyInfo(proxyInfo)
+    , mIsolationKey(isolationKey)
     , mUsingSSL(usingSSL)
     , mUsingConnect(false)
 {
@@ -118,12 +120,15 @@ nsHttpConnectionInfo::SetOriginServer(const nsACString &host, int32_t port)
         mHashKey.Append(ProxyPassword());
         mHashKey.Append(']');
     }
+
+    mHashKey.Append(mIsolationKey);
 }
 
 nsHttpConnectionInfo*
 nsHttpConnectionInfo::Clone() const
 {
-    nsHttpConnectionInfo* clone = new nsHttpConnectionInfo(mHost, mPort, mUsername, mProxyInfo, mUsingSSL);
+    nsHttpConnectionInfo* clone = new nsHttpConnectionInfo(mHost, mPort,
+      mUsername, mProxyInfo, mIsolationKey, mUsingSSL);
 
     // Make sure the anonymous and private flags are transferred!
     clone->SetAnonymous(GetAnonymous());
