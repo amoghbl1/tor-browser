@@ -10,6 +10,7 @@
 #include "pkix/pkixtypes.h"
 #include "secmodt.h"
 #include "CertVerifier.h"
+#include "nsString.h"
 
 namespace mozilla { namespace psm {
 
@@ -97,7 +98,7 @@ private:
   const OCSPFetching mOCSPFetching;
   OCSPCache& mOCSPCache; // non-owning!
   void* mPinArg; // non-owning!
-  const char* mIsolationKey; // non-owning!
+  nsAutoCString mIsolationKey;
   CERTChainVerifyCallback* mCheckChainCallback; // non-owning!
 };
 

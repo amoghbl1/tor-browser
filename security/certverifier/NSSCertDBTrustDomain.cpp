@@ -238,7 +238,7 @@ NSSCertDBTrustDomain::CheckRevocation(
 
   PRErrorCode cachedResponseErrorCode = 0;
   PRTime cachedResponseValidThrough = 0;
-  bool cachedResponsePresent = mOCSPCache.Get(cert, issuerCert, mIsolationKey,
+  bool cachedResponsePresent = mOCSPCache.Get(cert, issuerCert, mIsolationKey.get(),
                                               cachedResponseErrorCode,
                                               cachedResponseValidThrough);
   if (cachedResponsePresent) {
@@ -357,7 +357,7 @@ NSSCertDBTrustDomain::CheckRevocation(
       return SECFailure;
     }
 
-    response = DoOCSPRequest(arena.get(), url.get(), mIsolationKey, request,
+    response = DoOCSPRequest(arena.get(), url.get(), mIsolationKey.get(), request,
                              OCSPFetchingTypeToTimeoutTime(mOCSPFetching));
   }
 
@@ -367,7 +367,7 @@ NSSCertDBTrustDomain::CheckRevocation(
       error = cachedResponseErrorCode;
     }
     PRTime timeout = time + ServerFailureDelay;
-    if (mOCSPCache.Put(cert, issuerCert, mIsolationKey,
+    if (mOCSPCache.Put(cert, issuerCert, mIsolationKey.get(),
                        error, time, timeout)
           != SECSuccess) {
       return SECFailure;
@@ -467,7 +467,7 @@ NSSCertDBTrustDomain::VerifyAndMaybeCacheEncodedOCSPResponse(
       error == SEC_ERROR_OCSP_UNKNOWN_CERT) {
     PR_LOG(gCertVerifierLog, PR_LOG_DEBUG,
            ("NSSCertDBTrustDomain: caching OCSP response"));
-    if (mOCSPCache.Put(cert, issuerCert, mIsolationKey,
+    if (mOCSPCache.Put(cert, issuerCert, mIsolationKey.get(),
                        error, thisUpdate, validThrough)
           != SECSuccess) {
       return SECFailure;

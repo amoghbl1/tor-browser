@@ -4586,7 +4586,7 @@ nsHttpChannel::BeginConnect()
     rv = thirdPartySvc->GetFirstPartyIsolationURI(this, nullptr,
                                        getter_AddRefs(firstPartyIsolationURI));
     if (NS_SUCCEEDED(rv) && firstPartyIsolationURI) {
-        firstPartyIsolationURI->GetSpec(isolationKey);
+        thirdPartySvc->GetFirstPartyHostForIsolation(firstPartyIsolationURI, isolationKey);
     }
 
     mConnectionInfo = new nsHttpConnectionInfo(host, port, username, proxyInfo, isolationKey, usingSSL);
