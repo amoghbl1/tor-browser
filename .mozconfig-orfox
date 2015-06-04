@@ -1,0 +1,33 @@
+# Build Fennec
+
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-tbb-arm-linux-androideabi
+mk_add_options MOZ_APP_DISPLAYNAME="Orfox"
+mk_add_options MOZ_MAKE_FLAGS="-j4"
+
+# Android
+ac_add_options --enable-application=mobile/android
+ac_add_options --target=arm-linux-androideabi
+ac_add_options --with-android-ndk="$NDK_BASE" #Enter the android ndk location(ndk r10e)
+ac_add_options --with-android-sdk="$SDK_BASE" #Enter the android sdk location
+
+#enable ccache to set amount of cache assigned for build.
+ac_add_options --with-ccache
+
+ac_add_options --enable-optimize
+#ac_add_options --enable-official-branding
+ac_add_options --with-branding=mobile/android/branding/orfox
+##ac_add_options --enable-tor-browser-update
+##ac_add_options --enable-update-packaging
+ac_add_options --enable-signmar
+ac_add_options --enable-verify-mar
+#ac_add_options --disable-strip
+#ac_add_options --disable-install-strip == Known mobile build flag that causes errors
+ac_add_options --disable-tests
+ac_add_options --disable-debug
+ac_add_options --disable-maintenance-service
+ac_add_options --disable-crashreporter
+ac_add_options --disable-webrtc
+# Let's not compile EME at least until we can enable ClearKey and only Clearkey.
+# (Apart from that there is no Adobe CRM module for Linux right now)
+ac_add_options --disable-eme
+#ac_add_options --disable-ctypes
