@@ -1,0 +1,34 @@
+# Build Fennec 
+ac_add_options --enable-application=mobile/android  
+
+# Android 
+ac_add_options --target=arm-linux-androideabi  
+ac_add_options --with-android-ndk="$NDK_BASE" #Enter the android ndk location(ndk r8e)
+ac_add_options --with-android-sdk="$SDK_BASE/platforms/android-21" #Enter the android sdk location
+
+
+ac_add_options --with-ccache #enable ccache to set amount of cache assigned for build.
+ac_add_options --disable-unified-compilation
+
+# OBJDIR
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-tbb-@CONFIG_GUESS@
+# It is a good idea to have your objdir name start with obj so that Git ignores it.
+
+
+# Tor Browser Specific flags
+mk_add_options MOZ_MAKE_FLAGS="-j4"
+#ac_add_options --enable-optimize
+#ac_add_options --disable-optimize
+##ac_add_options --enable-official-branding
+##ac_add_options --enable-tor-browser-update
+##ac_add_options --enable-update-packaging
+#ac_add_options --enable-signmar
+#ac_add_options --enable-verify-mar
+#ac_add_options --disable-strip
+#ac_add_options --disable-install-strip
+#ac_add_options --disable-tests
+#ac_add_options --disable-debug
+#ac_add_options --disable-maintenance-service
+#ac_add_options --disable-crashreporter
+ac_add_options --disable-webrtc
+#ac_add_options --disable-ctypes
