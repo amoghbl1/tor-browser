@@ -36,7 +36,7 @@ MOZ_CAPTURE=1
 MOZ_RAW=1
 MOZ_PLACES=
 MOZ_SOCIAL=
-MOZ_ANDROID_HISTORY=1
+MOZ_ANDROID_HISTORY=0
 MOZ_DISABLE_EXPORT_JS=1
 
 # use custom widget for html:select
@@ -59,7 +59,7 @@ MOZ_SERVICES_HEALTHREPORT=1
 MOZ_LOCALE_SWITCHER=1
 
 # Enable second screen and casting support for external devices.
-MOZ_DEVICES=1
+MOZ_DEVICES=0
 
 # Enable second screen using native Android libraries, provided we're
 # not resource constrained.
