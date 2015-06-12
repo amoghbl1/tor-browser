@@ -15,6 +15,8 @@ import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.methods.HttpGet;
+import ch.boye.httpclientandroidlib.HttpHost;
+import ch.boye.httpclientandroidlib.conn.params.ConnRoutePNames;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.db.BrowserDB;
@@ -127,8 +129,10 @@ public class LoadFaviconTask {
             return null;
         }
 
+        HttpHost torProxy = new HttpHost("127.0.0.1", 8118);
         HttpGet request = new HttpGet(faviconURI);
-        request.setHeader("User-Agent", GeckoAppShell.getGeckoInterface().getDefaultUAString());
+        httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, torProxy);
+
         HttpResponse response = httpClient.execute(request);
         if (response == null) {
             return null;
