@@ -119,6 +119,7 @@ gujar.sources += ['java/org/mozilla/gecko/' + x for x in [
     'util/NonEvictingLruCache.java',
     'util/PrefUtils.java',
     'util/ProxySelector.java',
+    'util/ProxySettings.java',
     'util/RawResource.java',
     'util/ScreenshotObserver.java',
     'util/StringUtils.java',
@@ -134,6 +135,7 @@ gujar.extra_jars = [
     CONFIG['ANDROID_SUPPORT_V4_AAR_INTERNAL_LIB'],
     'constants.jar',
     'gecko-mozglue.jar',
+    'sync-thirdparty.jar',
 ]
 gujar.javac_flags += ['-Xlint:all,-deprecation']
 

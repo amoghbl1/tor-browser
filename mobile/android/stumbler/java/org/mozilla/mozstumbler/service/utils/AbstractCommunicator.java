@@ -17,6 +17,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.Proxy;
+import java.net.InetSocketAddress;
 
 public abstract class AbstractCommunicator {
 
@@ -73,7 +75,8 @@ public abstract class AbstractCommunicator {
                 sMozApiKey = prefs.getMozApiKey();
             }
             URL url = new URL(getUrlString() + "?key=" + sMozApiKey);
-            mHttpURLConnection = (HttpURLConnection) url.openConnection();
+            Proxy torProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 8118));
+            mHttpURLConnection = (HttpURLConnection) url.openConnection(torProxy);
             mHttpURLConnection.setRequestMethod("POST");
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e);
