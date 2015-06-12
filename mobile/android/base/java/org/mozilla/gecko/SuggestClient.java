@@ -7,6 +7,8 @@ package org.mozilla.gecko;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.Proxy;
+import java.net.InetSocketAddress;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import org.json.JSONArray;
 import org.mozilla.gecko.annotation.RobocopTarget;
 import org.mozilla.gecko.util.HardwareUtils;
+import org.mozilla.gecko.util.ProxySettings;
 
 import android.content.Context;
 import android.text.TextUtils;
@@ -87,7 +90,7 @@ public class SuggestClient {
             HttpURLConnection urlConnection = null;
             InputStream in = null;
             try {
-                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection = (HttpURLConnection) url.openConnection(ProxySettings.getProxy());
                 urlConnection.setConnectTimeout(mTimeout);
                 urlConnection.setRequestProperty("User-Agent", USER_AGENT);
                 in = new BufferedInputStream(urlConnection.getInputStream());

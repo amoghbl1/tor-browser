@@ -17,11 +17,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.Proxy;
+import java.net.InetSocketAddress;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.util.zip.GZIPOutputStream;
 
 import org.mozilla.gecko.AppConstants.Versions;
+import org.mozilla.gecko.util.ProxySettings;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -366,7 +369,7 @@ public class CrashReporter extends AppCompatActivity
         Log.i(LOGTAG, "server url: " + spec);
         try {
             URL url = new URL(spec);
-            HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+            HttpURLConnection conn = (HttpURLConnection)url.openConnection(ProxySettings.getProxy());
             conn.setRequestMethod("POST");
             String boundary = generateBoundary();
             conn.setDoOutput(true);
