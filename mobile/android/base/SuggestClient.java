@@ -7,6 +7,8 @@ package org.mozilla.gecko;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.Proxy;
+import java.net.InetSocketAddress;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -84,7 +86,8 @@ public class SuggestClient {
             HttpURLConnection urlConnection = null;
             InputStream in = null;
             try {
-                urlConnection = (HttpURLConnection) url.openConnection();
+                Proxy torProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 8118));
+                urlConnection = (HttpURLConnection) url.openConnection(torProxy);
                 urlConnection.setConnectTimeout(mTimeout);
                 urlConnection.setRequestProperty("User-Agent", USER_AGENT);
                 in = new BufferedInputStream(urlConnection.getInputStream());
