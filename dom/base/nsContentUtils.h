@@ -1911,6 +1911,16 @@ public:
     return sEncodeDecodeURLHash;
   }
 
+  /*
+   * Returns true if the browser should attempt to prevent content scripts
+   * from collecting distinctive information about the browser that could
+   * be used to "fingerprint" and track the user across websites.
+   */
+  static bool ResistFingerprinting()
+  {
+    return sPrivacyResistFingerprinting;
+  }
+
   /**
    * Returns true if the doc tree branch which contains aDoc contains any
    * plugins which we don't control event dispatch for, i.e. do any plugins
@@ -2390,6 +2400,7 @@ private:
   static bool sIsUserTimingLoggingEnabled;
   static bool sIsExperimentalAutocompleteEnabled;
   static bool sEncodeDecodeURLHash;
+  static bool sPrivacyResistFingerprinting;
 
   static nsHtml5StringParser* sHTMLFragmentParser;
   static nsIParser* sXMLFragmentParser;
