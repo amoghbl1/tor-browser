@@ -501,7 +501,7 @@ public class Distribution {
 
         try {
             Proxy torProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 8118));
-            final HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
+            final HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection(torProxy);
 
             // If the Search Activity starts, and we handle the referrer intent, this'll return
             // null. Recover gracefully in this case.
