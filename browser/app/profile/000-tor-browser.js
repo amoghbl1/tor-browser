@@ -193,6 +193,9 @@ pref("network.jar.block-remote-files", false);
 // https://trac.torproject.org/projects/tor/ticket/11253
 pref("security.tls.version.max", 3);
 
+// Enforce certificate pinning, see: https://bugs.torproject.org/16206
+pref("security.cert_pinning.enforcement_level", 2);
+
 #ifdef TOR_BROWSER_VERSION
 #expand pref("torbrowser.version", __TOR_BROWSER_VERSION__);
 #endif
