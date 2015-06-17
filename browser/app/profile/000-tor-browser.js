@@ -124,6 +124,11 @@ pref("plugin.state.flash", 1);
 pref("plugins.hide_infobar_for_missing_plugin", true);
 pref("plugins.hideMissingPluginsNotification", true);
 pref("media.peerconnection.enabled", false); // Disable WebRTC interfaces
+// GMPs: We make sure they don't show up on the Add-on panel and confuse users.
+// And the external update/donwload server must not get pinged. We apply a
+// clever solution for https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=769716.
+pref("media.gmp-provider.enabled", false);
+pref("media.gmp-manager.url.override", "data:text/plain,");
 
 // Security slider
 pref("svg.in-content.enabled", true);
