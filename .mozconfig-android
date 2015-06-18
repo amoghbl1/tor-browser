@@ -4,7 +4,7 @@ ac_add_options --enable-application=mobile/android
 # Android 
 ac_add_options --target=arm-linux-androideabi  
 ac_add_options --with-android-ndk="$NDK_BASE" #Enter the android ndk location(ndk r8e)
-ac_add_options --with-android-sdk="$SDK_BASE/platforms/android-21" #Enter the android sdk location
+ac_add_options --with-android-sdk="$SDK_BASE/platforms/android-22" #Enter the android sdk location
 
 
 ac_add_options --with-ccache #enable ccache to set amount of cache assigned for build.
