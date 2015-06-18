@@ -1048,3 +1048,35 @@ pref("security.tls.version.max", 3);
 #ifdef TOR_BROWSER_VERSION
 #expand pref("torbrowser.version", __TOR_BROWSER_VERSION__);
 #endif
+
+// More Orfox specific flags (some might be redundant)
+pref("privacy.clearOnShutdown.cache", true);
+pref("privacy.clearOnShutdown.cookies",true);
+pref("privacy.clearOnShutdown.downloads",true);
+pref("privacy.clearOnShutdown.formdata",true);
+pref("privacy.clearOnShutdown.history",true);
+pref("privacy.clearOnShutdown.offlineApps",true);
+pref("privacy.clearOnShutdown.passwords",true);
+pref("privacy.clearOnShutdown.sessions",true);
+pref("privacy.clearOnShutdown.siteSettings",true);
+
+// Do Not Track!
+pref("privacy.donottrackheader.enabled",false);
+pref("privacy.donottrackheader.value",1);
+
+// Don't send a referrer:
+pref("network.http.sendRefererHeader", 0);
+
+// Make sure certificates are up-to-date:
+pref("security.OCSP.require", true); pref("security.checkloaduri",true);
+
+// Don't display mixed content (i.e. not secure content on a secure page)
+pref("security.mixed_content.block_display_content", true);
+
+// Disable RTSP
+pref("media.rtsp.enabled", false);
+pref("media.rtsp.video.enabled", false);
+
+// Disable UDP Push service wakeup
+pref("services.push.udp.wakeupEnabled", false);
+pref("dom.push.udp.wakeupEnabled", false);
