@@ -19,10 +19,12 @@ using namespace ipc;
 namespace dom {
 
 BroadcastChannelParent::BroadcastChannelParent(const nsACString& aOrigin,
+                                               const nsAString& aFirstPartyHost,
                                                const nsAString& aChannel,
                                                bool aPrivateBrowsing)
   : mService(BroadcastChannelService::GetOrCreate())
   , mOrigin(aOrigin)
+  , mFirstPartyHost(aFirstPartyHost)
   , mChannel(aChannel)
   , mPrivateBrowsing(aPrivateBrowsing)
 {
@@ -44,7 +46,8 @@ BroadcastChannelParent::RecvPostMessage(const ClonedMessageData& aData)
     return false;
   }
 
-  mService->PostMessage(this, aData, mOrigin, mChannel, mPrivateBrowsing);
+  mService->PostMessage(this, aData, mOrigin, mFirstPartyHost,
+                        mChannel, mPrivateBrowsing);
   return true;
 }
 
@@ -80,12 +83,14 @@ BroadcastChannelParent::ActorDestroy(ActorDestroyReason aWhy)
 void
 BroadcastChannelParent::CheckAndDeliver(const ClonedMessageData& aData,
                                         const nsCString& aOrigin,
+                                        const nsString& aFirstPartyHost,
                                         const nsString& aChannel,
                                         bool aPrivateBrowsing)
 {
   AssertIsOnBackgroundThread();
 
   if (aOrigin == mOrigin &&
+      aFirstPartyHost == mFirstPartyHost &&
       aChannel == mChannel &&
       aPrivateBrowsing == mPrivateBrowsing) {
     // Duplicate the data for this parent.

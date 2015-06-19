@@ -13,6 +13,7 @@
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/ipc/PBackgroundChild.h"
+#include "mozilla/Preferences.h"
 #include "nsContentUtils.h"
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
@@ -20,6 +21,7 @@
 #include "nsIBFCacheEntry.h"
 #include "nsIDocument.h"
 #include "nsISupportsPrimitives.h"
+#include "mozIThirdPartyUtil.h"
 
 #ifdef XP_WIN
 #undef PostMessage
@@ -50,6 +52,44 @@ private:
 
 namespace {
 
+bool
+IsFirstPartyIsolationEnabled()
+{
+  return 0 != mozilla::Preferences::GetInt("privacy.thirdparty.isolate");
+}
+
+void
+GetFirstPartyHost(nsIDocument* aDoc, nsAString& aFirstPartyHost,
+                  ErrorResult& aRv)
+{
+  if (!aDoc) {
+    aRv.Throw(NS_ERROR_FAILURE);
+    return;
+  }
+
+  nsCOMPtr<mozIThirdPartyUtil> thirdPartySvc =
+    do_GetService(THIRDPARTYUTIL_CONTRACTID);
+  nsCOMPtr<nsIURI> firstPartyIsolationURI;
+  nsresult rv = thirdPartySvc->GetFirstPartyIsolationURI(nullptr, aDoc,
+                                    getter_AddRefs(firstPartyIsolationURI));
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aRv.Throw(rv);
+    return;
+  }
+
+  if (firstPartyIsolationURI) {
+    nsAutoCString hostCStr;
+    rv = thirdPartySvc->GetFirstPartyHostForIsolation(firstPartyIsolationURI,
+                                                      hostCStr);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      aRv.Throw(rv);
+      return;
+    }
+
+    aFirstPartyHost = NS_ConvertUTF8toUTF16(hostCStr);
+  }
+}
+
 nsIPrincipal*
 GetPrincipalFromWorkerPrivate(WorkerPrivate* aWorkerPrivate)
 {
@@ -71,11 +111,13 @@ class InitializeRunnable final : public WorkerMainThreadRunnable
 {
 public:
   InitializeRunnable(WorkerPrivate* aWorkerPrivate, nsACString& aOrigin,
+                     nsAString& aFirstPartyHost,
                      PrincipalInfo& aPrincipalInfo, bool& aPrivateBrowsing,
                      ErrorResult& aRv)
     : WorkerMainThreadRunnable(aWorkerPrivate)
     , mWorkerPrivate(GetCurrentThreadWorkerPrivate())
     , mOrigin(aOrigin)
+    , mFirstPartyHost(aFirstPartyHost)
     , mPrincipalInfo(aPrincipalInfo)
     , mPrivateBrowsing(aPrivateBrowsing)
     , mRv(aRv)
@@ -120,9 +162,16 @@ public:
       wp = wp->GetParent();
     }
 
+    bool isIsolationEnabled = IsFirstPartyIsolationEnabled();
+
     // Window doesn't exist for some kind of workers (eg: SharedWorkers)
     nsPIDOMWindow* window = wp->GetWindow();
     if (!window) {
+      // If we lack a window and first party isolation is enabled, disallow
+      // use of Broadcast Channels. This is the safe thing to do, e.g., if
+      // a SharedWorker is being used.
+      if (isIsolationEnabled)
+        mRv.Throw(NS_ERROR_FAILURE);
       return true;
     }
 
@@ -131,12 +180,20 @@ public:
       mPrivateBrowsing = nsContentUtils::IsInPrivateBrowsing(doc);
     }
 
+    if (isIsolationEnabled) {
+      GetFirstPartyHost(doc, mFirstPartyHost, mRv);
+      if (NS_WARN_IF(mRv.Failed())) {
+        return true;
+      }
+    }
+
     return true;
   }
 
 private:
   WorkerPrivate* mWorkerPrivate;
   nsACString& mOrigin;
+  nsAString& mFirstPartyHost;
   PrincipalInfo& mPrincipalInfo;
   bool& mPrivateBrowsing;
   ErrorResult& mRv;
@@ -302,12 +359,14 @@ private:
 BroadcastChannel::BroadcastChannel(nsPIDOMWindow* aWindow,
                                    const PrincipalInfo& aPrincipalInfo,
                                    const nsACString& aOrigin,
+                                   const nsAString& aFirstPartyHost,
                                    const nsAString& aChannel,
                                    bool aPrivateBrowsing)
   : DOMEventTargetHelper(aWindow)
   , mWorkerFeature(nullptr)
   , mPrincipalInfo(new PrincipalInfo(aPrincipalInfo))
   , mOrigin(aOrigin)
+  , mFirstPartyHost(aFirstPartyHost)
   , mChannel(aChannel)
   , mPrivateBrowsing(aPrivateBrowsing)
   , mIsKeptAlive(false)
@@ -338,6 +397,7 @@ BroadcastChannel::Constructor(const GlobalObject& aGlobal,
   // Window is null in workers.
 
   nsAutoCString origin;
+  nsAutoString firstPartyHost;
   PrincipalInfo principalInfo;
   bool privateBrowsing = false;
   WorkerPrivate* workerPrivate = nullptr;
@@ -381,14 +441,21 @@ BroadcastChannel::Constructor(const GlobalObject& aGlobal,
     if (doc) {
       privateBrowsing = nsContentUtils::IsInPrivateBrowsing(doc);
     }
+
+    if (IsFirstPartyIsolationEnabled()) {
+      GetFirstPartyHost(doc, firstPartyHost, aRv);
+      if (NS_WARN_IF(aRv.Failed())) {
+        return nullptr;
+      }
+    }
   } else {
     JSContext* cx = aGlobal.Context();
     workerPrivate = GetWorkerPrivateFromContext(cx);
     MOZ_ASSERT(workerPrivate);
 
     RefPtr<InitializeRunnable> runnable =
-      new InitializeRunnable(workerPrivate, origin, principalInfo,
-                             privateBrowsing, aRv);
+      new InitializeRunnable(workerPrivate, origin, firstPartyHost,
+                             principalInfo, privateBrowsing, aRv);
     runnable->Dispatch(aRv);
   }
 
@@ -397,8 +464,8 @@ BroadcastChannel::Constructor(const GlobalObject& aGlobal,
   }
 
   RefPtr<BroadcastChannel> bc =
-    new BroadcastChannel(window, principalInfo, origin, aChannel,
-                         privateBrowsing);
+    new BroadcastChannel(window, principalInfo, origin, firstPartyHost,
+                         aChannel, privateBrowsing);
 
   // Register this component to PBackground.
   PBackgroundChild* actor = BackgroundChild::GetForCurrentThread();
@@ -518,7 +585,8 @@ BroadcastChannel::ActorCreated(PBackgroundChild* aActor)
   }
 
   PBroadcastChannelChild* actor =
-    aActor->SendPBroadcastChannelConstructor(*mPrincipalInfo, mOrigin, mChannel,
+    aActor->SendPBroadcastChannelConstructor(*mPrincipalInfo, mOrigin,
+                                             mFirstPartyHost, mChannel,
                                              mPrivateBrowsing);
 
   mActor = static_cast<BroadcastChannelChild*>(actor);

@@ -71,7 +71,8 @@ parent:
   PCameras();
 
   PUDPSocket(OptionalPrincipalInfo pInfo, nsCString filter);
-  PBroadcastChannel(PrincipalInfo pInfo, nsCString origin, nsString channel,
+  PBroadcastChannel(PrincipalInfo pInfo, nsCString origin,
+                    nsString firstPartyHost, nsString channel,
                     bool privateBrowsing);
 
   PServiceWorkerManager();
