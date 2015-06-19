@@ -271,6 +271,7 @@ BackgroundChildImpl::DeallocPUDPSocketChild(PUDPSocketChild* child)
 dom::PBroadcastChannelChild*
 BackgroundChildImpl::AllocPBroadcastChannelChild(const PrincipalInfo& aPrincipalInfo,
                                                  const nsCString& aOrigin,
+                                                 const nsString& aFirstPartyHost,
                                                  const nsString& aChannel,
                                                  const bool& aPrivateBrowsing)
 {
