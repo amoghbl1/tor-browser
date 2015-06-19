@@ -250,13 +250,15 @@ mozilla::dom::PBroadcastChannelParent*
 BackgroundParentImpl::AllocPBroadcastChannelParent(
                                             const PrincipalInfo& aPrincipalInfo,
                                             const nsString& aOrigin,
+                                            const nsString& aFirstPartyHost,
                                             const nsString& aChannel,
                                             const bool& aPrivateBrowsing)
 {
   AssertIsInMainProcess();
   AssertIsOnBackgroundThread();
 
-  return new BroadcastChannelParent(aOrigin, aChannel, aPrivateBrowsing);
+  return new BroadcastChannelParent(aOrigin, aFirstPartyHost,
+                                    aChannel, aPrivateBrowsing);
 }
 
 namespace {
@@ -324,6 +326,7 @@ BackgroundParentImpl::RecvPBroadcastChannelConstructor(
                                             PBroadcastChannelParent* actor,
                                             const PrincipalInfo& aPrincipalInfo,
                                             const nsString& aOrigin,
+                                            const nsString& aFirstPartyHost,
                                             const nsString& aChannel,
                                             const bool& aPrivateBrowsing)
 {
