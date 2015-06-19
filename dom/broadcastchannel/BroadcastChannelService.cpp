@@ -83,11 +83,13 @@ struct MOZ_STACK_CLASS PostMessageData final
   PostMessageData(BroadcastChannelParent* aParent,
                   const ClonedMessageData& aData,
                   const nsAString& aOrigin,
+                  const nsAString& aFirstPartyHost,
                   const nsAString& aChannel,
                   bool aPrivateBrowsing)
     : mParent(aParent)
     , mData(aData)
     , mOrigin(aOrigin)
+    , mFirstPartyHost(aFirstPartyHost)
     , mChannel(aChannel)
     , mPrivateBrowsing(aPrivateBrowsing)
   {
@@ -117,6 +119,7 @@ struct MOZ_STACK_CLASS PostMessageData final
   const ClonedMessageData& mData;
   nsTArray<nsRefPtr<FileImpl>> mFiles;
   const nsString mOrigin;
+  const nsString mFirstPartyHost;
   const nsString mChannel;
   bool mPrivateBrowsing;
 };
@@ -131,8 +134,8 @@ PostMessageEnumerator(nsPtrHashKey<BroadcastChannelParent>* aKey, void* aPtr)
   MOZ_ASSERT(parent);
 
   if (parent != data->mParent) {
-    parent->CheckAndDeliver(data->mData, data->mOrigin, data->mChannel,
-                            data->mPrivateBrowsing);
+    parent->CheckAndDeliver(data->mData, data->mOrigin, data->mFirstPartyHost,
+                            data->mChannel, data->mPrivateBrowsing);
   }
 
   return PL_DHASH_NEXT;
@@ -144,6 +147,7 @@ void
 BroadcastChannelService::PostMessage(BroadcastChannelParent* aParent,
                                      const ClonedMessageData& aData,
                                      const nsAString& aOrigin,
+                                     const nsAString& aFirstPartyHost,
                                      const nsAString& aChannel,
                                      bool aPrivateBrowsing)
 {
@@ -151,7 +155,8 @@ BroadcastChannelService::PostMessage(BroadcastChannelParent* aParent,
   MOZ_ASSERT(aParent);
   MOZ_ASSERT(mAgents.Contains(aParent));
 
-  PostMessageData data(aParent, aData, aOrigin, aChannel, aPrivateBrowsing);
+  PostMessageData data(aParent, aData, aOrigin, aFirstPartyHost,
+                       aChannel, aPrivateBrowsing);
   mAgents.EnumerateEntries(PostMessageEnumerator, &data);
 }
 

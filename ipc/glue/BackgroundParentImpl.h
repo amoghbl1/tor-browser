@@ -73,6 +73,7 @@ protected:
   virtual PBroadcastChannelParent*
   AllocPBroadcastChannelParent(const PrincipalInfo& aPrincipalInfo,
                                const nsString& aOrigin,
+                               const nsString& aFirstPartyHost,
                                const nsString& aChannel,
                                const bool& aPrivateBrowsing) override;
 
@@ -80,6 +81,7 @@ protected:
   RecvPBroadcastChannelConstructor(PBroadcastChannelParent* actor,
                                    const PrincipalInfo& aPrincipalInfo,
                                    const nsString& origin,
+                                   const nsString& firstPartyHost,
                                    const nsString& channel,
                                    const bool& aPrivateBrowsing) override;
 
