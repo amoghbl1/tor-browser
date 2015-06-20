@@ -60,17 +60,30 @@ class nsIDocShell;
  *
  * Exceptions: some of the following values are set to higher values than in the spec because
  * the values in the spec are ridiculously low. They are explicitly marked below
+ *
+ * Tor Browser Modifications: The following values are the minimum between an ancient netbook and a 2013 Moto E
  */
-#define MINVALUE_GL_MAX_TEXTURE_SIZE                  1024  // Different from the spec, which sets it to 64 on page 162
-#define MINVALUE_GL_MAX_CUBE_MAP_TEXTURE_SIZE         512   // Different from the spec, which sets it to 16 on page 162
-#define MINVALUE_GL_MAX_VERTEX_ATTRIBS                8     // Page 164
-#define MINVALUE_GL_MAX_FRAGMENT_UNIFORM_VECTORS      16    // Page 164
-#define MINVALUE_GL_MAX_VERTEX_UNIFORM_VECTORS        128   // Page 164
+#define MINVALUE_GL_MAX_TEXTURE_SIZE                  2048  // Different from the spec, which sets it to 64 on page 162
+#define MINVALUE_GL_MAX_CUBE_MAP_TEXTURE_SIZE         2048  // Different from the spec, which sets it to 16 on page 162
+#define MINVALUE_GL_MAX_VERTEX_ATTRIBS                16    // Page 164
+#define MINVALUE_GL_MAX_FRAGMENT_UNIFORM_VECTORS      224   // Page 164
+#define MINVALUE_GL_MAX_VERTEX_UNIFORM_VECTORS        256   // Page 164
 #define MINVALUE_GL_MAX_VARYING_VECTORS               8     // Page 164
 #define MINVALUE_GL_MAX_TEXTURE_IMAGE_UNITS           8     // Page 164
-#define MINVALUE_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS    0     // Page 164
-#define MINVALUE_GL_MAX_RENDERBUFFER_SIZE             1024  // Different from the spec, which sets it to 1 on page 164
-#define MINVALUE_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS  8     // Page 164
+#define MINVALUE_GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS    8     // Page 164
+#define MINVALUE_GL_MAX_RENDERBUFFER_SIZE             2048  // Different from the spec, which sets it to 1 on page 164
+#define MINVALUE_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS  16    // Page 164
+
+/* The following additional values were set specifically for fingerprinting.
+ * These ranges came from a 2013 Moto E and an old macbook.
+ *
+ * These values specify the upper end of the maximum size of line and point
+ * elements. The lower bounds are 1 in both cases (and the minimum of 1 is
+ * guaranteed by OpenGL). */
+#define MINVALUE_GL_ALIASED_LINE_WIDTH_RANGE          5
+#define MINVALUE_GL_ALIASED_POINT_SIZE_RANGE          63
+/* This value is used to cap the resolution of the viewport to (MAX x MAX) */
+#define MINVALUE_GL_MAX_VIEWPORT_DIMS                 4096
 
 /*
  * Minimum value constants define in 6.2 State Tables of OpenGL ES - 3.0.4
