@@ -465,9 +465,6 @@ WebGLContext::InitAndValidateGL(FailureReason* const out_failReason)
     mCanLoseContextInForeground = gfxPrefs::WebGLCanLoseContextInForeground();
     mRestoreWhenVisible = gfxPrefs::WebGLRestoreWhenVisible();
 
-    if (MinCapabilityMode())
-        mDisableFragHighP = true;
-
     // These are the default values, see 6.2 State tables in the
     // OpenGL ES 2.0.25 spec.
     mColorWriteMask[0] = 1;
