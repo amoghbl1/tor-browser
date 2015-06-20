@@ -129,6 +129,14 @@ pref("media.peerconnection.enabled", false); // Disable WebRTC interfaces
 // clever solution for https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=769716.
 pref("media.gmp-provider.enabled", false);
 pref("media.gmp-manager.url.override", "data:text/plain,");
+// EME prefs: Strictly speaking these prefs don't need to be set as we are
+// using the --disable-eme compile flag. However, in order to not confuse users,
+// who might stumble upon them while looking into about:config, we set them to
+// 'false' communicating that EME is really disabled.
+pref("browser.eme.ui.enabled", false);
+pref("media.gmp-eme-adobe.enabled", false);
+pref("media.eme.enabled", false);
+pref("media.eme.apiVisible", false);
 
 // Security slider
 pref("svg.in-content.enabled", true);

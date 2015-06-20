@@ -32,4 +32,7 @@ ac_add_options --disable-crashreporter
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-webrtc
 ac_add_options --disable-tests
+# Let's not compile EME at least until we can enable ClearKey and only Clearkey.
+# (Apart from that there is no Adobe CRM module for OS X right now)
+ac_add_options --disable-eme
 # ac_add_options --disable-ctypes
