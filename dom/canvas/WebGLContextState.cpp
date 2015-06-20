@@ -138,6 +138,38 @@ WebGLContext::GetParameter(JSContext* cx, GLenum pname, ErrorResult& rv)
             case LOCAL_GL_MAX_RENDERBUFFER_SIZE:
                 return JS::Int32Value(MINVALUE_GL_MAX_RENDERBUFFER_SIZE);
 
+            case LOCAL_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS:
+                return JS::Int32Value(MINVALUE_GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
+
+            //case LOCAL_GL_DEPTH_RANGE:
+            case LOCAL_GL_ALIASED_POINT_SIZE_RANGE: {
+                GLfloat fv[2] = { 1, MINVALUE_GL_ALIASED_POINT_SIZE_RANGE };
+                JSObject* obj = Float32Array::Create(cx, this, 2, fv);
+                if (!obj) {
+                    rv = NS_ERROR_OUT_OF_MEMORY;
+                }
+                return JS::ObjectOrNullValue(obj);
+            }
+
+            case LOCAL_GL_ALIASED_LINE_WIDTH_RANGE: {
+                GLfloat fv[2] = { 1, MINVALUE_GL_ALIASED_LINE_WIDTH_RANGE };
+                JSObject* obj = Float32Array::Create(cx, this, 2, fv);
+                if (!obj) {
+                    rv = NS_ERROR_OUT_OF_MEMORY;
+                }
+                return JS::ObjectOrNullValue(obj);
+            }
+
+            case LOCAL_GL_MAX_VIEWPORT_DIMS: {
+                GLint iv[2] = { MINVALUE_GL_MAX_VIEWPORT_DIMS, MINVALUE_GL_MAX_VIEWPORT_DIMS };
+                JSObject* obj = Int32Array::Create(cx, this, 2, iv);
+                if (!obj) {
+                    rv = NS_ERROR_OUT_OF_MEMORY;
+                }
+                return JS::ObjectOrNullValue(obj);
+            }
+
+
             default:
                 // Return the real value; we're not overriding this one
                 break;
