@@ -21,4 +21,7 @@ ac_add_options --disable-debug
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-crashreporter
 ac_add_options --disable-webrtc
+# Let's not compile EME at least until we can enable ClearKey and only Clearkey.
+# (Apart from that there is no Adobe CRM module for Linux right now)
+ac_add_options --disable-eme
 #ac_add_options --disable-ctypes

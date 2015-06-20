@@ -24,6 +24,8 @@ ac_add_options --without-intl-api
 # We can't build the sandbox code with mingw-w64:
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1042426
 ac_add_options --disable-sandbox
+# EME is not running without sandbox. Thus, don't compile it in the first place.
+ac_add_options --disable-eme
 ac_add_options --disable-crashreporter
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-webrtc
