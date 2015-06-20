@@ -1700,9 +1700,6 @@ WebGLContext::InitAndValidateGL()
     mCanLoseContextInForeground = Preferences::GetBool("webgl.can-lose-context-in-foreground", true);
     mRestoreWhenVisible = Preferences::GetBool("webgl.restore-context-when-visible", true);
 
-    if (MinCapabilityMode())
-        mDisableFragHighP = true;
-
     // These are the default values, see 6.2 State tables in the
     // OpenGL ES 2.0.25 spec.
     mColorWriteMask[0] = 1;

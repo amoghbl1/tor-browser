@@ -1243,7 +1243,10 @@ WebGLContext::GetContextAttributes(Nullable<dom::WebGLContextAttributes>& retval
     result.mAlpha.Construct(mOptions.alpha);
     result.mDepth = mOptions.depth;
     result.mStencil = mOptions.stencil;
-    result.mAntialias = mOptions.antialias;
+    if (MinCapabilityMode())
+        result.mAntialias = false;
+    else
+        result.mAntialias = mOptions.antialias;
     result.mPremultipliedAlpha = mOptions.premultipliedAlpha;
     result.mPreserveDrawingBuffer = mOptions.preserveDrawingBuffer;
 }
