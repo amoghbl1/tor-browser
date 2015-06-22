@@ -30,8 +30,6 @@ MOZ_NO_SMART_CARDS=1
 # Enable getUserMedia
 MOZ_MEDIA_NAVIGATOR=1
 
-# Enable NFC permission
-MOZ_ANDROID_BEAM=1
 
 MOZ_XULRUNNER=
 
