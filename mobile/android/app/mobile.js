@@ -353,7 +353,7 @@ pref("privacy.item.siteSettings", true);
 pref("privacy.item.syncAccount", true);
 
 // enable geo
-pref("geo.enabled", true);
+pref("geo.enabled", false);
 
 // content sink control -- controls responsiveness during page load
 // see https://bugzilla.mozilla.org/show_bug.cgi?id=481566#c9
