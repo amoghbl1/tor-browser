@@ -22,6 +22,7 @@
      fileincluded here, so that they can be referenced by both APKs. -->
 #include FennecManifest_permissions.xml.in
 
+
     <application android:label="@string/moz_app_displayname"
                  android:icon="@drawable/icon"
                  android:logo="@drawable/logo"
