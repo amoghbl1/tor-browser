@@ -78,28 +78,16 @@ class HomeConfigPrefsBackend implements HomeConfigBackend {
         final PanelConfig historyEntry = createBuiltinPanelConfig(mContext, PanelType.HISTORY);
         final PanelConfig recentTabsEntry = createBuiltinPanelConfig(mContext, PanelType.RECENT_TABS);
 
-        // We disable Synced Tabs for guest mode profiles.
-        final PanelConfig remoteTabsEntry;
-        if (RestrictedProfiles.isAllowed(mContext, RestrictedProfiles.Restriction.DISALLOW_MODIFY_ACCOUNTS)) {
-            remoteTabsEntry = createBuiltinPanelConfig(mContext, PanelType.REMOTE_TABS);
-        } else {
-            remoteTabsEntry = null;
-        }
+        // We disable Synced Tabs for EVERYONE
 
         // On tablets, we go [...|History|Recent Tabs|Synced Tabs].
         // On phones, we go [Synced Tabs|Recent Tabs|History|...].
         if (HardwareUtils.isTablet()) {
             panelConfigs.add(historyEntry);
             panelConfigs.add(recentTabsEntry);
-            if (remoteTabsEntry != null) {
-                panelConfigs.add(remoteTabsEntry);
-            }
         } else {
             panelConfigs.add(0, historyEntry);
             panelConfigs.add(0, recentTabsEntry);
-            if (remoteTabsEntry != null) {
-                panelConfigs.add(0, remoteTabsEntry);
-            }
         }
 
         return new State(panelConfigs, true);
@@ -247,9 +235,9 @@ class HomeConfigPrefsBackend implements HomeConfigBackend {
                     break;
 
                 case 2:
-                    // Add "Remote Tabs"/"Synced Tabs" panel.
-                    addBuiltinPanelConfig(context, jsonPanels,
-                            PanelType.REMOTE_TABS, Position.FRONT, Position.BACK);
+                    // Don't Add "Remote Tabs"/"Synced Tabs" panel.
+                    // addBuiltinPanelConfig(context, jsonPanels,
+                    //        PanelType.REMOTE_TABS, Position.FRONT, Position.BACK);
                     break;
 
                 case 3:
