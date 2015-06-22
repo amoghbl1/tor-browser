@@ -15,8 +15,7 @@
 #endif
               android:targetSdkVersion="22"/>
 
-#include ../services/manifests/FxAccountAndroidManifest_permissions.xml.in
-#include ../services/manifests/SyncAndroidManifest_permissions.xml.in
+#include ../services/manifests/HealthReportAndroidManifest_permissions.xml.in
 
 #ifdef MOZ_ANDROID_SEARCH_ACTIVITY
 #include ../search/manifests/SearchAndroidManifest_permissions.xml.in
