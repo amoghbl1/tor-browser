@@ -633,7 +633,7 @@ pref("browser.dom.window.dump.enabled", true);
 pref("services.push.enabled", false);
 
 // controls if we want camera support
-pref("device.camera.enabled", true);
+pref("device.camera.enabled", false);
 pref("media.realtime_decoder.enabled", true);
 
 pref("dom.report_all_js_exceptions", true);
