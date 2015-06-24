@@ -16,7 +16,6 @@ EXTRA_JS_MODULES += [
     'AttributionCode.jsm',
     'BrowserUITelemetry.jsm',
     'BrowserUsageTelemetry.jsm',
-    'CastingApps.jsm',
     'ContentClick.jsm',
     'ContentCrashHandlers.jsm',
     'ContentLinkHandler.jsm',
@@ -47,6 +46,11 @@ EXTRA_JS_MODULES += [
     'URLBarZoom.jsm',
     'webrtcUI.jsm',
 ]
+
+if not CONFIG['TOR_BROWSER_VERSION']:
+    EXTRA_JS_MODULES += [
+        'CastingApps.jsm',
+    ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
     EXTRA_JS_MODULES += [

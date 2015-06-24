@@ -79,9 +79,6 @@ EXTRA_JS_MODULES += [
     'RemoteWebProgress.jsm',
     'ResetProfile.jsm',
     'ResponsivenessMonitor.jsm',
-    'secondscreen/PresentationApp.jsm',
-    'secondscreen/RokuApp.jsm',
-    'secondscreen/SimpleServiceDiscovery.jsm',
     'SelectContentHelper.jsm',
     'SelectParentHelper.jsm',
     'ServiceRequest.jsm',
@@ -102,6 +99,14 @@ EXTRA_JS_MODULES += [
     'WindowDraggingUtils.jsm',
     'ZipUtils.jsm',
 ]
+
+if not CONFIG['TOR_BROWSER_VERSION']:
+    EXTRA_JS_MODULES += [
+    'secondscreen/PresentationApp.jsm',
+    'secondscreen/RokuApp.jsm',
+    'secondscreen/SimpleServiceDiscovery.jsm',
+    ]
+
 EXTRA_JS_MODULES.third_party.jsesc += ['third_party/jsesc/jsesc.js']
 EXTRA_JS_MODULES.sessionstore += ['sessionstore/Utils.jsm']
 
