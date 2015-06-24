@@ -99,7 +99,7 @@ public class FxAccountGetStartedActivity extends AccountAuthenticatorActivity {
     if (extras != null) {
         intent.putExtras(extras);
     }
-    startActivityForResult(intent, CHILD_REQUEST_CODE);
+    // startActivityForResult(intent, CHILD_REQUEST_CODE);
   }
 
   @Override
