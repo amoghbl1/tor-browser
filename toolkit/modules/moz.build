@@ -59,8 +59,6 @@ EXTRA_JS_MODULES += [
     'RemoteSecurityUI.jsm',
     'RemoteWebProgress.jsm',
     'ResetProfile.jsm',
-    'secondscreen/RokuApp.jsm',
-    'secondscreen/SimpleServiceDiscovery.jsm',
     'SelectContentHelper.jsm',
     'SelectParentHelper.jsm',
     'Services.jsm',
@@ -79,6 +77,12 @@ EXTRA_JS_MODULES += [
     'WindowDraggingUtils.jsm',
     'ZipUtils.jsm',
 ]
+
+if not CONFIG['TOR_BROWSER_VERSION']:
+    EXTRA_JS_MODULES += [
+        'secondscreen/RokuApp.jsm',
+        'secondscreen/SimpleServiceDiscovery.jsm',
+    ]
 
 EXTRA_PP_JS_MODULES += [
     'AppConstants.jsm',
