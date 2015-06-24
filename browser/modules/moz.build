@@ -14,7 +14,6 @@ EXTRA_JS_MODULES += [
     'AboutHome.jsm',
     'AboutNewTab.jsm',
     'BrowserUITelemetry.jsm',
-    'CastingApps.jsm',
     'Chat.jsm',
     'ContentClick.jsm',
     'ContentCrashHandlers.jsm',
@@ -44,6 +43,11 @@ EXTRA_JS_MODULES += [
     'WebappManager.jsm',
     'webrtcUI.jsm',
 ]
+
+if not CONFIG['TOR_BROWSER_VERSION']:
+    EXTRA_JS_MODULES += [
+        'CastingApps.jsm',
+    ]
 
 EXTRA_PP_JS_MODULES += [
     'ProcessHangMonitor.jsm'
