@@ -44,7 +44,6 @@ EXTRA_JS_MODULES += [
     'RemoteSecurityUI.jsm',
     'RemoteWebNavigation.jsm',
     'RemoteWebProgress.jsm',
-    'secondscreen/SimpleServiceDiscovery.jsm',
     'SelectContentHelper.jsm',
     'SelectParentHelper.jsm',
     'sessionstore/FormData.jsm',
@@ -66,13 +65,20 @@ EXTRA_PP_JS_MODULES += [
     'GMPInstallManager.jsm',
     'GMPUtils.jsm',
     'ResetProfile.jsm',
-    'secondscreen/RokuApp.jsm',
     'Services.jsm',
     'Troubleshoot.jsm',
     'UpdateChannel.jsm',
     'WindowDraggingUtils.jsm',
     'WindowsPrefSync.jsm',
 ]
+
+if not CONFIG['TOR_BROWSER_VERSION']:
+    EXTRA_JS_MODULES += [
+        'secondscreen/SimpleServiceDiscovery.jsm',
+    ]
+    EXTRA_PP_JS_MODULES += [
+        'secondscreen/RokuApp.jsm',
+    ]
 
 if 'Android' != CONFIG['OS_TARGET']:
     EXTRA_PP_JS_MODULES += [
