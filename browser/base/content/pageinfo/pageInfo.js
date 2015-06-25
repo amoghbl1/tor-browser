@@ -970,6 +970,8 @@ function makePreview(row)
 
     var newImage = new Image;
     newImage.id = "thepreviewimage";
+    // Ensure "Media" items are fetched over the first-party domain.
+    newImage.setAttribute("firstparty", gWindow.top.document.location);
     var physWidth = 0, physHeight = 0;
     var width = 0, height = 0;
 

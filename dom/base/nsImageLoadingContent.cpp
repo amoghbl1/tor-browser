@@ -932,7 +932,7 @@ nsImageLoadingContent::LoadImage(nsIURI* aNewURI,
   nsCOMPtr<nsIContent> content =
       do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
   nsresult rv;
-  rv = nsContentUtils::LoadImage(aNewURI, aDocument,
+  rv = nsContentUtils::LoadImage(aNewURI, content,
                                  aDocument->NodePrincipal(),
                                  aDocument->GetDocumentURI(),
                                  aDocument->GetReferrerPolicy(),
