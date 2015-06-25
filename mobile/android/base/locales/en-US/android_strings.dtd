@@ -384,7 +384,7 @@ size. -->
 <!ENTITY save_as_pdf "Save as PDF">
 <!ENTITY print "Print">
 <!ENTITY find_in_page "Find in Page">
-<!ENTITY desktop_mode "Request Desktop Site">
+<!ENTITY desktop_mode "Request Mobile Site">
 <!ENTITY page "Page">
 <!ENTITY tools "Tools">
 <!ENTITY new_tab "New Tab">
