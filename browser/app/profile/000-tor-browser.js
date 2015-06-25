@@ -4,9 +4,8 @@
 
 // Please maintain unit tests at ./tbb-tests/browser_tor_TB4.js
 
-// Disable browser auto updaters and associated homepage notifications
+// Disable browser automatic updates and associated homepage notifications
 pref("app.update.auto", false);
-pref("app.update.enabled", false);
 pref("browser.search.update", false);
 pref("browser.rights.3.shown", true);
 pref("browser.startup.homepage_override.mstone", "ignore");
@@ -125,6 +124,19 @@ pref("plugin.state.flash", 1);
 pref("plugins.hide_infobar_for_missing_plugin", true);
 pref("plugins.hideMissingPluginsNotification", true);
 pref("media.peerconnection.enabled", false); // Disable WebRTC interfaces
+// GMPs: We make sure they don't show up on the Add-on panel and confuse users.
+// And the external update/donwload server must not get pinged. We apply a
+// clever solution for https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=769716.
+pref("media.gmp-provider.enabled", false);
+pref("media.gmp-manager.url.override", "data:text/plain,");
+// EME prefs: Strictly speaking these prefs don't need to be set as we are
+// using the --disable-eme compile flag. However, in order to not confuse users,
+// who might stumble upon them while looking into about:config, we set them to
+// 'false' communicating that EME is really disabled.
+pref("browser.eme.ui.enabled", false);
+pref("media.gmp-eme-adobe.enabled", false);
+pref("media.eme.enabled", false);
+pref("media.eme.apiVisible", false);
 
 // Security slider
 pref("svg.in-content.enabled", true);
@@ -188,6 +200,9 @@ pref("network.jar.block-remote-files", false);
 // Enable TLS 1.1 and 1.2:
 // https://trac.torproject.org/projects/tor/ticket/11253
 pref("security.tls.version.max", 3);
+
+// Enforce certificate pinning, see: https://bugs.torproject.org/16206
+pref("security.cert_pinning.enforcement_level", 2);
 
 #ifdef TOR_BROWSER_VERSION
 #expand pref("torbrowser.version", __TOR_BROWSER_VERSION__);
