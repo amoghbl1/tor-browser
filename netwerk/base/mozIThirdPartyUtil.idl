@@ -8,6 +8,7 @@ interface nsIURI;
 interface nsIDOMWindow;
 interface nsIChannel;
 interface nsIDocument;
+interface nsINode;
 
 /**
  * Utility functions for determining whether a given URI, channel, or window
@@ -167,8 +168,8 @@ interface mozIThirdPartyUtil : nsISupports
    *        An arbitrary channel for some content element of a first party
    *        load. Can be null.
    *
-   * @param aDoc
-   *        An arbitrary third party document. Can be null.
+   * @param aNode
+   *        An arbitrary third party document or node. Can be null.
    *
    * @return the first party url bar URI for the load.
    *
@@ -176,7 +177,7 @@ interface mozIThirdPartyUtil : nsISupports
    *         URI's scheme is not white listed.
    */
   [noscript] nsIURI getFirstPartyURI(in nsIChannel aChannel,
-                                     in nsIDocument aDoc);
+                                     in nsINode aNode);
 
   /**
    * isFirstPartyIsolationActive
@@ -219,7 +220,7 @@ interface mozIThirdPartyUtil : nsISupports
    *         URI's scheme is not white listed.
    */
   [noscript] nsIURI getFirstPartyIsolationURI(in nsIChannel aChannel,
-                                     in nsIDocument aDoc);
+                                     in nsINode aNode);
 
   /**
    * getFirstPartyURIFromChannel

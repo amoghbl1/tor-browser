@@ -624,7 +624,7 @@ public:
    * keep a mutable version around should pass in a clone.
    *
    * @param aURI uri of the image to be loaded
-   * @param aLoadingDocument the document we belong to
+   * @param aLoadingNode the node we belong to
    * @param aLoadingPrincipal the principal doing the load
    * @param aReferrer the referrer URI
    * @param aReferrerPolicy the referrer-sending policy to use on channel
@@ -636,7 +636,7 @@ public:
    * @return the imgIRequest for the image load
    */
   static nsresult LoadImage(nsIURI* aURI,
-                            nsIDocument* aLoadingDocument,
+                            nsINode* aLoadingNode,
                             nsIPrincipal* aLoadingPrincipal,
                             nsIURI* aReferrer,
                             mozilla::net::ReferrerPolicy aReferrerPolicy,
@@ -2299,6 +2299,11 @@ public:
   static void CallOnAllRemoteChildren(nsIDOMWindow* aWindow,
                                       CallOnRemoteChildFunction aCallback,
                                       void* aArg);
+
+  /*
+   * Returns true iff an nsIDOMWindow is a chrome window.
+   */
+  static bool IsChromeWindow(nsIDOMWindow* aWindow);
 
 private:
   static bool InitializeEventTable();
