@@ -353,7 +353,7 @@ pref("privacy.item.siteSettings", true);
 pref("privacy.item.syncAccount", true);
 
 // enable geo
-pref("geo.enabled", true);
+pref("geo.enabled", false);
 
 // content sink control -- controls responsiveness during page load
 // see https://bugzilla.mozilla.org/show_bug.cgi?id=481566#c9
@@ -633,7 +633,7 @@ pref("browser.dom.window.dump.enabled", true);
 pref("services.push.enabled", false);
 
 // controls if we want camera support
-pref("device.camera.enabled", true);
+pref("device.camera.enabled", false);
 pref("media.realtime_decoder.enabled", true);
 
 pref("dom.report_all_js_exceptions", true);
