@@ -129,6 +129,8 @@ public class LoadFaviconTask {
 
         HttpGet request = new HttpGet(faviconURI);
         request.setHeader("User-Agent", GeckoAppShell.getGeckoInterface().getDefaultUAString());
+        httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, torProxy);
+
         HttpResponse response = httpClient.execute(request);
         if (response == null) {
             return null;
