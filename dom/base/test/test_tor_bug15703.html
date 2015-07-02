@@ -1,0 +1,92 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugs.torproject.org/15703
+-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Test for Tor Browser Bug 15703</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript;version=1.7" src="bug15502_utils.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+<p id="display"></p>
+<div id="content"></div>
+
+<script class="testbody" type="application/javascript;version=1.7">
+SimpleTest.waitForExplicitFinish();
+
+// __setPref(key, value)__.
+// Set a pref value asynchronously, returning a prmoise that resolves
+// when it succeeds.
+let setPref = function* (key, value) {
+  return new Promise(function(resolve, reject) {
+    SpecialPowers.pushPrefEnv({"set": [[key, value]]}, resolve);
+  });
+};
+
+// ## Testing constants
+let domain1 = "http://example.com",
+    domain2 = "http://example.net",
+    path = "/tests/dom/base/test/",
+    page_create = "bug15703_page_create.html",
+    page_retrieve = "bug15703_page_retrieve.html"
+    worker_create = "bug15703_worker_create.html",
+    worker_retrieve = "bug15703_worker_retrieve.html";
+
+// __tabIO(domain, child, input)__.
+// Open a tab at the given `domain` and `child` page. Post an
+// `input` message to the tab.
+let tabIO = function* (domain, child, input) {
+  tab = window.open(domain + path + "bug15502_tab.html", "_blank");
+  yield receiveMessage(tab); // ready message
+  sendMessage(tab, "http://example.org" + path + child);
+  yield receiveMessage(tab); // ready message
+  sendMessage(tab, input);
+  return yield receiveMessage(tab);
+};
+
+// __mediaSourceTest(isolationOn, domainA, domainB, createPage, retrievePage)__.
+// Run a test where we set the pref "privacy.thirdparty.isolate" to on or off,
+// and then create a media source in `domainA`, using the page `createPage`,
+// and then attempt to retrive a media source in `domainB`, using
+// the page `retrievePage`.
+let mediaSourceTest = function* (isolationOn, domainA, domainB, createPage, retrievePage) {
+  yield setPref("privacy.thirdparty.isolate", isolationOn ? 2 : 0);
+  let input = "create",
+      mediaSourceURL = yield tabIO(domainA, createPage, input),
+      result = yield tabIO(domainB, retrievePage, mediaSourceURL),
+      description = domainA + ":" + createPage + "->" + domainB + ":" + retrievePage + ", isolation " + (isolationOn ? "on." : "off.");
+  if (isolationOn && domainA !== domainB) {
+    ok(result !== "retrieved", description + " Deny retrieval");
+  } else {
+    ok(result === "retrieved", description + " Allow retrieval");
+  }
+};
+
+
+// ## The main test
+// Run a Task.jsm coroutine that tests various combinations of domains
+// methods, and isolation states for reading and writing mediasource URLs.
+spawn_task(function* () {
+  yield setPref("media.mediasource.whitelist", false);
+  for (let isolate of [false, true]) {
+    for (let domainB of [domain1, domain2]) {
+      // There doesn't appear to be a way to create a MediaSource object in a worker.
+      for (let create of [page_create, /* worker_create */]) {
+        // No way I could find to retrieve a MediaSource object in a worker.
+        for (let retrieve of [page_retrieve, /* worker_retrieve */]) {
+          yield mediaSourceTest(isolate, domain1, domainB, create, retrieve);
+        }
+      }
+    }
+  }
+  SimpleTest.finish();
+});
+
+</script>
+
+</body>
+</html>
