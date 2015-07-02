@@ -1,0 +1,50 @@
+
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugs.torproject.org/15502
+-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Page mediaSource retriever for Tor Browser Bug 15703</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript;version=1.7" src="bug15502_utils.js"></script>
+</head>
+<body>
+<div id="display" style="white-space:pre; font-family:monospace; display:inline;"></div>
+<video id="testvideo"></video>
+<script type="text/javascript;version=1.7">
+
+let reportResult = function(mediaSourceURL, message) {
+  sendMessage(window.parent, message);
+  appendLine("display", mediaSourceURL + " -> " + message);
+};
+
+spawn_task(function* () {
+  // Tell the parent tab we are ready to start.
+  sendMessage(window.parent, "ready");
+  // Receive a mediaSourceURL. In a moment, we will
+  // use a video element to attempt to implicitly load
+  // the MediaSource object at this URL.
+  let mediaSourceURL = yield receiveMessage(window.parent);
+  // First create the video element.
+  let videoElement = document.getElementById("testvideo");
+  // If we are not able to load a MediaSource object
+  // at mediaSourceURL, then an error event will occur.
+  videoElement.addEventListener("error", function (e) {
+    reportResult(mediaSourceURL, "setting videoElement.src failed");
+  });
+  // If we do find a MediaSource object at mediaSourceURL,
+  // then a "stalled" event will occur, because the object
+  // has been found, but contains no content.
+  videoElement.addEventListener("stalled", function (e) {
+    reportResult(mediaSourceURL, "retrieved");
+  });
+  // Now attempt to load a MediaSource object by setting
+  // the video element's src to mediaSourceURL.
+  videoElement.src = mediaSourceURL;
+});
+
+</script>
+</body>
+</html>
