@@ -32,6 +32,7 @@
 #include <algorithm>
 #include "nsProxyRelease.h"
 #include "nsIContentPolicy.h"
+#include "mozilla/dom/ThirdPartyUtil.h"
 
 #ifdef PR_LOGGING
 PRLogModuleInfo* gMediaResourceLog;
@@ -1365,7 +1366,10 @@ nsresult FileMediaResource::Open(nsIStreamListener** aStreamListener)
 
       rv = NS_NewLocalFileInputStream(getter_AddRefs(mInput), file);
     } else if (IsBlobURI(mURI)) {
-      rv = NS_GetStreamForBlobURI(mURI, getter_AddRefs(mInput));
+      nsCString isolationKey;
+      rv = ThirdPartyUtil::GetFirstPartyHost(mChannel, isolationKey);
+      NS_ENSURE_SUCCESS(rv, rv);
+      rv = NS_GetStreamForBlobURI(mURI, isolationKey, getter_AddRefs(mInput));
     }
   } else {
     // Ensure that we never load a local file from some page on a

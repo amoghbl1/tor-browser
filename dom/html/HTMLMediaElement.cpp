@@ -90,6 +90,7 @@
 #include "ImageContainer.h"
 #include "nsRange.h"
 #include <algorithm>
+#include "ThirdPartyUtil.h"
 
 #ifdef PR_LOGGING
 static PRLogModuleInfo* gMediaElementLog;
@@ -521,7 +522,11 @@ HTMLMediaElement::GetMozMediaSourceObject() const
 {
   nsRefPtr<MediaSource> source;
   if (mLoadingSrc && IsMediaSourceURI(mLoadingSrc)) {
-    NS_GetSourceForMediaSourceURI(mLoadingSrc, getter_AddRefs(source));
+    nsCString isolationKey;
+    nsresult rv = ThirdPartyUtil::GetFirstPartyHost(GetOwnerDocument(), isolationKey);
+    if (NS_SUCCEEDED(rv)) {
+      NS_GetSourceForMediaSourceURI(mLoadingSrc, isolationKey, getter_AddRefs(source));
+    }
   }
   return source.forget();
 }
@@ -1194,7 +1199,10 @@ nsresult HTMLMediaElement::LoadResource()
 
   if (IsMediaStreamURI(mLoadingSrc)) {
     nsRefPtr<DOMMediaStream> stream;
-    rv = NS_GetStreamForMediaStreamURI(mLoadingSrc, getter_AddRefs(stream));
+    nsCString isolationKey;
+    rv = ThirdPartyUtil::GetFirstPartyHost(GetOwnerDocument(), isolationKey);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = NS_GetStreamForMediaStreamURI(mLoadingSrc, isolationKey, getter_AddRefs(stream));
     if (NS_FAILED(rv)) {
       nsCString specUTF8;
       mLoadingSrc->GetSpec(specUTF8);
@@ -1209,7 +1217,10 @@ nsresult HTMLMediaElement::LoadResource()
 
   if (IsMediaSourceURI(mLoadingSrc)) {
     nsRefPtr<MediaSource> source;
-    rv = NS_GetSourceForMediaSourceURI(mLoadingSrc, getter_AddRefs(source));
+    nsCString isolationKey;
+    rv = ThirdPartyUtil::GetFirstPartyHost(GetOwnerDocument(), isolationKey);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = NS_GetSourceForMediaSourceURI(mLoadingSrc, isolationKey, getter_AddRefs(source));
     if (NS_FAILED(rv)) {
       nsCString specUTF8;
       mLoadingSrc->GetSpec(specUTF8);
