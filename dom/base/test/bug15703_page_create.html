@@ -1,0 +1,28 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugs.torproject.org/15703
+-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Page mediasource URI creator for Tor Browser Bug 15703</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript;version=1.7" src="bug15502_utils.js"></script>
+</head>
+<body>
+<div id="display" style="white-space:pre; font-family:monospace; display:inline;"></div>
+
+<script type="text/javascript;version=1.7">
+
+spawn_task(function* () {
+  sendMessage(window.parent, "ready");
+  let message = yield receiveMessage(window.parent),
+      mediaSource = new MediaSource(),
+      mediaSourceURL = URL.createObjectURL(mediaSource);
+  sendMessage(window.parent, mediaSourceURL);
+  appendLine("display", message + " -> " + mediaSourceURL);
+});
+
+</script>
+</body>
+</html>
