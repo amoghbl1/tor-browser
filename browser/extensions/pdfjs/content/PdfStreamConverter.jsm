@@ -250,12 +250,6 @@ ChromeActions.prototype = {
       filename = 'document.pdf';
     }
     var blobUri = data.blobUrl ? NetUtil.newURI(data.blobUrl) : originalUri;
-    var netChannel;
-    try {
-      netChannel = NetUtil.newChannel(blobUri);
-    } catch (e) {
-      netChannel = NetUtil.newChannel(originalUri);
-    }
     var extHelperAppSvc =
           Cc['@mozilla.org/uriloader/external-helper-app-service;1'].
              getService(Ci.nsIExternalHelperAppService);
@@ -263,6 +257,7 @@ ChromeActions.prototype = {
                          getService(Ci.nsIWindowWatcher).activeWindow;
 
     var docIsPrivate = this.isInPrivateBrowsing();
+    var netChannel = NetUtil.newChannel(blobUri);
     if ('nsIPrivateBrowsingChannel' in Ci &&
         netChannel instanceof Ci.nsIPrivateBrowsingChannel) {
       netChannel.setPrivate(docIsPrivate);
