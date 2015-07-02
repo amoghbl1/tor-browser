@@ -16,7 +16,6 @@
 #include "mozilla/dom/File.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/LoadInfo.h"
-#include "mozIThirdPartyUtil.h"
 
 using mozilla::dom::FileImpl;
 using mozilla::ErrorResult;
@@ -30,20 +29,9 @@ struct DataInfo
   nsCOMPtr<nsISupports> mObject;
   nsCOMPtr<nsIPrincipal> mPrincipal;
   nsCString mStack;
-  nsCString mFirstPartyHost;
 };
 
 static nsClassHashtable<nsCStringHashKey, DataInfo>* gDataTable;
-static nsCOMPtr<mozIThirdPartyUtil> gThirdPartyUtilService;
-
-static nsCString GetFirstPartyHostFromCaller() {
-  if (!gThirdPartyUtilService) {
-    gThirdPartyUtilService = do_GetService(THIRDPARTYUTIL_CONTRACTID);
-  }
-  nsCString host;
-  gThirdPartyUtilService->GetFirstPartyHostFromCaller(host);
-  return host;
-}
 
 // Memory reporting for the hash table.
 namespace mozilla {
@@ -325,8 +313,6 @@ nsHostObjectProtocolHandler::AddDataEntry(const nsACString& aScheme,
 
   info->mObject = aObject;
   info->mPrincipal = aPrincipal;
-  // Record the first party host that originated this object.
-  info->mFirstPartyHost = GetFirstPartyHostFromCaller();
   mozilla::BlobURLsReporter::GetJSStackForBlob(info);
 
   gDataTable->Put(aUri, info);
@@ -451,10 +437,7 @@ GetDataObject(nsIURI* aURI)
   aURI->GetSpec(spec);
 
   DataInfo* info = GetDataInfo(spec);
-  // Deny access to this object if the current first-party host
-  // doesn't match the originating first-party host.
-  return (info && info->mFirstPartyHost == GetFirstPartyHostFromCaller())
-         ? info->mObject : nullptr;
+  return info ? info->mObject : nullptr;
 }
 
 // -----------------------------------------------------------------------
@@ -512,9 +495,7 @@ nsHostObjectProtocolHandler::NewChannel2(nsIURI* uri,
 
   DataInfo* info = GetDataInfo(spec);
 
-  // Deny access to this URI if the current first party host
-  // doesn't match the first party host when it was created.
-  if (!info || (info->mFirstPartyHost != GetFirstPartyHostFromCaller())) {
+  if (!info) {
     return NS_ERROR_DOM_BAD_URI;
   }
 
