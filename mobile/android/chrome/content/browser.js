@@ -3105,7 +3105,7 @@ var DesktopUserAgent = {
   getUserAgentForTab: function ua_getUserAgentForTab(aTab) {
     // Send desktop UA if "Request Desktop Site" is enabled.
     if (aTab.desktopMode) {
-      return "Mozilla/5.0 (Android; Mobile; rv:31.0) Gecko/20100101 Firefox/31.0";
+      return this.DESKTOP_UA;
     }
 
     return null;
