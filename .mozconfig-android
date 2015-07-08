@@ -11,7 +11,7 @@ ac_add_options --with-ccache #enable ccache to set amount of cache assigned for 
 ac_add_options --disable-unified-compilation
 
 # OBJDIR
-mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-tbb-@CONFIG_GUESS@
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-tbb-arm-linux-androideabi
 # It is a good idea to have your objdir name start with obj so that Git ignores it.
 
 
