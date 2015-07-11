@@ -8,26 +8,25 @@ package org.mozilla.gecko.favicons;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Bitmap;
-import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 import android.text.TextUtils;
 import android.util.Log;
 import ch.boye.httpclientandroidlib.Header;
 import ch.boye.httpclientandroidlib.HttpEntity;
 import ch.boye.httpclientandroidlib.HttpResponse;
 import ch.boye.httpclientandroidlib.client.methods.HttpGet;
-import ch.boye.httpclientandroidlib.HttpHost;
-import ch.boye.httpclientandroidlib.conn.params.ConnRoutePNames;
+import ch.boye.httpclientandroidlib.impl.client.CloseableHttpClient;
+import ch.boye.httpclientandroidlib.impl.client.HttpClients;
 import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.favicons.decoders.FaviconDecoder;
 import org.mozilla.gecko.favicons.decoders.LoadFaviconResult;
+import org.mozilla.gecko.util.ProxyRoutePlanner;
 import org.mozilla.gecko.util.GeckoJarReader;
 import org.mozilla.gecko.util.IOUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -74,7 +73,10 @@ public class LoadFaviconTask {
     private LinkedList<LoadFaviconTask> chainees;
     private boolean isChaining;
 
-    static DefaultHttpClient httpClient = new DefaultHttpClient();
+    static CloseableHttpClient httpClient = HttpClients.custom()
+            .setUserAgent(GeckoAppShell.getGeckoInterface().getDefaultUAString())
+            .setRoutePlanner(new ProxyRoutePlanner())
+            .build();
 
     public LoadFaviconTask(Context context, String pageURL, String faviconURL, int flags, OnFaviconLoadedListener listener) {
         this(context, pageURL, faviconURL, flags, listener, -1, false);
@@ -128,12 +130,9 @@ public class LoadFaviconTask {
         if (visited.size() == MAX_REDIRECTS_TO_FOLLOW) {
             return null;
         }
-        
-        HttpHost torProxy = new HttpHost("127.0.0.1", 8118);
+
         HttpGet request = new HttpGet(faviconURI);
-        request.setHeader("User-Agent", GeckoAppShell.getGeckoInterface().getDefaultUAString());
-        httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, torProxy);
-        
+
         HttpResponse response = httpClient.execute(request);
         if (response == null) {
             return null;
@@ -610,7 +609,10 @@ public class LoadFaviconTask {
         // which counts as network activity.
         if (ThreadUtils.isOnBackgroundThread()) {
             if (httpClient != null) {
-                httpClient.close();
+                try {
+                    httpClient.close();
+                } catch (IOException e) {
+                }
             }
             return;
         }

@@ -16,6 +16,7 @@ import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.distribution.Distribution;
+import org.mozilla.gecko.util.ProxySettings;
 import org.mozilla.gecko.util.FileUtils;
 import org.mozilla.gecko.util.GeckoJarReader;
 import org.mozilla.gecko.util.HardwareUtils;
@@ -34,8 +35,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.Proxy;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Locale;
@@ -329,8 +328,8 @@ public class SearchEngineManager implements SharedPreferences.OnSharedPreference
             String responseText = null;
 
             URL url = new URL(GEOIP_LOCATION_URL);
-            Proxy torProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 8118));
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection(torProxy);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection(
+                    ProxySettings.getProxy());
             try {
                 // POST an empty JSON object.
                 final String message = "{}";
