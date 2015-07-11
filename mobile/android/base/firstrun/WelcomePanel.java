@@ -21,18 +21,6 @@ public class WelcomePanel extends FirstrunPanel {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
         final ViewGroup root = (ViewGroup) inflater.inflate(R.layout.firstrun_welcome_fragment, container, false);
-        root.findViewById(R.id.welcome_account).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Telemetry.sendUIEvent(TelemetryContract.Event.ACTION, TelemetryContract.Method.BUTTON, "firstrun-sync");
-
-                final Intent accountIntent = new Intent(getActivity(), FxAccountGetStartedActivity.class);
-                startActivity(accountIntent);
-
-                close();
-            }
-        });
-
         root.findViewById(R.id.welcome_browse).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
