@@ -57,7 +57,7 @@ fi
 MOZ_PAY=1
 
 # Enable UI for healthreporter
-MOZ_SERVICES_HEALTHREPORT=1
+# MOZ_SERVICES_HEALTHREPORT=1
 
 # Enable runtime locale switching.
 MOZ_LOCALE_SWITCHER=1
