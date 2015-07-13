@@ -132,11 +132,13 @@ IDBFactory::CreateForWindow(nsPIDOMWindow* aWindow,
   nsCOMPtr<nsIPrincipal> principal;
   nsresult rv = AllowedForWindowInternal(aWindow, getter_AddRefs(principal));
 
+  // XXX: Check Removed due to Bug #16528
+  /*
   if (!(NS_SUCCEEDED(rv) && nsContentUtils::IsSystemPrincipal(principal)) &&
       NS_WARN_IF(!Preferences::GetBool(kPrefIndexedDBEnabled, false))) {
     *aFactory = nullptr;
     return NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR;
-  }
+  } */
 
   if (rv == NS_ERROR_DOM_NOT_SUPPORTED_ERR) {
     NS_WARNING("IndexedDB is not permitted in a third-party window.");
@@ -273,11 +275,13 @@ IDBFactory::CreateForMainThreadJSInternal(
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aPrincipalInfo);
 
+  /* XXX: Check Removed to due #16528
   if (aPrincipalInfo->type() != PrincipalInfo::TSystemPrincipalInfo &&
       NS_WARN_IF(!Preferences::GetBool(kPrefIndexedDBEnabled, false))) {
     *aFactory = nullptr;
     return NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR;
   }
+  */
 
   IndexedDatabaseManager* mgr = IndexedDatabaseManager::GetOrCreate();
   if (NS_WARN_IF(!mgr)) {
