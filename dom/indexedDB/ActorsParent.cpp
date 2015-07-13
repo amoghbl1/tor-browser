@@ -19407,6 +19407,7 @@ FactoryOp::CheckPermission(ContentParent* aContentParent,
     if (aContentParent) {
       // The DOM in the other process should have kept us from receiving any
       // indexedDB messages so assume that the child is misbehaving.
+      // XXX: Does this happen with e10s due to Bug #16528?
       aContentParent->KillHard("IndexedDB CheckPermission 1");
     }
     return NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR;
