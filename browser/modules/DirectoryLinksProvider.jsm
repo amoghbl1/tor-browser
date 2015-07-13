@@ -139,7 +139,7 @@ let DirectoryLinksProvider = {
    * Set appropriate default ping behavior controlled by enhanced pref
    */
   _setDefaultEnhanced: function DirectoryLinksProvider_setDefaultEnhanced() {
-    if (!Services.prefs.prefHasUserValue(PREF_NEWTAB_ENHANCED)) {
+    if (Services.prefs.getBoolPref(PREF_NEWTAB_ENHANCED)) {
       let enhanced = true;
       try {
         // Default to not enhanced if DNT is set to tell websites to not track
