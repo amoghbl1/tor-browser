@@ -23,7 +23,6 @@ import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.accounts.OnAccountsUpdateListener;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -46,7 +45,6 @@ public class Tabs implements GeckoEventListener {
     // All accesses to mTabs must be synchronized on the Tabs instance.
     private final HashMap<Integer, Tab> mTabs = new HashMap<Integer, Tab>();
 
-    private AccountManager mAccountManager;
     private OnAccountsUpdateListener mAccountListener;
 
     public static final int LOADURL_NONE         = 0;
@@ -129,7 +127,8 @@ public class Tabs implements GeckoEventListener {
         }
 
         mAppContext = appContext;
-        mAccountManager = AccountManager.get(appContext);
+        
+        // AccountManager call disabled as part of bug #5395
 
         mAccountListener = new OnAccountsUpdateListener() {
             @Override
@@ -137,9 +136,6 @@ public class Tabs implements GeckoEventListener {
                 persistAllTabs();
             }
         };
-
-        // The listener will run on the background thread (see 2nd argument).
-        mAccountManager.addOnAccountsUpdatedListener(mAccountListener, ThreadUtils.getBackgroundHandler(), false);
 
         if (mBookmarksContentObserver != null) {
             // It's safe to use the db here since we aren't doing any I/O.
