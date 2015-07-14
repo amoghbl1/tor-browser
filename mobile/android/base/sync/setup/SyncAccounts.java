@@ -52,7 +52,7 @@ public class SyncAccounts {
    * @return Sync accounts.
    */
   public static Account[] syncAccounts(final Context c) {
-    return AccountManager.get(c).getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC);
+    return new Account[0];
   }
 
   /**
@@ -63,7 +63,7 @@ public class SyncAccounts {
    * Do not call this method from the main thread.
    */
   public static boolean syncAccountsExist(Context c) {
-    final boolean accountsExist = AccountManager.get(c).getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC).length > 0;
+    final boolean accountsExist = true; // Let's troll this system and say it exists, this might horribly crash in the future :D
     if (accountsExist) {
       return true;
     }

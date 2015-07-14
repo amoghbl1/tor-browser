@@ -22,7 +22,6 @@ import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
 
 import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Resources;
@@ -99,8 +98,9 @@ public class FirefoxAccounts {
    * @return Firefox account objects.
    */
   public static Account[] getFirefoxAccounts(final Context context) {
-    final Account[] accounts =
-        AccountManager.get(context).getAccountsByType(FxAccountConstants.ACCOUNT_TYPE);
+    // AccountManager call disabled as part of bug #5395
+    final Account[] accounts = new Account[0];
+    
     if (accounts.length > 0) {
       return accounts;
     }
