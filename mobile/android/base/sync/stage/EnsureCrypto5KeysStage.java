@@ -55,7 +55,7 @@ implements SyncStorageRequestDelegate {
     // We need an update: fetch fresh keys.
     Logger.debug(LOG_TAG, "Fetching fresh collection keys for this session.");
     try {
-      SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.wboURI(CRYPTO_COLLECTION, "keys"));
+      SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.getContext(), session.wboURI(CRYPTO_COLLECTION, "keys"));
       request.delegate = this;
       request.get();
     } catch (URISyntaxException e) {

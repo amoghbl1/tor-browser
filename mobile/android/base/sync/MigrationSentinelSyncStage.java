@@ -174,7 +174,7 @@ public class MigrationSentinelSyncStage extends AbstractNonRepositorySyncStage {
     public void check() {
       final String url = session.config.storageURL() + META_FXA_CREDENTIALS;
       try {
-        final SyncStorageRecordRequest request = new SyncStorageRecordRequest(url);
+        final SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.getContext(), url);
         request.delegate = new SyncStorageRequestDelegate() {
 
           @Override

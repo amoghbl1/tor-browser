@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
+import android.content.Context;
+
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
@@ -22,8 +24,8 @@ public class FxAccountClient20 extends FxAccountClient10 implements FxAccountCli
   protected static final String[] LOGIN_RESPONSE_REQUIRED_STRING_FIELDS_KEYS = new String[] { JSON_KEY_UID, JSON_KEY_SESSIONTOKEN, JSON_KEY_KEYFETCHTOKEN, };
   protected static final String[] LOGIN_RESPONSE_REQUIRED_BOOLEAN_FIELDS = new String[] { JSON_KEY_VERIFIED };
 
-  public FxAccountClient20(String serverURI, Executor executor) {
-    super(serverURI, executor);
+  public FxAccountClient20(Context ctx, String serverURI, Executor executor) {
+    super(ctx, serverURI, executor);
   }
 
   /**

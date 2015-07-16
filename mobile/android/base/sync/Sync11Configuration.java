@@ -10,6 +10,7 @@ import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.crypto.KeyBundle;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
@@ -24,15 +25,17 @@ public class Sync11Configuration extends SyncConfiguration {
 
   public Sync11Configuration(String username,
                              AuthHeaderProvider authHeaderProvider,
+                             Context ctx,
                              SharedPreferences prefs) {
-    super(username, authHeaderProvider, prefs);
+    super(username, authHeaderProvider, ctx, prefs);
   }
 
   public Sync11Configuration(String username,
                              AuthHeaderProvider authHeaderProvider,
+                             Context ctx,
                              SharedPreferences prefs,
                              KeyBundle keyBundle) {
-    super(username, authHeaderProvider, prefs, keyBundle);
+    super(username, authHeaderProvider, ctx, prefs, keyBundle);
   }
 
   @Override

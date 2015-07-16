@@ -109,7 +109,7 @@ public class FxAccountSignInActivity extends FxAccountAbstractSetupActivity {
     };
 
     Executor executor = Executors.newSingleThreadExecutor();
-    FxAccountClient client = new FxAccountClient20(serverURI, executor);
+    FxAccountClient client = new FxAccountClient20(this, serverURI, executor);
     try {
       hideRemoteError();
       new FxAccountSignInTask(this, this, email, passwordStretcher, client, getQueryParameters(), delegate).execute();

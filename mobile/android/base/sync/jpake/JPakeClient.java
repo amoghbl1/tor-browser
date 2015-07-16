@@ -9,6 +9,8 @@ import java.math.BigInteger;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import android.content.Context;
+
 import org.json.simple.JSONObject;
 import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.background.common.log.Logger;
@@ -83,6 +85,7 @@ public class JPakeClient {
 
   public JPakeParty jParty;
   public final JPakeNumGenerator numGen;
+  public final Context context;
 
   public int pollTries;
 
@@ -92,6 +95,7 @@ public class JPakeClient {
 
   public JPakeClient(SetupSyncActivity activity) {
     controllerActivity = activity;
+    context = activity;
     jpakeServer = "https://setup.services.mozilla.com/";
     jpakePollInterval = 1 * 1000; // 1 second
     jpakeMaxTries = MAX_TRIES;

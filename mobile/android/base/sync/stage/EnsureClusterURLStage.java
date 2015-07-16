@@ -12,6 +12,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import android.content.Context;
+
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.NodeAuthenticationException;
 import org.mozilla.gecko.sync.NullClusterURLException;
@@ -71,11 +73,12 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
    *          <code>https://server/pathname/version/username/node/weave</code>.
    * @throws URISyntaxException
    */
-  public static void fetchClusterURL(final String nodeWeaveURL,
+  public static void fetchClusterURL(final Context context,
+                                     final String nodeWeaveURL,
                                      final ClusterURLFetchDelegate delegate) throws URISyntaxException {
     Logger.info(LOG_TAG, "In fetchClusterURL: node/weave is " + nodeWeaveURL);
 
-    BaseResource resource = new BaseResource(nodeWeaveURL);
+    BaseResource resource = new BaseResource(context, nodeWeaveURL);
     resource.delegate = new BaseResourceDelegate(resource) {
       @Override
       public String getUserAgent() {
@@ -251,7 +254,7 @@ public class EnsureClusterURLStage extends AbstractNonRepositorySyncStage {
       @Override
       public void run() {
         try {
-          fetchClusterURL(callback.nodeWeaveURL(), delegate);
+          fetchClusterURL(session.getContext(), callback.nodeWeaveURL(), delegate);
         } catch (URISyntaxException e) {
           session.abort(e, "Invalid URL for node/weave.");
         }

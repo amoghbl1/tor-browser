@@ -91,7 +91,7 @@ public class PutRequestStage extends JPakeStage {
   }
 
   private Resource createPutRequest(final PutRequestStageDelegate callbackDelegate, final JPakeClient jpakeClient) throws URISyntaxException {
-    BaseResource httpResource = new BaseResource(jpakeClient.channelUrl);
+    BaseResource httpResource = new BaseResource(jpakeClient.context, jpakeClient.channelUrl);
     httpResource.delegate = new BaseResourceDelegate(httpResource) {
       @Override
       public String getUserAgent() {

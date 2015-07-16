@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.browserid.verifier;
 
+import android.content.Context;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -25,12 +27,16 @@ public class BrowserIDRemoteVerifierClient10 extends AbstractBrowserIDRemoteVeri
 
   public static final String DEFAULT_VERIFIER_URL = "https://verifier.login.persona.org/verify";
 
-  public BrowserIDRemoteVerifierClient10() throws URISyntaxException {
+  private final Context mCtx;
+
+  public BrowserIDRemoteVerifierClient10(Context ctx) throws URISyntaxException {
     super(new URI(DEFAULT_VERIFIER_URL));
+    mCtx = ctx;
   }
 
-  public BrowserIDRemoteVerifierClient10(URI verifierUri) {
+  public BrowserIDRemoteVerifierClient10(Context ctx, URI verifierUri) {
     super(verifierUri);
+    mCtx = ctx;
   }
 
   @Override
@@ -45,7 +51,7 @@ public class BrowserIDRemoteVerifierClient10 extends AbstractBrowserIDRemoteVeri
       throw new IllegalArgumentException("delegate cannot be null.");
     }
 
-    BaseResource r = new BaseResource(verifierUri);
+    BaseResource r = new BaseResource(mCtx, verifierUri);
 
     r.delegate = new RemoteVerifierResourceDelegate(r, delegate);
 

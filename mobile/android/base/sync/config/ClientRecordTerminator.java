@@ -6,6 +6,8 @@ package org.mozilla.gecko.sync.config;
 
 import java.net.URI;
 
+import android.content.Context;
+
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.SyncConfiguration;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
@@ -27,14 +29,14 @@ public class ClientRecordTerminator {
     super(); // Stop this class from being instantiated.
   }
 
-  public static void deleteClientRecord(final SyncConfiguration config, final String clientGUID)
+  public static void deleteClientRecord(final Context context, final SyncConfiguration config, final String clientGUID)
     throws Exception {
 
     final String collection = "clients";
     final URI wboURI = config.wboURI(collection, clientGUID);
 
     // Would prefer to break this out into a self-contained client library.
-    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(wboURI);
+    final SyncStorageRecordRequest r = new SyncStorageRecordRequest(context, wboURI);
     r.delegate = new SyncStorageRequestDelegate() {
       @Override
       public AuthHeaderProvider getAuthHeaderProvider() {

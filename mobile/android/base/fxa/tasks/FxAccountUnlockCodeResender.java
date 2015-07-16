@@ -99,7 +99,7 @@ public class FxAccountUnlockCodeResender {
     }
 
     final Executor executor = Executors.newSingleThreadExecutor();
-    final FxAccountClient client = new FxAccountClient20(authServerURI, executor);
+    final FxAccountClient client = new FxAccountClient20(context, authServerURI, executor);
     new FxAccountUnlockCodeTask(context, emailUTF8, client, delegate).execute();
   }
 }

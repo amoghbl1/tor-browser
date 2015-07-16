@@ -30,7 +30,7 @@ public class DeleteChannel {
   public void execute(final JPakeClient jClient, final String reason) {
     final BaseResource httpResource;
     try {
-      httpResource = new BaseResource(jClient.channelUrl);
+      httpResource = new BaseResource(jClient.context, jClient.channelUrl);
     } catch (URISyntaxException e) {
       Logger.debug(LOG_TAG, "Encountered URISyntax exception, displaying abort anyway.");
       jClient.displayAbort(reason);

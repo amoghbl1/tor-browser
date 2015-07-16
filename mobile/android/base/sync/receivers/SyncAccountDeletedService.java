@@ -133,14 +133,14 @@ public class SyncAccountDeletedService extends IntentService {
       }
 
       BasicAuthHeaderProvider authHeaderProvider = new BasicAuthHeaderProvider(encodedUsername, password);
-      SyncConfiguration configuration = new Sync11Configuration(encodedUsername, authHeaderProvider, prefs);
+      SyncConfiguration configuration = new Sync11Configuration(encodedUsername, authHeaderProvider, context, prefs);
       if (configuration.getClusterURL() == null) {
         Logger.warn(LOG_TAG, "Cluster URL was null; not deleting client record from server.");
         return;
       }
 
       try {
-        ClientRecordTerminator.deleteClientRecord(configuration, clientGUID);
+        ClientRecordTerminator.deleteClientRecord(context, configuration, clientGUID);
       } catch (Exception e) {
         // This should never happen, but we really don't want to die in a background thread.
         Logger.warn(LOG_TAG, "Got exception deleting client record from server; ignoring.", e);

@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.tokenserver;
 
+import android.content.Context;
+
 import java.io.IOException;
 import java.net.URI;
 import java.security.GeneralSecurityException;
@@ -320,8 +322,9 @@ public class TokenServerClient {
   public void getTokenFromBrowserIDAssertion(final String assertion,
                                              final boolean conditionsAccepted,
                                              final String clientState,
-                                             final TokenServerClientDelegate delegate) {
-    final BaseResource resource = new BaseResource(this.uri);
+                                             final TokenServerClientDelegate delegate,
+                                             final Context context) {
+    final BaseResource resource = new BaseResource(context, this.uri);
     resource.delegate = new TokenFetchResourceDelegate(this, resource, delegate,
                                                        assertion, clientState,
                                                        conditionsAccepted);

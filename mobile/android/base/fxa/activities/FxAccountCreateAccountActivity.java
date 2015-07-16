@@ -386,7 +386,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     };
 
     Executor executor = Executors.newSingleThreadExecutor();
-    FxAccountClient client = new FxAccountClient20(serverURI, executor);
+    FxAccountClient client = new FxAccountClient20(this, serverURI, executor);
     try {
       hideRemoteError();
       new FxAccountCreateAccountTask(this, this, email, passwordStretcher, client, getQueryParameters(), delegate).execute();

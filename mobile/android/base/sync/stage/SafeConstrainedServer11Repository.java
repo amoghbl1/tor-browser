@@ -51,7 +51,7 @@ public class SafeConstrainedServer11Repository extends ConstrainedServer11Reposi
   @Override
   public void createSession(RepositorySessionCreationDelegate delegate,
                             Context context) {
-    delegate.onSessionCreated(new CountCheckingServer11RepositorySession(this, this.getDefaultFetchLimit()));
+    delegate.onSessionCreated(new CountCheckingServer11RepositorySession(this, context, this.getDefaultFetchLimit()));
   }
 
   public class CountCheckingServer11RepositorySession extends Server11RepositorySession {
@@ -63,8 +63,8 @@ public class SafeConstrainedServer11Repository extends ConstrainedServer11Reposi
      */
     private final long fetchLimit;
 
-    public CountCheckingServer11RepositorySession(Repository repository, long fetchLimit) {
-      super(repository);
+    public CountCheckingServer11RepositorySession(Repository repository, Context context, long fetchLimit) {
+      super(repository, context);
       this.fetchLimit = fetchLimit;
     }
 

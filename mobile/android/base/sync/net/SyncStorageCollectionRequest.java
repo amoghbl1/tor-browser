@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.sync.net;
 
+import android.content.Context;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,8 +31,8 @@ import ch.boye.httpclientandroidlib.impl.client.DefaultHttpClient;
 public class SyncStorageCollectionRequest extends SyncStorageRequest {
   private static final String LOG_TAG = "CollectionRequest";
 
-  public SyncStorageCollectionRequest(URI uri) {
-    super(uri);
+  public SyncStorageCollectionRequest(Context context, URI uri) {
+    super(context, uri);
   }
 
   protected volatile boolean aborting = false;

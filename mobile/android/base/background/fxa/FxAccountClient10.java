@@ -20,6 +20,8 @@ import java.util.concurrent.Executor;
 
 import javax.crypto.Mac;
 
+import android.content.Context;
+
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientMalformedResponseException;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
@@ -77,6 +79,8 @@ public class FxAccountClient10 {
   protected static final String[] requiredErrorStringFields = { JSON_KEY_ERROR, JSON_KEY_MESSAGE, JSON_KEY_INFO };
   protected static final String[] requiredErrorLongFields = { JSON_KEY_CODE, JSON_KEY_ERRNO };
 
+  protected final Context mCtx;
+
   /**
    * The server's URI.
    * <p>
@@ -87,13 +91,14 @@ public class FxAccountClient10 {
 
   protected final Executor executor;
 
-  public FxAccountClient10(String serverURI, Executor executor) {
+  public FxAccountClient10(Context ctx, String serverURI, Executor executor) {
     if (serverURI == null) {
       throw new IllegalArgumentException("Must provide a server URI.");
     }
     if (executor == null) {
       throw new IllegalArgumentException("Must provide a non-null executor.");
     }
+    this.mCtx = ctx;
     this.serverURI = serverURI.endsWith("/") ? serverURI : serverURI + "/";
     if (!this.serverURI.endsWith("/")) {
       throw new IllegalArgumentException("Constructed serverURI must end with a trailing slash: " + this.serverURI);
@@ -140,7 +145,7 @@ public class FxAccountClient10 {
         sb.append(URLEncoder.encode(val, "UTF-8"));
       }
     }
-    return new BaseResource(new URI(sb.toString()));
+    return new BaseResource(mCtx, new URI(sb.toString()));
   }
 
   /**

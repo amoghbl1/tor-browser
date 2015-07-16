@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.sync.net;
 
+import android.content.Context;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -64,15 +66,15 @@ public class SyncStorageRequest implements Resource {
    * @param uri
    * @throws URISyntaxException
    */
-  public SyncStorageRequest(String uri) throws URISyntaxException {
-    this(new URI(uri));
+  public SyncStorageRequest(Context ctx, String uri) throws URISyntaxException {
+    this(ctx, new URI(uri));
   }
 
   /**
    * @param uri
    */
-  public SyncStorageRequest(URI uri) {
-    this.resource = new BaseResource(uri);
+  public SyncStorageRequest(Context ctx, URI uri) {
+    this.resource = new BaseResource(ctx, uri);
     this.resourceDelegate = this.makeResourceDelegate(this);
     this.resource.delegate = this.resourceDelegate;
   }

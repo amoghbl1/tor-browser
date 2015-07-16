@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import android.content.Context;
+
 import org.json.simple.parser.JSONParser;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.SyncConstants;
@@ -66,7 +68,7 @@ public class GetChannelStage extends JPakeStage {
     };
 
     try {
-      makeChannelRequest(callbackDelegate, jClient.jpakeServer + "new_channel", jClient.clientId);
+      makeChannelRequest(jClient.context, callbackDelegate, jClient.jpakeServer + "new_channel", jClient.clientId);
     } catch (URISyntaxException e) {
       Logger.error(LOG_TAG, "Incorrect URI syntax.", e);
       jClient.abort(Constants.JPAKE_ERROR_CHANNEL);
@@ -78,8 +80,8 @@ public class GetChannelStage extends JPakeStage {
     }
   }
 
-  private void makeChannelRequest(final GetChannelStageDelegate callbackDelegate, String getChannelUrl, final String clientId) throws URISyntaxException {
-    final BaseResource httpResource = new BaseResource(getChannelUrl);
+  private void makeChannelRequest(final Context context, final GetChannelStageDelegate callbackDelegate, String getChannelUrl, final String clientId) throws URISyntaxException {
+    final BaseResource httpResource = new BaseResource(context, getChannelUrl);
     httpResource.delegate = new BaseResourceDelegate(httpResource) {
       @Override
       public String getUserAgent() {

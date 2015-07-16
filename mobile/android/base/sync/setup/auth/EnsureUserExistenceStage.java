@@ -55,7 +55,7 @@ public class EnsureUserExistenceStage implements AuthenticatorStage {
 
     // This is not the same as Utils.nodeWeaveURL: it's missing the trailing node/weave.
     String userRequestUrl = aa.nodeServer + "user/1.0/" + aa.username;
-    final BaseResource httpResource = new BaseResource(userRequestUrl);
+    final BaseResource httpResource = new BaseResource(aa.context, userRequestUrl);
     httpResource.delegate = new BaseResourceDelegate(httpResource) {
       @Override
       public String getUserAgent() {

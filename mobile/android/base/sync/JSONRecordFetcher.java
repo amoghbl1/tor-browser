@@ -7,6 +7,8 @@ package org.mozilla.gecko.sync;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import android.content.Context;
+
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.delegates.JSONRecordFetchDelegate;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
@@ -22,14 +24,16 @@ public class JSONRecordFetcher {
   private static final long DEFAULT_AWAIT_TIMEOUT_MSEC = 2 * 60 * 1000;   // Two minutes.
   private static final String LOG_TAG = "JSONRecordFetcher";
 
+  protected final Context mCtx;
   protected final AuthHeaderProvider authHeaderProvider;
   protected final String uri;
   protected JSONRecordFetchDelegate delegate;
 
-  public JSONRecordFetcher(final String uri, final AuthHeaderProvider authHeaderProvider) {
+  public JSONRecordFetcher(final Context ctx, final String uri, final AuthHeaderProvider authHeaderProvider) {
     if (uri == null) {
       throw new IllegalArgumentException("uri must not be null");
     }
+    this.mCtx = ctx;
     this.uri = uri;
     this.authHeaderProvider = authHeaderProvider;
   }
@@ -78,7 +82,7 @@ public class JSONRecordFetcher {
   public void fetch(final JSONRecordFetchDelegate delegate) {
     this.delegate = delegate;
     try {
-      final SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.getURI());
+      final SyncStorageRecordRequest r = new SyncStorageRecordRequest(mCtx, this.getURI());
       r.delegate = new JSONFetchHandler();
       r.get();
     } catch (Exception e) {

@@ -8,6 +8,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.Executor;
 
+import android.content.Context;
+
 import org.mozilla.gecko.background.fxa.oauth.FxAccountAbstractClient;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
@@ -27,10 +29,10 @@ public class FxAccountProfileClient10 extends FxAccountAbstractClient {
     super(serverURI, executor);
   }
 
-  public void profile(final String token, RequestDelegate<ExtendedJSONObject> delegate) {
+  public void profile(final String token, RequestDelegate<ExtendedJSONObject> delegate, Context context) {
     BaseResource resource;
     try {
-      resource = new BaseResource(new URI(serverURI + "profile"));
+      resource = new BaseResource(context, new URI(serverURI + "profile"));
     } catch (URISyntaxException e) {
       invokeHandleError(delegate, e);
       return;
