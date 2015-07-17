@@ -2955,7 +2955,7 @@ public class BrowserApp extends GeckoApp
                                 !PrefUtils.getStringSet(GeckoSharedPrefs.forProfile(this),
                                                         ClearOnShutdownPref.PREF,
                                                         new HashSet<String>()).isEmpty();
-        aMenu.findItem(R.id.quit).setVisible(visible);
+        aMenu.findItem(R.id.quit).setVisible(true);
 
         if (tab == null || tab.getURL() == null) {
             bookmark.setEnabled(false);
