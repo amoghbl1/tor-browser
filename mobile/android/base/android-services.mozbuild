@@ -710,6 +710,8 @@ sync_thirdparty_java_files = [
     'ch/boye/httpclientandroidlib/util/package-info.java',
     'ch/boye/httpclientandroidlib/util/TextUtils.java',
     'ch/boye/httpclientandroidlib/util/VersionInfo.java',
+    'info/guardianproject/netcipher/proxy/OrbotHelper.java',
+    'info/guardianproject/netcipher/proxy/TorServiceUtils.java',
     'org/json/simple/ItemList.java',
     'org/json/simple/JSONArray.java',
     'org/json/simple/JSONAware.java',
