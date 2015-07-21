@@ -12,6 +12,7 @@ include('android-services.mozbuild')
 
 geckoview_source_dir = TOPSRCDIR + '/mobile/android/geckoview/src/main/'
 geckoview_thirdparty_source_dir = TOPSRCDIR + '/mobile/android/geckoview/src/thirdparty/'
+geckoview_netcipher_source_dir = TOPSRCDIR + '/mobile/android/geckoview/src/thirdparty/java/info/guardianproject/netcipher/proxy/'
 thirdparty_source_dir = TOPSRCDIR + '/mobile/android/thirdparty/'
 
 constants_jar = add_java_jar('constants')
@@ -287,6 +288,11 @@ gvjar.sources += [geckoview_thirdparty_source_dir + f for f in [
     'java/com/googlecode/eyesfree/braille/selfbraille/ISelfBrailleService.java',
     'java/com/googlecode/eyesfree/braille/selfbraille/SelfBrailleClient.java',
     'java/com/googlecode/eyesfree/braille/selfbraille/WriteData.java',
+]]
+
+gvjar.sources += [geckoview_netcipher_source_dir + f for f in [
+    'OrbotHelper.java',
+    'TorServiceUtils.java',
 ]]
 
 gvjar.extra_jars += [

@@ -174,6 +174,8 @@ import android.animation.ObjectAnimator;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import info.guardianproject.netcipher.proxy.OrbotHelper;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -1068,6 +1070,30 @@ public class BrowserApp extends GeckoApp
         }
     }
 
+    public void checkStartOrbot() {
+        if (!OrbotHelper.isOrbotInstalled(this)) {
+            final Intent intent = OrbotHelper.getOrbotInstallIntent(this);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.install_orbot);
+            builder.setMessage(R.string.you_must_have_orbot);
+            builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    startActivity(intent);
+                }
+            });
+            builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                }
+            });
+            builder.show();
+        } else {
+            OrbotHelper.requestStartTor(this);
+        }
+    }
+
     @Override
     public void onResume() {
         super.onResume();
@@ -1076,11 +1102,7 @@ public class BrowserApp extends GeckoApp
             return;
         }
 
-        if (!mHasResumed) {
-            EventDispatcher.getInstance().unregisterGeckoThreadListener((GeckoEventListener) this,
-                    "Prompt:ShowTop");
-            mHasResumed = true;
-        }
+        checkStartOrbot();
 
         processTabQueue();
 

@@ -1,0 +1,5 @@
+<!-- NetCipher Integration Strings, used for dialog -->
+  <string name="install_orbot">Install Orbot?</string>
+  <string name="you_must_have_orbot">You must have Orbot installed and activated to proxy traffic through it. Would you like to download it?</string>
+  <string name="yes">Yes</string>
+  <string name="no">No</string>
