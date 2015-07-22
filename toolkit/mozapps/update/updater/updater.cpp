@@ -877,7 +877,7 @@ static int rename_file(const NS_tchar *spath, const NS_tchar *dpath,
   return OK;
 }
 
-#ifdef XP_WIN
+#if defined(XP_WIN) && !defined(TOR_BROWSER_UPDATE)
 // Remove the directory pointed to by path and all of its files and
 // sub-directories. If a file is in use move it to the tobedeleted directory
 // and attempt to schedule removal of the file on reboot
@@ -1016,6 +1016,8 @@ static int backup_discard(const NS_tchar *path)
            backup, path));
       return WRITE_ERROR;
     }
+
+#if !defined(TOR_BROWSER_UPDATE)
     // The MoveFileEx call to remove the file on OS reboot will fail if the
     // process doesn't have write access to the HKEY_LOCAL_MACHINE registry key
     // but this is ok since the installer / uninstaller will delete the
@@ -1028,6 +1030,7 @@ static int backup_discard(const NS_tchar *path)
       LOG(("backup_discard: failed to schedule OS reboot removal of " \
            "file: " LOG_S, path));
     }
+#endif
   }
 #else
   if (rv)
@@ -2437,7 +2440,9 @@ ProcessReplaceRequest()
     if (NS_taccess(deleteDir, F_OK)) {
       NS_tmkdir(deleteDir, 0755);
     }
+#if !defined(TOR_BROWSER_UPDATE)
     remove_recursive_on_reboot(tmpDir, deleteDir);
+#endif
 #endif
   }
 
@@ -3539,6 +3544,7 @@ int NS_main(int argc, NS_tchar **argv)
   if (!sStagedUpdate && !sReplaceRequest && _wrmdir(DELETE_DIR)) {
     LOG(("NS_main: unable to remove directory: " LOG_S ", err: %d",
          DELETE_DIR, errno));
+#if !defined(TOR_BROWSER_UPDATE)
     // The directory probably couldn't be removed due to it containing files
     // that are in use and will be removed on OS reboot. The call to remove the
     // directory on OS reboot is done after the calls to remove the files so the
@@ -3555,6 +3561,7 @@ int NS_main(int argc, NS_tchar **argv)
       LOG(("NS_main: failed to schedule OS reboot removal of " \
            "directory: " LOG_S, DELETE_DIR));
     }
+#endif
   }
 #endif /* XP_WIN */
 
