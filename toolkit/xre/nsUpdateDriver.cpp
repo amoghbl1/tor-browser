@@ -1111,6 +1111,20 @@ ProcessUpdates(nsIFile *greDir, nsIFile *appDir, nsIFile *updRootDir,
                bool restart, bool isOSUpdate, nsIFile *osApplyToDir,
                ProcessType *pid)
 {
+#if defined(XP_WIN) && defined(TOR_BROWSER_UPDATE)
+  // Try to remove the "tobedeleted" directory which, if present, contains
+  // files that could not be removed during a previous update (e.g., DLLs
+  // that were in use and therefore locked by Windows).
+  nsCOMPtr<nsIFile> deleteDir;
+  nsresult winrv = appDir->Clone(getter_AddRefs(deleteDir));
+  if (NS_SUCCEEDED(winrv)) {
+    winrv = deleteDir->AppendNative(NS_LITERAL_CSTRING("tobedeleted"));
+    if (NS_SUCCEEDED(winrv)) {
+      winrv = deleteDir->Remove(true);
+    }
+  }
+#endif
+
   nsresult rv;
 
   nsCOMPtr<nsIFile> updatesDir;
