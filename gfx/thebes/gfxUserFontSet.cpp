@@ -407,17 +407,19 @@ gfxUserFontEntry::LoadNextSrc()
         // src local ==> lookup and load immediately
 
         if (currSrc.mSourceType == gfxFontFaceSrc::eSourceType_Local) {
-            gfxFontEntry* fe =
-                gfxPlatform::GetPlatform()->LookupLocalFont(currSrc.mLocalName,
-                                                            mWeight,
-                                                            mStretch,
-                                                            mStyle);
-            nsTArray<gfxUserFontSet*> fontSets;
-            GetUserFontSets(fontSets);
-            for (gfxUserFontSet* fontSet : fontSets) {
-                // We need to note on each gfxUserFontSet that contains the user
-                // font entry that we used a local() rule.
-                fontSet->SetLocalRulesUsed();
+            gfxFontEntry* fe = nullptr;
+            if (gfxFontUtils::IsFontFamilyNameAllowed(currSrc.mLocalName)) {
+                fe = gfxPlatform::GetPlatform()->LookupLocalFont(currSrc.mLocalName,
+                                                                 mWeight,
+                                                                 mStretch,
+                                                                 mStyle);
+                nsTArray<gfxUserFontSet*> fontSets;
+                GetUserFontSets(fontSets);
+                for (gfxUserFontSet* fontSet : fontSets) {
+                    // We need to note on each gfxUserFontSet that contains the user
+                    // font entry that we used a local() rule.
+                    fontSet->SetLocalRulesUsed();
+                }
             }
             if (fe) {
                 LOG(("userfonts (%p) [src %d] loaded local: (%s) for (%s) gen: %8.8x\n",
