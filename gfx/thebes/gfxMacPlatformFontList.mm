@@ -701,7 +701,11 @@ gfxMacPlatformFontList::InitFontList()
     CFArrayRef familyNames = CTFontManagerCopyAvailableFontFamilyNames();
 
     for (NSString* familyName in (NSArray*)familyNames) {
-        AddFamily((CFStringRef)familyName);
+        nsAutoString textFamilyName;
+        nsCocoaUtils::GetStringForNSString(familyName, textFamilyName);
+        if (gfxFontUtils::IsFontFamilyNameAllowed(textFamilyName)) {
+            AddFamily((CFStringRef)familyName);
+        }
     }
 
     CFRelease(familyNames);
@@ -731,6 +735,9 @@ gfxMacPlatformFontList::InitSingleFaceList()
     for (uint32_t i = 0; i < numFonts; i++) {
         LOG_FONTLIST(("(fontlist-singleface) face name: %s\n",
                       NS_ConvertUTF16toUTF8(singleFaceFonts[i]).get()));
+        if (!gfxFontUtils::IsFontFamilyNameAllowed(singleFaceFonts[i])) {
+            continue;
+        }
         gfxFontEntry *fontEntry = LookupLocalFont(singleFaceFonts[i],
                                                   400, 0,
                                                   NS_FONT_STYLE_NORMAL);

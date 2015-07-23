@@ -1,3 +1,4 @@
+
 /* -*- Mode: C++; tab-width: 20; indent-tabs-mode: nil; c-basic-offset: 4 -*-
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +10,8 @@
 #include "gfxPlatform.h"
 #include "nsComponentManagerUtils.h"
 #include "nsTArray.h"
+#include "nsTHashtable.h"
+#include "nsHashKeys.h"
 #include "nsAutoPtr.h"
 #include "mozilla/Likely.h"
 #include "mozilla/Endian.h"
@@ -978,6 +981,14 @@ public:
                                     uint32_t aGlyphId,
                                     nsTArray<uint16_t> &aGlyphs,
                                     nsTArray<mozilla::gfx::Color> &aColors);
+
+    // A list of white-listed system fonts. If the list is empty, we permit
+    // all fonts.
+    static nsTHashtable<nsStringHashKey>* sWhitelistFamilyNames;
+
+    // Returns true only if the font family name is whitelisted or the
+    // whitelist is empty.
+    static bool IsFontFamilyNameAllowed(const nsAString& aFontFamilyName);
 
 protected:
     friend struct MacCharsetMappingComparator;

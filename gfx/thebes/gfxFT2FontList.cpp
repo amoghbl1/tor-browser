@@ -1021,7 +1021,7 @@ gfxFT2FontList::AddFaceToList(const nsCString& aEntryName, uint32_t aIndex,
         NS_ConvertUTF8toUTF16 name(aFace->family_name);
         BuildKeyNameFromFontName(name);
         gfxFontFamily *family = fontFamilies.GetWeak(name);
-        if (!family) {
+        if (!family && gfxFontUtils::IsFontFamilyNameAllowed(name)) {
             family = new FT2FontFamily(name);
             fontFamilies.Put(name, family);
             if (mSkipSpaceLookupCheckFamilies.Contains(name)) {
@@ -1320,20 +1320,22 @@ gfxFT2FontList::AppendFaceFromFontListEntry(const FontListEntry& aFLE,
             aFLE.isHidden() ? mHiddenFontFamilies : mFontFamilies;
         fe->mStandardFace = (aStdFile == kStandard);
         nsAutoString name(aFLE.familyName());
-        gfxFontFamily *family = fontFamilies.GetWeak(name);
-        if (!family) {
-            family = new FT2FontFamily(name);
-            fontFamilies.Put(name, family);
-            if (mSkipSpaceLookupCheckFamilies.Contains(name)) {
-                family->SetSkipSpaceFeatureCheck(true);
+        if (gfxFontUtils::IsFontFamilyNameAllowed(name)) {
+            gfxFontFamily *family = fontFamilies.GetWeak(name);
+            if (!family) {
+                family = new FT2FontFamily(name);
+                fontFamilies.Put(name, family);
+                if (mSkipSpaceLookupCheckFamilies.Contains(name)) {
+                    family->SetSkipSpaceFeatureCheck(true);
+                }
+                if (mBadUnderlineFamilyNames.Contains(name)) {
+                    family->SetBadUnderlineFamily();
+                }
             }
-            if (mBadUnderlineFamilyNames.Contains(name)) {
-                family->SetBadUnderlineFamily();
-            }
-        }
-        family->AddFontEntry(fe);
+            family->AddFontEntry(fe);
 
-        fe->CheckForBrokenFont(family);
+            fe->CheckForBrokenFont(family);
+        }
     }
 }
 

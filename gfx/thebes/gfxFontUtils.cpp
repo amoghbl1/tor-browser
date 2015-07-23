@@ -1770,3 +1770,28 @@ gfxFontUtils::IsCffFont(const uint8_t* aFontData)
 
 #endif
 
+/* static */
+nsTHashtable<nsStringHashKey>* gfxFontUtils::sWhitelistFamilyNames = nullptr;
+
+/* static */
+bool
+gfxFontUtils::IsFontFamilyNameAllowed(const nsAString& aFontFamilyName)
+{
+    if (!sWhitelistFamilyNames) {
+        sWhitelistFamilyNames = new nsTHashtable<nsStringHashKey>();
+        nsAutoTArray<nsString, 10> list;
+        GetPrefsFontList("font.system.whitelist", list);
+        uint32_t numFonts = list.Length();
+        for (uint32_t i = 0; i < numFonts; i++) {
+            nsAutoString key;
+            ToLowerCase(list[i], key);
+            sWhitelistFamilyNames->PutEntry(key);
+        }
+    }
+    nsAutoString fontFamilyNameLower;
+    ToLowerCase(aFontFamilyName, fontFamilyNameLower);
+    // If whitelist is empty, any family name is allowed. If whitelist
+    // has entries, then only allow family names in the whitelist.
+    return sWhitelistFamilyNames->Count() == 0 ||
+           sWhitelistFamilyNames->Contains(fontFamilyNameLower);
+}
