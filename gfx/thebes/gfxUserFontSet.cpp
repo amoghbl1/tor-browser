@@ -410,12 +410,14 @@ gfxUserFontEntry::LoadNextSrc()
         // src local ==> lookup and load immediately
 
         if (currSrc.mSourceType == gfxFontFaceSrc::eSourceType_Local) {
-            gfxFontEntry* fe =
-                gfxPlatform::GetPlatform()->LookupLocalFont(currSrc.mLocalName,
-                                                            mWeight,
-                                                            mStretch,
-                                                            mItalic);
-            mFontSet->SetLocalRulesUsed();
+            gfxFontEntry* fe = nullptr;
+            if (gfxFontUtils::IsFontFamilyNameAllowed(currSrc.mLocalName)) {
+                fe = gfxPlatform::GetPlatform()->LookupLocalFont(currSrc.mLocalName,
+                                                                 mWeight,
+                                                                 mStretch,
+                                                                 mItalic);
+                mFontSet->SetLocalRulesUsed();
+            }
             if (fe) {
                 LOG(("userfonts (%p) [src %d] loaded local: (%s) for (%s) gen: %8.8x\n",
                      mFontSet, mSrcIndex,
