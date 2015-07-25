@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.background.bagheera;
 
+import android.content.Context;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
@@ -32,6 +34,7 @@ import ch.boye.httpclientandroidlib.protocol.HTTP;
  */
 public class BagheeraClient {
 
+  protected final Context mCtx;
   protected final String serverURI;
   protected final Executor executor;
   protected static final Pattern URI_PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
@@ -51,13 +54,14 @@ public class BagheeraClient {
    * @param executor
    *          the executor which will be used to invoke delegate callbacks.
    */
-  public BagheeraClient(final String serverURI, final Executor executor) {
+  public BagheeraClient(final Context ctx, final String serverURI, final Executor executor) {
     if (serverURI == null) {
       throw new IllegalArgumentException("Must provide a server URI.");
     }
     if (executor == null) {
       throw new IllegalArgumentException("Must provide a non-null executor.");
     }
+    this.mCtx = ctx;
     this.serverURI = serverURI.endsWith("/") ? serverURI : serverURI + "/";
     this.executor = executor;
   }
@@ -71,8 +75,8 @@ public class BagheeraClient {
    * @param serverURI
    *          the destination server URI.
    */
-  public BagheeraClient(final String serverURI) {
-    this(serverURI, Executors.newSingleThreadExecutor());
+  public BagheeraClient(final Context ctx, final String serverURI) {
+    this(ctx, serverURI, Executors.newSingleThreadExecutor());
   }
 
   /**
@@ -147,7 +151,7 @@ public class BagheeraClient {
 
     final String uri = this.serverURI + PROTOCOL_VERSION + SUBMIT_PATH +
                        namespace + "/" + id;
-    return new BaseResource(uri);
+    return new BaseResource(mCtx, uri);
   }
 
   public class BagheeraResourceDelegate extends BaseResourceDelegate {

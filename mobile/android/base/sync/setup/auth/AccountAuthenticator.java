@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.sync.setup.auth;
 
+import android.content.Context;
+
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -18,6 +20,8 @@ public class AccountAuthenticator {
   private final AccountActivity activityCallback;
   private Queue<AuthenticatorStage> stages;
 
+  public final Context context;
+
   // Values for authentication.
   public String password;
   public String username;
@@ -30,6 +34,7 @@ public class AccountAuthenticator {
 
   public AccountAuthenticator(AccountActivity activity) {
     activityCallback = activity;
+    context = activity;
     prepareStages();
   }
 

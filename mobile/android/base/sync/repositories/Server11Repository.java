@@ -55,7 +55,7 @@ public class Server11Repository extends Repository {
   @Override
   public void createSession(RepositorySessionCreationDelegate delegate,
                             Context context) {
-    delegate.onSessionCreated(new Server11RepositorySession(this));
+    delegate.onSessionCreated(new Server11RepositorySession(this, context));
   }
 
   public URI collectionURI() {

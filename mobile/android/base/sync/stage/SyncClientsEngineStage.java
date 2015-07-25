@@ -543,7 +543,7 @@ public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
 
     try {
       final URI getURI = session.config.collectionURI(COLLECTION_NAME, true);
-      final SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(getURI);
+      final SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(session.getContext(), getURI);
       request.delegate = clientDownloadDelegate;
 
       Logger.trace(LOG_TAG, "Downloading client records.");
@@ -557,7 +557,7 @@ public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
     Logger.trace(LOG_TAG, "Uploading " + records.size() + " client records.");
     try {
       final URI postURI = session.config.collectionURI(COLLECTION_NAME, false);
-      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI);
+      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.getContext(), postURI);
       request.delegate = clientUploadDelegate;
       request.post(records);
     } catch (URISyntaxException e) {
@@ -574,7 +574,7 @@ public class SyncClientsEngineStage extends AbstractSessionManagingSyncStage {
     Logger.debug(LOG_TAG, "Uploading client record " + record.guid);
     try {
       final URI postURI = session.config.collectionURI(COLLECTION_NAME);
-      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(postURI);
+      final SyncStorageRecordRequest request = new SyncStorageRecordRequest(session.getContext(), postURI);
       request.delegate = clientUploadDelegate;
       request.post(record);
     } catch (URISyntaxException e) {

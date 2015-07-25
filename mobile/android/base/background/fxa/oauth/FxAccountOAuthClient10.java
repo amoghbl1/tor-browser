@@ -8,6 +8,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.Executor;
 
+import android.content.Context;
+
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.net.BaseResource;
 
@@ -59,10 +61,10 @@ public class FxAccountOAuthClient10 extends FxAccountAbstractClient {
   }
 
   public void authorization(String client_id, String assertion, String state, String scope,
-                            RequestDelegate<AuthorizationResponse> delegate) {
+                            RequestDelegate<AuthorizationResponse> delegate, Context context) {
     final BaseResource resource;
     try {
-      resource = new BaseResource(new URI(serverURI + "authorization"));
+      resource = new BaseResource(context, new URI(serverURI + "authorization"));
     } catch (URISyntaxException e) {
       invokeHandleError(delegate, e);
       return;

@@ -311,7 +311,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
           final AuthHeaderProvider authHeaderProvider = new HawkAuthHeaderProvider(token.id, token.key.getBytes("UTF-8"), includePayloadVerificationHash, storageServerSkew);
 
           final Context context = getContext();
-          final SyncConfiguration syncConfig = new SyncConfiguration(token.uid, authHeaderProvider, sharedPrefs, syncKeyBundle);
+          final SyncConfiguration syncConfig = new SyncConfiguration(token.uid, authHeaderProvider, context, sharedPrefs, syncKeyBundle);
 
           Collection<String> knownStageNames = SyncConfiguration.validEngineNames();
           syncConfig.stagesToSync = Utils.getStagesToSyncFromBundle(knownStageNames, extras);
@@ -365,7 +365,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     };
 
     TokenServerClient tokenServerclient = new TokenServerClient(tokenServerEndpointURI, executor);
-    tokenServerclient.getTokenFromBrowserIDAssertion(assertion, true, clientState, delegate);
+    tokenServerclient.getTokenFromBrowserIDAssertion(assertion, true, clientState, delegate, getContext());
   }
 
   /**

@@ -103,7 +103,7 @@ public class FxAccountCodeResender {
     }
 
     Executor executor = Executors.newSingleThreadExecutor();
-    FxAccountClient client = new FxAccountClient20(fxAccount.getAccountServerURI(), executor);
+    FxAccountClient client = new FxAccountClient20(context, fxAccount.getAccountServerURI(), executor);
     new FxAccountResendCodeTask(context, sessionToken, client, delegate).execute();
   }
 }

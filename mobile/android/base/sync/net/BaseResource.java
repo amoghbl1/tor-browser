@@ -4,6 +4,8 @@
 
 package org.mozilla.gecko.sync.net;
 
+import android.content.Context;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -21,6 +23,7 @@ import javax.net.ssl.SSLContext;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.background.common.log.Logger;
+import org.mozilla.gecko.util.ProxyRoutePlanner;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 
 import ch.boye.httpclientandroidlib.Header;
@@ -52,8 +55,6 @@ import ch.boye.httpclientandroidlib.params.HttpProtocolParams;
 import ch.boye.httpclientandroidlib.protocol.BasicHttpContext;
 import ch.boye.httpclientandroidlib.protocol.HttpContext;
 import ch.boye.httpclientandroidlib.util.EntityUtils;
-import ch.boye.httpclientandroidlib.HttpHost;
-import ch.boye.httpclientandroidlib.conn.params.ConnRoutePNames;
 
 /**
  * Provide simple HTTP access to a Sync server or similar.
@@ -74,6 +75,7 @@ public class BaseResource implements Resource {
 
   private static final String LOG_TAG = "BaseResource";
 
+  protected final Context mCtx;
   protected final URI uri;
   protected BasicHttpContext context;
   protected DefaultHttpClient client;
@@ -89,19 +91,21 @@ public class BaseResource implements Resource {
   protected static final CopyOnWriteArrayList<WeakReference<HttpResponseObserver>>
     httpResponseObservers = new CopyOnWriteArrayList<>();
 
-  public BaseResource(String uri) throws URISyntaxException {
-    this(uri, rewriteLocalhost);
+  public BaseResource(Context ctx, String uri) throws URISyntaxException {
+    this(ctx, uri, rewriteLocalhost);
   }
 
-  public BaseResource(URI uri) {
-    this(uri, rewriteLocalhost);
+  public BaseResource(Context ctx, URI uri) {
+    this(ctx, uri, rewriteLocalhost);
   }
 
-  public BaseResource(String uri, boolean rewrite) throws URISyntaxException {
-    this(new URI(uri), rewrite);
+  public BaseResource(Context ctx, String uri, boolean rewrite) throws URISyntaxException {
+    this(ctx, new URI(uri), rewrite);
   }
 
-  public BaseResource(URI uri, boolean rewrite) {
+  public BaseResource(Context ctx, URI uri, boolean rewrite) {
+    this.mCtx = ctx;
+
     if (uri == null) {
       throw new IllegalArgumentException("uri must not be null");
     }
@@ -183,8 +187,7 @@ public class BaseResource implements Resource {
     // We could reuse these client instances, except that we mess around
     // with their parameters… so we'd need a pool of some kind.
     client = new DefaultHttpClient(getConnectionManager());
-    HttpHost torProxy = new HttpHost("127.0.0.1", 8118);
-    client.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, torProxy);
+    client.setRoutePlanner(new ProxyRoutePlanner());
 
     // TODO: Eventually we should use Apache HttpAsyncClient. It's not out of alpha yet.
     // Until then, we synchronously make the request, then invoke our delegate's callback.

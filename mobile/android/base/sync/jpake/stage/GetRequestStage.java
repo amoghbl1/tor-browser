@@ -100,7 +100,7 @@ public class GetRequestStage extends JPakeStage {
   }
 
   private Resource createGetRequest(final GetRequestStageDelegate callbackDelegate, final JPakeClient jpakeClient) throws URISyntaxException {
-    BaseResource httpResource = new BaseResource(jpakeClient.channelUrl);
+    BaseResource httpResource = new BaseResource(jpakeClient.context, jpakeClient.channelUrl);
     httpResource.delegate = new BaseResourceDelegate(httpResource) {
       @Override
       public String getUserAgent() {

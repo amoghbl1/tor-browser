@@ -128,7 +128,7 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
       this.context = context;
       this.fxAccount = fxAccount;
       this.executor = Executors.newSingleThreadExecutor();
-      this.client = new FxAccountClient20(fxAccount.getAccountServerURI(), executor);
+      this.client = new FxAccountClient20(context, fxAccount.getAccountServerURI(), executor);
     }
 
     @Override
@@ -251,7 +251,7 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
             Logger.error(LOG_TAG, "OAuth error.", e);
             responder.fail(e);
           }
-        });
+        }, context);
       }
     });
   }

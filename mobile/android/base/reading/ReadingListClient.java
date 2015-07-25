@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.util.Queue;
 import java.util.concurrent.Executor;
+import android.content.Context;
 
 import org.mozilla.gecko.background.ReadingListConstants;
 import org.mozilla.gecko.background.common.log.Logger;
@@ -35,20 +36,22 @@ public class ReadingListClient {
   static final String LOG_TAG = ReadingListClient.class.getSimpleName();
   private final AuthHeaderProvider auth;
 
+  private final Context mCtx;
   private final URI articlesURI;              // .../articles
   private final URI articlesBaseURI;          // .../articles/
 
   /**
    * Use a {@link BasicAuthHeaderProvider} for testing, and an FxA OAuth provider for the real service.
    */
-  public ReadingListClient(final URI serviceURI, final AuthHeaderProvider auth) {
+  public ReadingListClient(final Context ctx, final URI serviceURI, final AuthHeaderProvider auth) {
+    this.mCtx = ctx;
     this.articlesURI = serviceURI.resolve("articles");
     this.articlesBaseURI = serviceURI.resolve("articles/");
     this.auth = auth;
   }
 
   private BaseResource getRelativeArticleResource(final String rel) {
-    return new BaseResource(this.articlesBaseURI.resolve(rel));
+    return new BaseResource(mCtx, this.articlesBaseURI.resolve(rel));
   }
 
   private static final class DelegatingUploadResourceDelegate extends UploadResourceDelegate<ReadingListRecordResponse> {
@@ -516,7 +519,7 @@ public class ReadingListClient {
   // Deliberately declare `delegate` non-final so we can't capture it below. We prefer
   // to use `recordDelegate` explicitly.
   public void getAll(final FetchSpec spec, ReadingListRecordDelegate delegate, final long ifModifiedSince) throws URISyntaxException {
-    final BaseResource r = new BaseResource(spec.getURI(this.articlesURI));
+    final BaseResource r = new BaseResource(mCtx, spec.getURI(this.articlesURI));
     r.delegate = new MultipleRecordResourceDelegate(r, auth, delegate, ReadingListStorageResponse.FACTORY, ifModifiedSince);
     if (ReadingListConstants.DEBUG) {
       Logger.info(LOG_TAG, "Getting all records from " + r.getURIString());
@@ -571,7 +574,7 @@ public class ReadingListClient {
   }
 
   public void add(final ClientReadingListRecord up, final ReadingListRecordUploadDelegate uploadDelegate) {
-    final BaseResource r = new BaseResource(this.articlesURI);
+    final BaseResource r = new BaseResource(mCtx, this.articlesURI);
     r.delegate = new DelegatingUploadResourceDelegate(r, auth, ReadingListRecordResponse.FACTORY, up,
                                                       uploadDelegate);
 
@@ -655,7 +658,7 @@ public class ReadingListClient {
   // TODO: modified times etc.
   public void wipe(final ReadingListWipeDelegate delegate) {
     Logger.info(LOG_TAG, "Wiping server.");
-    final BaseResource r = new BaseResource(this.articlesURI);
+    final BaseResource r = new BaseResource(mCtx, this.articlesURI);
 
     r.delegate = new ReadingListResourceDelegate<ReadingListStorageResponse>(r, auth, ReadingListStorageResponse.FACTORY) {
 

@@ -6,6 +6,7 @@ package org.mozilla.gecko.browserid.verifier;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import android.content.Context;
 
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.net.BaseResource;
@@ -22,12 +23,16 @@ public class BrowserIDRemoteVerifierClient20 extends AbstractBrowserIDRemoteVeri
   protected static final String JSON_KEY_ASSERTION = "assertion";
   protected static final String JSON_KEY_AUDIENCE = "audience";
 
-  public BrowserIDRemoteVerifierClient20() throws URISyntaxException {
+  private final Context mCtx;
+
+  public BrowserIDRemoteVerifierClient20(Context ctx) throws URISyntaxException {
     super(new URI(DEFAULT_VERIFIER_URL));
+    mCtx = ctx;
   }
 
-  public BrowserIDRemoteVerifierClient20(URI verifierUri) {
+  public BrowserIDRemoteVerifierClient20(Context ctx, URI verifierUri) {
     super(verifierUri);
+    mCtx = ctx;
   }
 
   @Override
@@ -42,7 +47,7 @@ public class BrowserIDRemoteVerifierClient20 extends AbstractBrowserIDRemoteVeri
       throw new IllegalArgumentException("delegate cannot be null.");
     }
 
-    BaseResource r = new BaseResource(verifierUri);
+    BaseResource r = new BaseResource(mCtx, verifierUri);
     r.delegate = new RemoteVerifierResourceDelegate(r, delegate);
 
     final ExtendedJSONObject requestBody = new ExtendedJSONObject();

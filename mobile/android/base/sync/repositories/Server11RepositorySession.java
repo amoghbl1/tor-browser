@@ -15,6 +15,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
+import android.content.Context;
+
 import org.json.simple.JSONArray;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.CryptoRecord;
@@ -206,6 +208,7 @@ public class Server11RepositorySession extends RepositorySession {
   }
 
 
+  Context mCtx;
   Server11Repository serverRepository;
   AtomicLong uploadTimestamp = new AtomicLong(0);
 
@@ -221,9 +224,10 @@ public class Server11RepositorySession extends RepositorySession {
     }
   }
 
-  public Server11RepositorySession(Repository repository) {
+  public Server11RepositorySession(Repository repository, Context ctx) {
     super(repository);
     serverRepository = (Server11Repository) repository;
+    mCtx = ctx;
   }
 
   private String flattenIDs(String[] guids) {
@@ -259,7 +263,7 @@ public class Server11RepositorySession extends RepositorySession {
                                          throws URISyntaxException {
 
     URI collectionURI = serverRepository.collectionURI(full, newer, limit, sort, ids);
-    SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(collectionURI);
+    SyncStorageCollectionRequest request = new SyncStorageCollectionRequest(mCtx, collectionURI);
     request.delegate = delegate;
 
     // So it can clean up.
@@ -374,7 +378,7 @@ public class Server11RepositorySession extends RepositorySession {
       final ArrayList<byte[]> outgoing = recordsBuffer;
       final ArrayList<String> outgoingGuids = recordGuidsBuffer;
       RepositorySessionStoreDelegate uploadDelegate = this.delegate;
-      storeWorkQueue.execute(new RecordUploadRunnable(uploadDelegate, outgoing, outgoingGuids, byteCount));
+      storeWorkQueue.execute(new RecordUploadRunnable(uploadDelegate, outgoing, outgoingGuids, byteCount, mCtx));
 
       recordsBuffer = new ArrayList<byte[]>();
       recordGuidsBuffer = new ArrayList<String>();
@@ -430,17 +434,20 @@ public class Server11RepositorySession extends RepositorySession {
     private final ArrayList<byte[]> outgoing;
     private ArrayList<String> outgoingGuids;
     private final long byteCount;
+    private final Context context;
 
     public RecordUploadRunnable(RepositorySessionStoreDelegate storeDelegate,
                                 ArrayList<byte[]> outgoing,
                                 ArrayList<String> outgoingGuids,
-                                long byteCount) {
+                                long byteCount,
+                                Context context) {
       Logger.debug(LOG_TAG, "Preparing record upload for " +
                   outgoing.size() + " records (" +
                   byteCount + " bytes).");
       this.outgoing = outgoing;
       this.outgoingGuids = outgoingGuids;
       this.byteCount = byteCount;
+      this.context = context;
     }
 
     @Override
@@ -598,7 +605,7 @@ public class Server11RepositorySession extends RepositorySession {
       }
 
       URI u = serverRepository.collectionURI();
-      SyncStorageRequest request = new SyncStorageRequest(u);
+      SyncStorageRequest request = new SyncStorageRequest(context, u);
 
       request.delegate = this;
 

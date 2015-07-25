@@ -513,7 +513,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter implements BaseGlob
 
     final AuthHeaderProvider authHeaderProvider = new BasicAuthHeaderProvider(username, password);
     final SharedPreferences prefs = getContext().getSharedPreferences(prefsPath, Utils.SHARED_PREFERENCES_MODE);
-    final SyncConfiguration config = new Sync11Configuration(username, authHeaderProvider, prefs, keyBundle);
+    final SyncConfiguration config = new Sync11Configuration(username, authHeaderProvider, this.mContext, prefs, keyBundle);
 
     Collection<String> knownStageNames = SyncConfiguration.validEngineNames();
     config.stagesToSync = Utils.getStagesToSyncFromBundle(knownStageNames, extras);

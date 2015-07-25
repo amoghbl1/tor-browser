@@ -35,7 +35,7 @@ public abstract class FxADefaultLoginStateMachineDelegate implements LoginStateM
     this.context = context;
     this.fxAccount = fxAccount;
     this.executor = Executors.newSingleThreadExecutor();
-    this.client = new FxAccountClient20(fxAccount.getAccountServerURI(), executor);
+    this.client = new FxAccountClient20(context, fxAccount.getAccountServerURI(), executor);
   }
 
   abstract public void handleNotMarried(State notMarried);

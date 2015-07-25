@@ -7,6 +7,7 @@ package org.mozilla.gecko.sync;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 
 public class PersistedMetaGlobal {
@@ -15,9 +16,11 @@ public class PersistedMetaGlobal {
   public static final String META_GLOBAL_SERVER_RESPONSE_BODY = "metaGlobalServerResponseBody";
   public static final String META_GLOBAL_LAST_MODIFIED        = "metaGlobalLastModified";
 
+  protected Context mCtx;
   protected SharedPreferences prefs;
 
-  public PersistedMetaGlobal(SharedPreferences prefs) {
+  public PersistedMetaGlobal(Context ctx, SharedPreferences prefs) {
+    this.mCtx = ctx;
     this.prefs = prefs;
   }
 
@@ -40,7 +43,7 @@ public class PersistedMetaGlobal {
     MetaGlobal metaGlobal = null;
     try {
       CryptoRecord cryptoRecord = CryptoRecord.fromJSONRecord(json);
-      MetaGlobal mg = new MetaGlobal(metaUrl, authHeaderProvider);
+      MetaGlobal mg = new MetaGlobal(mCtx, metaUrl, authHeaderProvider);
       mg.setFromRecord(cryptoRecord);
       metaGlobal = mg;
     } catch (Exception e) {

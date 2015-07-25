@@ -75,6 +75,7 @@ public abstract class AbstractCommunicator {
                 sMozApiKey = prefs.getMozApiKey();
             }
             URL url = new URL(getUrlString() + "?key=" + sMozApiKey);
+            // TODO are we allowed to link to code in base?
             Proxy torProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 8118));
             mHttpURLConnection = (HttpURLConnection) url.openConnection(torProxy);
             mHttpURLConnection.setRequestMethod("POST");

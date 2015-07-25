@@ -12,6 +12,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import android.content.Context;
+
 import org.json.simple.JSONArray;
 import org.json.simple.parser.ParseException;
 import org.mozilla.gecko.background.common.log.Logger;
@@ -25,6 +27,7 @@ import org.mozilla.gecko.sync.net.SyncStorageResponse;
 
 public class MetaGlobal implements SyncStorageRequestDelegate {
   private static final String LOG_TAG = "MetaGlobal";
+  protected final Context mCtx;
   protected String metaURL;
 
   // Fields.
@@ -45,7 +48,8 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   private boolean isUploading;
   protected final AuthHeaderProvider authHeaderProvider;
 
-  public MetaGlobal(String metaURL, AuthHeaderProvider authHeaderProvider) {
+  public MetaGlobal(Context ctx, String metaURL, AuthHeaderProvider authHeaderProvider) {
+    this.mCtx = ctx;
     this.metaURL = metaURL;
     this.authHeaderProvider = authHeaderProvider;
   }
@@ -54,7 +58,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
     this.callback = delegate;
     try {
       this.isUploading = false;
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
+      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.mCtx, this.metaURL);
       r.delegate = this;
       r.deferGet();
     } catch (URISyntaxException e) {
@@ -65,7 +69,7 @@ public class MetaGlobal implements SyncStorageRequestDelegate {
   public void upload(MetaGlobalDelegate callback) {
     try {
       this.isUploading = true;
-      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.metaURL);
+      SyncStorageRecordRequest r = new SyncStorageRecordRequest(this.mCtx, this.metaURL);
 
       r.delegate = this;
       this.callback = callback;

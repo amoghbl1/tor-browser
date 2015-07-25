@@ -12,6 +12,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import android.content.Context;
+
 import org.mozilla.apache.commons.codec.binary.Base64;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.SyncConstants;
@@ -78,7 +80,7 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
     String authRequestUrl = makeAuthRequestUrl(aa.authServer, aa.username);
     // Might contain plaintext username for old Sync accounts.
     Logger.pii(LOG_TAG, "Making auth request to: " + authRequestUrl);
-    authenticateAccount(callbackDelegate, authRequestUrl, authHeader);
+    authenticateAccount(aa.context, callbackDelegate, authRequestUrl, authHeader);
 
   }
 
@@ -91,8 +93,8 @@ public class AuthenticateAccountStage implements AuthenticatorStage {
    * @throws URISyntaxException
    */
   // Made public for testing.
-  public void authenticateAccount(final AuthenticateAccountStageDelegate callbackDelegate, final String authRequestUrl, final String authHeader) throws URISyntaxException {
-    final BaseResource httpResource = new BaseResource(authRequestUrl);
+  public void authenticateAccount(final Context context, final AuthenticateAccountStageDelegate callbackDelegate, final String authRequestUrl, final String authHeader) throws URISyntaxException {
+    final BaseResource httpResource = new BaseResource(context, authRequestUrl);
     httpResource.delegate = new BaseResourceDelegate(httpResource) {
       @Override
       public String getUserAgent() {

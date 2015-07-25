@@ -8,6 +8,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import android.content.Context;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mozilla.gecko.sync.CryptoRecord;
@@ -42,12 +44,12 @@ public class SyncStorageRecordRequest extends SyncStorageRequest {
     }
   }
 
-  public SyncStorageRecordRequest(URI uri) {
-    super(uri);
+  public SyncStorageRecordRequest(Context context, URI uri) {
+    super(context, uri);
   }
 
-  public SyncStorageRecordRequest(String url) throws URISyntaxException {
-    this(new URI(url));
+  public SyncStorageRecordRequest(Context context, String url) throws URISyntaxException {
+    this(context, new URI(url));
   }
 
   @Override

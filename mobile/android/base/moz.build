@@ -78,7 +78,9 @@ gujar.sources += [
     'util/NativeJSObject.java',
     'util/NonEvictingLruCache.java',
     'util/PrefUtils.java',
+    'util/ProxyRoutePlanner.java',
     'util/ProxySelector.java',
+    'util/ProxySettings.java',
     'util/RawResource.java',
     'util/StringUtils.java',
     'util/ThreadUtils.java',
@@ -89,6 +91,7 @@ gujar.sources += [
 gujar.extra_jars = [
     'constants.jar',
     'gecko-mozglue.jar',
+    'sync-thirdparty.jar',
 ]
 gujar.javac_flags += ['-Xlint:all,-deprecation']
 

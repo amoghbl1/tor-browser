@@ -134,7 +134,7 @@ public class ReadingListSyncAdapter extends AbstractThreadedSyncAdapter {
     final AuthHeaderProvider auth = new BearerAuthHeaderProvider(authToken);
 
     final PrefsBranch branch = new PrefsBranch(sharedPrefs, "readinglist.");
-    final ReadingListClient remote = new ReadingListClient(endpoint, auth);
+    final ReadingListClient remote = new ReadingListClient(context, endpoint, auth);
     final ContentProviderClient cpc = getContentProviderClient(context); // Released by the inner SyncAdapterSynchronizerDelegate.
 
     final LocalReadingListStorage local = new LocalReadingListStorage(cpc);

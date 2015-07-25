@@ -11,6 +11,8 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 
+import android.content.Context;
+
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.sync.SyncConstants;
 import org.mozilla.gecko.sync.Utils;
@@ -65,7 +67,7 @@ public class FetchUserNodeStage implements AuthenticatorStage {
     String nodeRequestUrl = Utils.nodeWeaveURL(aa.nodeServer, aa.username);
     // Might contain a plaintext username in the case of old Sync accounts.
     Logger.pii(LOG_TAG, "NodeUrl: " + nodeRequestUrl);
-    final BaseResource httpResource = makeFetchNodeRequest(callbackDelegate, nodeRequestUrl);
+    final BaseResource httpResource = makeFetchNodeRequest(aa.context, callbackDelegate, nodeRequestUrl);
     // Make request on separate thread.
     AccountAuthenticator.runOnThread(new Runnable() {
       @Override
@@ -75,9 +77,9 @@ public class FetchUserNodeStage implements AuthenticatorStage {
     });
   }
 
-  private BaseResource makeFetchNodeRequest(final FetchNodeStageDelegate callbackDelegate, String fetchNodeUrl) throws URISyntaxException {
+  private BaseResource makeFetchNodeRequest(final Context context, final FetchNodeStageDelegate callbackDelegate, String fetchNodeUrl) throws URISyntaxException {
     // Fetch node containing user.
-    final BaseResource httpResource = new BaseResource(fetchNodeUrl);
+    final BaseResource httpResource = new BaseResource(context, fetchNodeUrl);
     httpResource.delegate = new BaseResourceDelegate(httpResource) {
       @Override
       public String getUserAgent() {

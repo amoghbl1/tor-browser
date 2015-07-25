@@ -43,7 +43,7 @@ public class AndroidBrowserBookmarksServerSyncStage extends ServerSyncStage {
     // If this is a first sync, we need to check server counts to make sure that we aren't
     // going to screw up. SafeConstrainedServer11Repository does this. See Bug 814331.
     AuthHeaderProvider authHeaderProvider = session.getAuthHeaderProvider();
-    final JSONRecordFetcher countsFetcher = new JSONRecordFetcher(session.config.infoCollectionCountsURL(), authHeaderProvider);
+    final JSONRecordFetcher countsFetcher = new JSONRecordFetcher(session.getContext(), session.config.infoCollectionCountsURL(), authHeaderProvider);
     String collection = getCollection();
     return new SafeConstrainedServer11Repository(
         collection,

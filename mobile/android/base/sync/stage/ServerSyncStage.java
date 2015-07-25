@@ -376,7 +376,7 @@ public abstract class ServerSyncStage extends AbstractSessionManagingSyncStage i
     SyncStorageRequest request;
 
     try {
-      request = new SyncStorageRequest(session.config.collectionURI(getCollection()));
+      request = new SyncStorageRequest(session.getContext(), session.config.collectionURI(getCollection()));
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);

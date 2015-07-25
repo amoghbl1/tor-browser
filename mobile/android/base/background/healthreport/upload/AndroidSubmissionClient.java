@@ -100,7 +100,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
   }
 
   protected void uploadPayload(String id, String payload, Collection<String> oldIds, BagheeraRequestDelegate uploadDelegate) {
-    final BagheeraClient client = new BagheeraClient(getDocumentServerURI());
+    final BagheeraClient client = new BagheeraClient(context, getDocumentServerURI());
 
     Logger.pii(LOG_TAG, "New health report has id " + id +
         "and obsoletes " + (oldIds != null ? Integer.toString(oldIds.size()) : "no") + " old ids.");
@@ -186,7 +186,7 @@ public class AndroidSubmissionClient implements SubmissionClient {
 
   @Override
   public void delete(final long localTime, final String id, Delegate delegate) {
-    final BagheeraClient client = new BagheeraClient(getDocumentServerURI());
+    final BagheeraClient client = new BagheeraClient(context, getDocumentServerURI());
 
     Logger.pii(LOG_TAG, "Deleting health report with id " + id + ".");
 

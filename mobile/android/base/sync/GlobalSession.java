@@ -520,7 +520,7 @@ public class GlobalSession implements HttpResponseObserver {
   }
 
   public void fetchInfoCollections(JSONRecordFetchDelegate callback) throws URISyntaxException {
-    final JSONRecordFetcher fetcher = new JSONRecordFetcher(config.infoCollectionsURL(), getAuthHeaderProvider());
+    final JSONRecordFetcher fetcher = new JSONRecordFetcher(getContext(), config.infoCollectionsURL(), getAuthHeaderProvider());
     fetcher.fetch(callback);
   }
 
@@ -536,7 +536,7 @@ public class GlobalSession implements HttpResponseObserver {
                          final KeyUploadDelegate keyUploadDelegate) {
     SyncStorageRecordRequest request;
     try {
-      request = new SyncStorageRecordRequest(this.config.keysURI());
+      request = new SyncStorageRecordRequest(getContext(), this.config.keysURI());
     } catch (URISyntaxException e) {
       keyUploadDelegate.onKeyUploadFailed(e);
       return;
@@ -835,7 +835,7 @@ public class GlobalSession implements HttpResponseObserver {
     final GlobalSession self = this;
 
     try {
-      request = new SyncStorageRequest(config.storageURL());
+      request = new SyncStorageRequest(getContext(), config.storageURL());
     } catch (URISyntaxException ex) {
       Logger.warn(LOG_TAG, "Invalid URI in wipeServer.");
       wipeDelegate.onWipeFailed(ex);
@@ -1026,7 +1026,7 @@ public class GlobalSession implements HttpResponseObserver {
       engines.put(engineName, engineSettings.toJSONObject());
     }
 
-    MetaGlobal metaGlobal = new MetaGlobal(metaURL, this.getAuthHeaderProvider());
+    MetaGlobal metaGlobal = new MetaGlobal(getContext(), metaURL, this.getAuthHeaderProvider());
     metaGlobal.setSyncID(newSyncID);
     metaGlobal.setStorageVersion(STORAGE_VERSION);
     metaGlobal.setEngines(engines);

@@ -20,6 +20,7 @@ import org.mozilla.gecko.sync.crypto.PersistedCrypto5Keys;
 import org.mozilla.gecko.sync.net.AuthHeaderProvider;
 import org.mozilla.gecko.sync.stage.GlobalSyncStage.Stage;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 
@@ -87,6 +88,7 @@ public class SyncConfiguration {
   public SharedPreferences prefs;
 
   protected final AuthHeaderProvider authHeaderProvider;
+  protected final Context mCtx;
 
   public static final String PREF_PREFS_VERSION = "prefs.version";
   public static final long CURRENT_PREFS_VERSION = 1;
@@ -112,15 +114,16 @@ public class SyncConfiguration {
 
   private static final String API_VERSION = "1.5";
 
-  public SyncConfiguration(String username, AuthHeaderProvider authHeaderProvider, SharedPreferences prefs) {
+  public SyncConfiguration(String username, AuthHeaderProvider authHeaderProvider, Context ctx, SharedPreferences prefs) {
     this.username = username;
     this.authHeaderProvider = authHeaderProvider;
+    this.mCtx = ctx;
     this.prefs = prefs;
     this.loadFromPrefs(prefs);
   }
 
-  public SyncConfiguration(String username, AuthHeaderProvider authHeaderProvider, SharedPreferences prefs, KeyBundle syncKeyBundle) {
-    this(username, authHeaderProvider, prefs);
+  public SyncConfiguration(String username, AuthHeaderProvider authHeaderProvider, Context ctx, SharedPreferences prefs, KeyBundle syncKeyBundle) {
+    this(username, authHeaderProvider, ctx, prefs);
     this.syncKeyBundle = syncKeyBundle;
   }
 
@@ -469,6 +472,6 @@ public class SyncConfiguration {
   }
 
   public PersistedMetaGlobal persistedMetaGlobal() {
-    return new PersistedMetaGlobal(getPrefs());
+    return new PersistedMetaGlobal(mCtx, getPrefs());
   }
 }

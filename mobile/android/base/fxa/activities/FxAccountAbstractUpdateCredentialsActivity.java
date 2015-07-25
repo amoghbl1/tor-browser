@@ -161,7 +161,7 @@ public abstract class FxAccountAbstractUpdateCredentialsActivity extends FxAccou
   public void updateCredentials(String email, String password) {
     String serverURI = fxAccount.getAccountServerURI();
     Executor executor = Executors.newSingleThreadExecutor();
-    FxAccountClient client = new FxAccountClient20(serverURI, executor);
+    FxAccountClient client = new FxAccountClient20(this, serverURI, executor);
     PasswordStretcher passwordStretcher = makePasswordStretcher(password);
     try {
       hideRemoteError();
