@@ -81,6 +81,7 @@ pref("browser.syncPromoViewsLeftMap", "{\"addons\":0, \"passwords\":0, \"bookmar
 pref("services.sync.engine.prefs", false); // Never sync prefs, addons, or tabs with other browsers
 pref("services.sync.engine.addons", false);
 pref("services.sync.engine.tabs", false);
+pref("services.sync.ui.hidden", true);
 pref("extensions.getAddons.cache.enabled", false); // https://blog.mozilla.org/addons/how-to-opt-out-of-add-on-metadata-updates/
 pref("browser.newtabpage.directory.ping", "data:text/plain,"); // Bug 16316 - Avoid potential confusion over tiles for now.
 pref("browser.newtabpage.directory.source", "data:text/plain,"); // Bug 16316 - Avoid potential confusion over tiles for now.
