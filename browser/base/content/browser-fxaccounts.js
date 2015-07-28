@@ -5,6 +5,7 @@
 var gFxAccounts = {
 
   SYNC_MIGRATION_NOTIFICATION_TITLE: "fxa-migration",
+  PREF_SYNC_UI_HIDDEN: "services.sync.ui.hidden",
 
   _initialized: false,
   _inCustomizationMode: false,
@@ -99,6 +100,8 @@ var gFxAccounts = {
       Services.obs.addObserver(this, topic, false);
     }
 
+    Services.prefs.addObserver(this.PREF_SYNC_UI_HIDDEN, this, false);
+
     gNavToolbox.addEventListener("customizationstarting", this);
     gNavToolbox.addEventListener("customizationending", this);
 
@@ -117,6 +120,8 @@ var gFxAccounts = {
       Services.obs.removeObserver(this, topic);
     }
 
+    Services.prefs.removeObserver(this.PREF_SYNC_UI_HIDDEN, this);
+
     this._initialized = false;
   },
 
@@ -124,6 +129,9 @@ var gFxAccounts = {
     switch (topic) {
       case "fxa-migration:state-changed":
         this.onMigrationStateChanged(data, subject);
+        break;
+      case this.PREF_SYNC_UI_HIDDEN:
+        this.updateAppMenuItem();
         break;
       case this.FxAccountsCommon.ON_PROFILE_CHANGE_NOTIFICATION:
         this._cachedProfile = null;
@@ -202,7 +210,11 @@ var gFxAccounts = {
     } catch (e) { }
 
     // Bail out if FxA is disabled.
-    if (!this.weave.fxAccountsEnabled) {
+    let hideSyncUI = false;
+    try {
+      hideSyncUI = Services.prefs.getBoolPref(this.PREF_SYNC_UI_HIDDEN);
+    } catch (e) {}
+    if (hideSyncUI || !this.weave.fxAccountsEnabled) {
       return Promise.resolve();
     }
 
