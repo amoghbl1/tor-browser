@@ -120,10 +120,12 @@ import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -1070,6 +1072,30 @@ public class BrowserApp extends GeckoApp
         }
     }
 
+    private BroadcastReceiver torStatusReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (TextUtils.equals(intent.getAction(), OrbotHelper.ACTION_STATUS)) {
+                Log.i(LOGTAG, getPackageName() + " received intent : " + intent.getAction() + " " + intent.getPackage());
+                String status = intent.getStringExtra(OrbotHelper.EXTRA_STATUS) + " (" + intent.getStringExtra(OrbotHelper.EXTRA_PACKAGE_NAME) + ")";
+                Log.i(LOGTAG, status);
+
+                boolean enabled = (intent.getStringExtra(OrbotHelper.EXTRA_STATUS).equals(OrbotHelper.STATUS_ON));
+                // TODO
+                /*
+                   if(enabled) {
+                   if (intent.hasExtra(OrbotHelper.EXTRA_PROXY_PORT_HTTP))
+                   Log.i(LOGTAG, "HTTP PROXY: " + intent.getIntExtra(OrbotHelper.EXTRA_PROXY_PORT_HTTP, -1));
+
+                   if (intent.hasExtra(OrbotHelper.EXTRA_PROXY_PORT_SOCKS))
+                   Log.i(LOGTAG, "SOCKS PROXY: " + intent.getIntExtra(OrbotHelper.EXTRA_PROXY_PORT_SOCKS, -1));
+                   }
+                 */
+            }
+        }
+    };
+
     public void checkStartOrbot() {
         if (!OrbotHelper.isOrbotInstalled(this)) {
             final Intent intent = OrbotHelper.getOrbotInstallIntent(this);
@@ -1090,6 +1116,7 @@ public class BrowserApp extends GeckoApp
             });
             builder.show();
         } else {
+            registerReceiver(torStatusReceiver, new IntentFilter(OrbotHelper.ACTION_STATUS));
             OrbotHelper.requestStartTor(this);
         }
     }
@@ -1136,6 +1163,10 @@ public class BrowserApp extends GeckoApp
         if (mIsAbortingAppLaunch) {
             return;
         }
+        // Register for Prompt:ShowTop so we can foreground this activity even if it's hidden.
+        EventDispatcher.getInstance().registerGeckoThreadListener((GeckoEventListener) this,
+            "Prompt:ShowTop");
+        unregisterReceiver(torStatusReceiver);
 
         for (final BrowserAppDelegate delegate : delegates) {
             delegate.onRestart(this);
