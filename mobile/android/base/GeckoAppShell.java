@@ -54,6 +54,8 @@ import org.mozilla.gecko.util.NativeJSObject;
 import org.mozilla.gecko.util.ProxySelector;
 import org.mozilla.gecko.util.ThreadUtils;
 
+import info.guardianproject.netcipher.proxy.OrbotHelper;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.PendingIntent;
@@ -209,6 +211,8 @@ public class GeckoAppShell
 
     static private int sDensityDpi;
     static private int sScreenDepth;
+
+    static final Queue<Intent> PENDING_URL_INTENTS = new ConcurrentLinkedQueue<Intent>();
 
     /* Default colors. */
     private static final float[] DEFAULT_LAUNCHER_ICON_HSV = { 32.0f, 1.0f, 1.0f };
@@ -393,6 +397,15 @@ public class GeckoAppShell
         } catch (NoSuchElementException e) {}
     }
 
+    static void sendPendingUrlIntents(Context context) {
+        try {
+            while (!PENDING_URL_INTENTS.isEmpty()) {
+                final Intent intent = PENDING_URL_INTENTS.poll();
+                context.startActivity(intent);
+            }
+        } catch (NoSuchElementException e) {}
+    }
+
     /**
      * If the Gecko thread is running, immediately dispatches the event to
      * Gecko.
@@ -414,7 +427,8 @@ public class GeckoAppShell
             throw new IllegalArgumentException("e cannot be null.");
         }
 
-        if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
+        if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)
+            && OrbotHelper.STATUS_ON.equals(Tabs.getInstance().getTorStatus())) {
             notifyGeckoOfEvent(e);
             // Gecko will copy the event data into a normal C++ object. We can recycle the event now.
             e.recycle();
@@ -1099,6 +1113,12 @@ public class GeckoAppShell
         }
 
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        if (!OrbotHelper.STATUS_ON.equals(Tabs.getInstance().getTorStatus())) {
+            PENDING_URL_INTENTS.add(intent);
+            return true;
+        }
+
         try {
             context.startActivity(intent);
             return true;
