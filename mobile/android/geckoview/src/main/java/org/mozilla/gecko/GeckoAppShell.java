@@ -21,9 +21,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Queue;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import android.annotation.SuppressLint;
 import org.mozilla.gecko.annotation.JNITarget;
@@ -43,6 +46,8 @@ import org.mozilla.gecko.util.NativeJSContainer;
 import org.mozilla.gecko.util.NativeJSObject;
 import org.mozilla.gecko.util.ProxySelector;
 import org.mozilla.gecko.util.ThreadUtils;
+
+import info.guardianproject.netcipher.proxy.OrbotHelper;
 
 import android.Manifest;
 import android.app.Activity;
@@ -109,6 +114,8 @@ public class GeckoAppShell
 
     // We have static members only.
     private GeckoAppShell() { }
+
+    private static String torStatus;
 
     private static final CrashHandler CRASH_HANDLER = new CrashHandler() {
         @Override
@@ -187,6 +194,8 @@ public class GeckoAppShell
     static private int sDensityDpi;
     static private int sScreenDepth;
 
+    static final Queue<Intent> PENDING_URL_INTENTS = new ConcurrentLinkedQueue<Intent>();
+
     /* Is the value in sVibrationEndTime valid? */
     private static boolean sVibrationMaybePlaying;
 
@@ -253,6 +262,17 @@ public class GeckoAppShell
     public static LayerView getLayerView() {
         return sLayerView;
     }
+
+    static void sendPendingUrlIntents() {
+        try {
+            Context context = getContext();
+            while (!PENDING_URL_INTENTS.isEmpty()) {
+                final Intent intent = PENDING_URL_INTENTS.poll();
+                context.startActivity(intent);
+            }
+        } catch (NoSuchElementException e) {}
+    }
+
 
     /**
      * Sends an asynchronous request to Gecko.
@@ -2235,5 +2255,16 @@ public class GeckoAppShell
             sScreenSize = new Rect(0, 0, disp.getWidth(), disp.getHeight());
         }
         return sScreenSize;
+    }
+
+    public static void setTorStatus(Intent intent) {
+        torStatus = intent.getStringExtra(OrbotHelper.EXTRA_STATUS);
+        if (OrbotHelper.STATUS_ON.equals(torStatus)) {
+            sendPendingUrlIntents();
+        }
+    }
+
+    public static String getTorStatus() {
+        return torStatus;
     }
 }
