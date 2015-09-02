@@ -57,6 +57,8 @@ import org.mozilla.gecko.util.ProxySelector;
 import org.mozilla.gecko.util.ThreadUtils;
 import org.mozilla.gecko.widget.ExternalIntentDuringPrivateBrowsingPromptFragment;
 
+import info.guardianproject.netcipher.proxy.OrbotHelper;
+
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -216,6 +218,8 @@ public class GeckoAppShell
     static private int sDensityDpi;
     static private int sScreenDepth;
 
+    static final Queue<Intent> PENDING_URL_INTENTS = new ConcurrentLinkedQueue<Intent>();
+
     /* Default colors. */
     private static final float[] DEFAULT_LAUNCHER_ICON_HSV = { 32.0f, 1.0f, 1.0f };
 
@@ -332,6 +336,15 @@ public class GeckoAppShell
         return sLayerView;
     }
 
+    static void sendPendingUrlIntents(Context context) {
+        try {
+            while (!PENDING_URL_INTENTS.isEmpty()) {
+                final Intent intent = PENDING_URL_INTENTS.poll();
+                context.startActivity(intent);
+            }
+        } catch (NoSuchElementException e) {}
+    }
+
     /**
      * If the Gecko thread is running, immediately dispatches the event to
      * Gecko.
@@ -353,7 +366,8 @@ public class GeckoAppShell
             throw new IllegalArgumentException("e cannot be null.");
         }
 
-        if (GeckoThread.isRunning()) {
+        if (GeckoThread.isRunning() 
+                && OrbotHelper.STATUS_ON.equals(Tabs.getInstance().getTorStatus())) {
             notifyGeckoOfEvent(e);
             // Gecko will copy the event data into a normal C++ object.
             // We can recycle the event now.
@@ -1084,6 +1098,11 @@ public class GeckoAppShell
                 // Default to using the fennec app context.
                 intent.setClassName(context, className);
             }
+        }
+
+        if (!OrbotHelper.STATUS_ON.equals(Tabs.getInstance().getTorStatus())) {
+            PENDING_URL_INTENTS.add(intent);
+            return true;
         }
 
         if (!showPromptInPrivateBrowsing || activityContext == null) {
