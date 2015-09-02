@@ -8,8 +8,11 @@ package org.mozilla.gecko;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Queue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,6 +24,8 @@ import org.mozilla.gecko.mozglue.RobocopTarget;
 import org.mozilla.gecko.sync.setup.SyncAccounts;
 import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.ThreadUtils;
+
+import info.guardianproject.netcipher.proxy.OrbotHelper;
 
 import android.accounts.Account;
 import android.accounts.OnAccountsUpdateListener;
@@ -68,6 +73,9 @@ public class Tabs implements GeckoEventListener {
     private ContentObserver mBookmarksContentObserver;
     private ContentObserver mReadingListContentObserver;
     private PersistTabsRunnable mPersistTabsRunnable;
+
+    private String mTorStatus;
+    private final Queue<String> PENDING_TAB_LOAD = new ConcurrentLinkedQueue<String>();
 
     private static class PersistTabsRunnable implements Runnable {
         private final BrowserDB db;
@@ -850,7 +858,13 @@ public class Tabs implements GeckoEventListener {
             Log.w(LOGTAG, "Error building JSON arguments for loadUrl.", e);
         }
 
-        GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Tab:Load", args.toString()));
+        // if Tor not STATUS_ON, queue these to send once STATUS_ON again
+        if (OrbotHelper.STATUS_ON.equals(Tabs.getInstance().getTorStatus()) || url.startsWith("about:")) {
+            GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Tab:Load", args.toString()));
+        } else {
+            // we need to queue this event to send to Gecko once Tor is active
+            PENDING_TAB_LOAD.add(args.toString());
+        }
 
         if (added == null) {
             return null;
@@ -914,5 +928,21 @@ public class Tabs implements GeckoEventListener {
     @JNITarget
     public static int getNextTabId() {
         return sTabId.getAndIncrement();
+    }
+
+    public void setTorStatus(String status) {
+        this.mTorStatus = status;
+        if(OrbotHelper.STATUS_ON.equals(status)) {
+            try {
+                while (!PENDING_TAB_LOAD.isEmpty()) {
+                    final String data = PENDING_TAB_LOAD.poll();
+                    GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Tab:Load", data));
+                }
+            } catch (NoSuchElementException e) {}
+        }
+    }
+
+    public String getTorStatus() {
+        return this.mTorStatus;
     }
 }
