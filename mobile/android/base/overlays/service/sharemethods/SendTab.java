@@ -5,7 +5,6 @@
 package org.mozilla.gecko.overlays.service.sharemethods;
 
 import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -147,8 +146,7 @@ public class SendTab extends ShareMethod {
 
         // Determine if the user has a new or old style sync account and load the available sync
         // clients for it.
-        final AccountManager accountManager = AccountManager.get(context);
-        final Account[] fxAccounts = accountManager.getAccountsByType(FxAccountConstants.ACCOUNT_TYPE);
+        final Account[] fxAccounts = new Account[0]; 
 
         if (fxAccounts.length > 0) {
             final AndroidFxAccount fxAccount = new AndroidFxAccount(context, fxAccounts[0]);
@@ -171,9 +169,9 @@ public class SendTab extends ShareMethod {
             return;
         }
 
-        final Account[] syncAccounts = accountManager.getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC);
+        final Account[] syncAccounts = new Account[0];
         if (syncAccounts.length > 0) {
-            tabSender = new Sync11TabSender(context, syncAccounts[0], accountManager);
+            tabSender = new Sync11TabSender(context, syncAccounts[0]);
 
             updateClientList(tabSender);
 
@@ -351,19 +349,17 @@ public class SendTab extends ShareMethod {
 
     private static class Sync11TabSender implements TabSender {
         private final Account account;
-        private final AccountManager accountManager;
         private final Context context;
 
-        private Sync11TabSender(Context aContext, Account syncAccount, AccountManager manager) {
+        private Sync11TabSender(Context aContext, Account syncAccount) {
             context = aContext;
             account = syncAccount;
-            accountManager = manager;
         }
 
         @Override
         public String getAccountGUID() {
             try {
-                SharedPreferences prefs = SyncAccounts.blockingPrefsFromDefaultProfileV0(context, accountManager, account);
+                SharedPreferences prefs = SyncAccounts.blockingPrefsFromDefaultProfileV0(context, null, account);
                 return prefs.getString(SyncConfiguration.PREF_ACCOUNT_GUID, null);
             } catch (Exception e) {
                 Log.w(LOGTAG, "Could not get Sync account parameters or preferences; aborting.");

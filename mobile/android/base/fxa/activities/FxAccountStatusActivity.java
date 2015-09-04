@@ -13,7 +13,6 @@ import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.sync.Utils;
 
 import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.annotation.SuppressLint;
@@ -153,7 +152,6 @@ public class FxAccountStatusActivity extends LocaleAwareFragmentActivity {
       .setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
-          AccountManager.get(activity).removeAccount(account, callback, null);
         }
       })
       .setNegativeButton(android.R.string.cancel, new Dialog.OnClickListener() {

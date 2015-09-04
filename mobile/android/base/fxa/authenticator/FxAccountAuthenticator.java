@@ -44,12 +44,10 @@ public class FxAccountAuthenticator extends AbstractAccountAuthenticator {
   public static final int UNKNOWN_ERROR_CODE = 999;
 
   protected final Context context;
-  protected final AccountManager accountManager;
 
   public FxAccountAuthenticator(Context context) {
     super(context);
     this.context = context;
-    this.accountManager = AccountManager.get(context);
   }
 
   @Override

@@ -35,6 +35,8 @@
 #include ../search/strings/search_strings.xml.in
 
 #include ../services/strings.xml.in
+#include ../orfox/strings.xml.in
+
   <string name="no_space_to_start_error">&no_space_to_start_error;</string>
   <string name="error_loading_file">&error_loading_file;</string>
 

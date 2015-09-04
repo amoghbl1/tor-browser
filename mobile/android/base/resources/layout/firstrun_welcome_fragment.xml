@@ -50,12 +50,6 @@
                       android:textAppearance="@style/TextAppearance.FirstrunRegular.Body"
                       android:text="@string/firstrun_welcome_subtext"/>
 
-            <Button android:id="@+id/welcome_account"
-                    style="@style/Widget.Firstrun.Button"
-                    android:background="@drawable/firstrun_button_background"
-                    android:layout_gravity="center"
-                    android:text="@string/firstrun_welcome_button_account"/>
-
             <TextView android:id="@+id/welcome_browse"
                       android:layout_width="@dimen/firstrun_content_width"
                       android:layout_height="wrap_content"

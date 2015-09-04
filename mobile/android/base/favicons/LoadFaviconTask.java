@@ -131,6 +131,7 @@ public class LoadFaviconTask {
         
         HttpHost torProxy = new HttpHost("127.0.0.1", 8118);
         HttpGet request = new HttpGet(faviconURI);
+        request.setHeader("User-Agent", GeckoAppShell.getGeckoInterface().getDefaultUAString());
         httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, torProxy);
         
         HttpResponse response = httpClient.execute(request);

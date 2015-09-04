@@ -140,6 +140,8 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
 
+import info.guardianproject.netcipher.proxy.OrbotHelper;
+
 public class BrowserApp extends GeckoApp
                         implements TabsPanel.TabsLayoutChangeListener,
                                    PropertyAnimator.PropertyAnimationListener,
@@ -905,9 +907,36 @@ public class BrowserApp extends GeckoApp
         checkFirstrun(this, new SafeIntent(getIntent()));
     }
 
+
+    public void checkStartOrbot() {
+        if (!OrbotHelper.isOrbotInstalled(this)) {
+            final Intent intent = OrbotHelper.getOrbotInstallIntent(this);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.install_orbot);
+            builder.setMessage(R.string.you_must_have_orbot);
+            builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    startActivity(intent);
+                }
+            });
+            builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                }
+            });
+            builder.show();
+        } else {
+            OrbotHelper.requestStartTor(this);
+        }
+    }
+
     @Override
     public void onResume() {
         super.onResume();
+
+        checkStartOrbot();
 
         final String args = ContextUtils.getStringExtra(getIntent(), "args");
         // If an external intent tries to start Fennec in guest mode, and it's not already
@@ -2955,7 +2984,7 @@ public class BrowserApp extends GeckoApp
                                 !PrefUtils.getStringSet(GeckoSharedPrefs.forProfile(this),
                                                         ClearOnShutdownPref.PREF,
                                                         new HashSet<String>()).isEmpty();
-        aMenu.findItem(R.id.quit).setVisible(visible);
+        aMenu.findItem(R.id.quit).setVisible(true);
 
         if (tab == null || tab.getURL() == null) {
             bookmark.setEnabled(false);

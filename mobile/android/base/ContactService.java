@@ -19,7 +19,6 @@ import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.accounts.Account;
-import android.accounts.AccountManager;
 import android.app.AlertDialog;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
@@ -1524,7 +1523,8 @@ public class ContactService implements GeckoEventListener {
     }
 
     private void getDeviceAccount(final Runnable handleMessage) {
-        Account[] accounts = AccountManager.get(mActivity).getAccounts();
+        // AccountManager call disabled as part of bug #5395
+        Account[] accounts = new Account[0];
 
         if (accounts.length == 0) {
             Log.w(LOGTAG, "No accounts available");

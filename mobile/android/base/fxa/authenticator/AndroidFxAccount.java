@@ -77,7 +77,6 @@ public class AndroidFxAccount {
   private static final String PREF_KEY_LAST_SYNCED_TIMESTAMP = "lastSyncedTimestamp";
 
   protected final Context context;
-  protected final AccountManager accountManager;
   protected final Account account;
 
   /**
@@ -114,7 +113,6 @@ public class AndroidFxAccount {
   public AndroidFxAccount(Context applicationContext, Account account) {
     this.context = applicationContext;
     this.account = account;
-    this.accountManager = AccountManager.get(this.context);
   }
 
   /**
@@ -134,7 +132,7 @@ public class AndroidFxAccount {
   }
 
   protected int getAccountVersion() {
-    String v = accountManager.getUserData(account, ACCOUNT_KEY_ACCOUNT_VERSION);
+    String v = null;
     if (v == null) {
       return 0;         // Implicit.
     }
@@ -152,7 +150,6 @@ public class AndroidFxAccount {
    */
   protected synchronized void persistBundle(ExtendedJSONObject bundle) {
     perAccountBundleCache.put(account.name, bundle);
-    accountManager.setUserData(account, ACCOUNT_KEY_DESCRIPTOR, bundle.toJSONString());
   }
 
   protected ExtendedJSONObject unbundle() {
@@ -184,7 +181,7 @@ public class AndroidFxAccount {
       return null;
     }
 
-    String bundleString = accountManager.getUserData(account, ACCOUNT_KEY_DESCRIPTOR);
+    String bundleString = null;
     if (bundleString == null) {
       return null;
     }
@@ -259,15 +256,15 @@ public class AndroidFxAccount {
    * deleted profile. Such is life.
    */
   public String getProfile() {
-    return accountManager.getUserData(account, ACCOUNT_KEY_PROFILE);
+    return null;
   }
 
   public String getAccountServerURI() {
-    return accountManager.getUserData(account, ACCOUNT_KEY_IDP_SERVER);
+    return null;
   }
 
   public String getTokenServerURI() {
-    return accountManager.getUserData(account, ACCOUNT_KEY_TOKEN_SERVER);
+    return null;
   }
 
   private String constructPrefsPath(String product, long version, String extra) throws GeneralSecurityException, UnsupportedEncodingException {
@@ -407,11 +404,10 @@ public class AndroidFxAccount {
     userdata.putString(ACCOUNT_KEY_DESCRIPTOR, bundle.toJSONString());
 
     Account account = new Account(email, FxAccountConstants.ACCOUNT_TYPE);
-    AccountManager accountManager = AccountManager.get(context);
     // We don't set an Android password, because we don't want to persist the
     // password (or anything else as powerful as the password). Instead, we
     // internally manage a sessionToken with a remotely owned lifecycle.
-    boolean added = accountManager.addAccountExplicitly(account, null, userdata);
+    boolean added = false;
     if (!added) {
       return null;
     }
@@ -422,7 +418,6 @@ public class AndroidFxAccount {
     // missing all or some of the userdata bundle, possibly due to an Android
     // AccountManager caching bug.
     for (String key : userdata.keySet()) {
-      accountManager.setUserData(account, key, userdata.getString(key));
     }
 
     AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
@@ -644,8 +639,6 @@ public class AndroidFxAccount {
     }
     State state = getState();
     setState(state.makeSeparatedState());
-    accountManager.setUserData(account, ACCOUNT_KEY_IDP_SERVER, authServerEndpoint);
-    accountManager.setUserData(account, ACCOUNT_KEY_TOKEN_SERVER, tokenServerEndpoint);
     ContentResolver.setIsSyncable(account, BrowserContract.READING_LIST_AUTHORITY, 1);
   }
 
