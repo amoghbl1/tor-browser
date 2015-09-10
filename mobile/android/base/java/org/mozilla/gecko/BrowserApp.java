@@ -139,6 +139,9 @@ import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.StrictMode;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
@@ -1119,6 +1122,14 @@ public class BrowserApp extends GeckoApp
         if (mIsAbortingAppLaunch) {
             return;
         }
+        /* run in thread so Tor status updates will be received while the
+         * Gecko event sync is blocking the main thread */
+        HandlerThread handlerThread = new HandlerThread("torStatusReceiver");
+        handlerThread.start();
+        Looper looper = handlerThread.getLooper();
+        Handler handler = new Handler(looper);
+        registerReceiver(torStatusReceiver, new IntentFilter(OrbotHelper.ACTION_STATUS),
+                null, handler);
 
         checkStartOrbot();
 
