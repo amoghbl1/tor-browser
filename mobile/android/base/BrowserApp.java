@@ -115,6 +115,9 @@ import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.StrictMode;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -944,7 +947,6 @@ public class BrowserApp extends GeckoApp
             });
             builder.show();
         } else {
-            registerReceiver(torStatusReceiver, new IntentFilter(OrbotHelper.ACTION_STATUS));
             OrbotHelper.requestStartTor(this);
         }
     }
@@ -952,6 +954,15 @@ public class BrowserApp extends GeckoApp
     @Override
     public void onResume() {
         super.onResume();
+
+        /* run in thread so Tor status updates will be received while the
+         * Gecko event sync is blocking the main thread */
+        HandlerThread handlerThread = new HandlerThread("torStatusReceiver");
+        handlerThread.start();
+        Looper looper = handlerThread.getLooper();
+        Handler handler = new Handler(looper);
+        registerReceiver(torStatusReceiver, new IntentFilter(OrbotHelper.ACTION_STATUS),
+                         null, handler);
 
         checkStartOrbot();
 
