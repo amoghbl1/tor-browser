@@ -10630,9 +10630,14 @@ nsDocShell::DoURILoad(nsIURI* aURI,
 
   nsCOMPtr<nsINode> requestingNode;
   if (mScriptGlobal) {
-    requestingNode = mScriptGlobal->GetFrameElementInternal();
-    if (!requestingNode) {
+    if (!aFileName.IsVoid()) {
+      // File is being downloaded. Assign current document to requesting node.
       requestingNode = mScriptGlobal->GetExtantDoc();
+    } else {
+      requestingNode = mScriptGlobal->GetFrameElementInternal();
+      if (!requestingNode) {
+        requestingNode = mScriptGlobal->GetExtantDoc();
+      }
     }
   }
 
