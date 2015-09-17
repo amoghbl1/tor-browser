@@ -129,7 +129,9 @@ static bool sUseHardLinks = true;
 #endif
 
 #ifdef XP_WIN
+#ifdef MOZ_MAINTENANCE_SERVICE
 #include "registrycertificates.h"
+#endif
 BOOL PathAppendSafe(LPWSTR base, LPCWSTR extra);
 BOOL PathGetSiblingFilePath(LPWSTR destinationBuffer,
                             LPCWSTR siblingFilePath,
@@ -2031,6 +2033,7 @@ LaunchWinPostProcess(const WCHAR *installationDir,
     return false;
   }
 
+#ifdef MOZ_MAINTENANCE_SERVICE
 // TEST_UPDATER is not available on esr38
 //#if !defined(TEST_UPDATER)
   if (sUsingService &&
@@ -2038,6 +2041,7 @@ LaunchWinPostProcess(const WCHAR *installationDir,
     return false;
   }
 //#endif
+#endif
 
   WCHAR dlogFile[MAX_PATH + 1];
   if (!PathGetSiblingFilePath(dlogFile, exefullpath, L"uninstall.update")) {
@@ -2981,8 +2985,10 @@ int NS_main(int argc, NS_tchar **argv)
   const int callbackIndex = 6;
 
 #if defined(XP_WIN)
+#ifdef MOZ_MAINTENANCE_SERVICE
   sUsingService = getenv("MOZ_USING_SERVICE") != nullptr;
   putenv(const_cast<char*>("MOZ_USING_SERVICE="));
+#endif
   // lastFallbackError keeps track of the last error for the service not being
   // used, in case of an error when fallback is not enabled we write the
   // error to the update.status file.
