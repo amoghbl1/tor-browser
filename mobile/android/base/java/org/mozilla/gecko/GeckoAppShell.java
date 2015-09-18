@@ -137,6 +137,8 @@ public class GeckoAppShell
     // We have static members only.
     private GeckoAppShell() { }
 
+    private static String torStatus;
+
     private static final CrashHandler CRASH_HANDLER = new CrashHandler() {
         @Override
         protected String getAppPackageName() {
@@ -336,8 +338,9 @@ public class GeckoAppShell
         return sLayerView;
     }
 
-    static void sendPendingUrlIntents(Context context) {
+    static void sendPendingUrlIntents() {
         try {
+            Context context = getContext();
             while (!PENDING_URL_INTENTS.isEmpty()) {
                 final Intent intent = PENDING_URL_INTENTS.poll();
                 context.startActivity(intent);
@@ -366,8 +369,7 @@ public class GeckoAppShell
             throw new IllegalArgumentException("e cannot be null.");
         }
 
-        if (GeckoThread.isRunning() 
-                && OrbotHelper.STATUS_ON.equals(Tabs.getInstance().getTorStatus())) {
+        if (GeckoThread.isRunning()) {
             notifyGeckoOfEvent(e);
             // Gecko will copy the event data into a normal C++ object.
             // We can recycle the event now.
@@ -1100,7 +1102,7 @@ public class GeckoAppShell
             }
         }
 
-        if (!OrbotHelper.STATUS_ON.equals(Tabs.getInstance().getTorStatus())) {
+        if (!OrbotHelper.STATUS_ON.equals(torStatus)) {
             PENDING_URL_INTENTS.add(intent);
             return true;
         }
@@ -2807,5 +2809,16 @@ public class GeckoAppShell
     @JNITarget
     static boolean isWebAppProcess() {
         return GeckoProfile.get(getApplicationContext()).isWebAppProfile();
+    }
+
+    public static void setTorStatus(Intent intent) {
+        torStatus = intent.getStringExtra(OrbotHelper.EXTRA_STATUS);
+        if (OrbotHelper.STATUS_ON.equals(torStatus)) {
+            sendPendingUrlIntents();
+        }
+    }
+
+    public static String getTorStatus() {
+        return torStatus;
     }
 }
