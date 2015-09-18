@@ -1080,12 +1080,7 @@ public class BrowserApp extends GeckoApp
         @Override
         public void onReceive(Context context, Intent intent) {
             if (TextUtils.equals(intent.getAction(), OrbotHelper.ACTION_STATUS)) {
-                String status = intent.getStringExtra(OrbotHelper.EXTRA_STATUS);
-                Tabs.getInstance().setTorStatus(status);
-
-                if (status.equals(OrbotHelper.STATUS_ON)) {
-                    GeckoAppShell.sendPendingUrlIntents(BrowserApp.this);
-                }
+                GeckoAppShell.setTorStatus(intent);
             }
         }
     };
