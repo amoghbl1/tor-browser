@@ -11,10 +11,7 @@
 . $(dirname "$0")/common.sh
 
 # TODO: it would be better to pass this as a command line option.
-# Make sure we delete the pre 5.1.0 HTTPS Everywhere as well in case it
-# exists. The extension ID got changed with the version bump to 5.1.0.
-ext_path='TorBrowser/Data/Browser/profile.default/extensions'
-directories_to_remove="$ext_path/https-everywhere@eff.org $ext_path/https-everywhere-eff@eff.org"
+directories_to_remove='TorBrowser/Data/Browser/profile.default/extensions/https-everywhere@eff.org'
 
 # -----------------------------------------------------------------------------
 
