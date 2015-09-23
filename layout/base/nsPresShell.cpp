@@ -209,6 +209,7 @@ CapturingContentInfo nsIPresShell::gCaptureInfo =
 nsIContent* nsIPresShell::gKeyDownTarget;
 nsClassHashtable<nsUint32HashKey, nsIPresShell::PointerCaptureInfo>* nsIPresShell::gPointerCaptureList;
 nsClassHashtable<nsUint32HashKey, nsIPresShell::PointerInfo>* nsIPresShell::gActivePointersIds;
+bool nsIPresShell::sSuppressModifierKeyEvents = false;
 
 // RangePaintInfo is used to paint ranges to offscreen buffers
 struct RangePaintInfo {
@@ -6866,6 +6867,16 @@ PresShell::HandleKeyboardEvent(nsINode* aTarget,
                                nsEventStatus* aStatus,
                                EventDispatchingCallback* aEventCB)
 {
+  if (nsContentUtils::ResistFingerprinting() && sSuppressModifierKeyEvents) {
+    nsString keyName;
+    aEvent.GetDOMKeyName(keyName);
+    if (keyName.Equals(NS_LITERAL_STRING("Shift")) ||
+        keyName.Equals(NS_LITERAL_STRING("Alt")) ||
+        keyName.Equals(NS_LITERAL_STRING("AltGraph"))) {
+      aEvent.mFlags.mOnlyChromeDispatch = true;
+    }
+  }
+
   if (aEvent.mMessage == eKeyPress ||
       !BeforeAfterKeyboardEventEnabled()) {
     EventDispatcher::Dispatch(aTarget, mPresContext,
@@ -10530,6 +10541,8 @@ void nsIPresShell::InitializeStatics()
   NS_ASSERTION(!gPointerCaptureList, "InitializeStatics called multiple times!");
   gPointerCaptureList = new nsClassHashtable<nsUint32HashKey, PointerCaptureInfo>;
   gActivePointersIds = new nsClassHashtable<nsUint32HashKey, PointerInfo>;
+  Preferences::AddBoolVarCache(&sSuppressModifierKeyEvents,
+                               "privacy.suppressModifierKeyEvents", false);
 }
 
 void nsIPresShell::ReleaseStatics()
