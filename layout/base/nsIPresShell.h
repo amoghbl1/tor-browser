@@ -1813,6 +1813,9 @@ protected:
   // to true, so we can avoid any paint calls for widget related to this
   // presshell.
   bool mIsNeverPainting;
+
+  // If true, don't report Alt, Shift, and AltGr KeyboardEvents to content.
+  static bool sSuppressModifierKeyEvents;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsIPresShell, NS_IPRESSHELL_IID)
