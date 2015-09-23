@@ -205,6 +205,7 @@ nsRefPtrHashtable<nsUint32HashKey, dom::Touch>* nsIPresShell::gCaptureTouchList;
 nsClassHashtable<nsUint32HashKey, nsIPresShell::PointerCaptureInfo>* nsIPresShell::gPointerCaptureList;
 nsClassHashtable<nsUint32HashKey, nsIPresShell::PointerInfo>* nsIPresShell::gActivePointersIds;
 bool nsIPresShell::gPreventMouseEvents = false;
+bool nsIPresShell::sSuppressModifierKeyEvents = false;
 
 // convert a color value to a string, in the CSS format #RRGGBB
 // *  - initially created for bugs 31816, 20760, 22963
@@ -7187,6 +7188,16 @@ PresShell::HandleKeyboardEvent(nsINode* aTarget,
                                nsEventStatus* aStatus,
                                EventDispatchingCallback* aEventCB)
 {
+  if (nsContentUtils::ResistFingerprinting() && sSuppressModifierKeyEvents) {
+    nsString keyName;
+    aEvent.GetDOMKeyName(keyName);
+    if (keyName.Equals(NS_LITERAL_STRING("Shift")) ||
+        keyName.Equals(NS_LITERAL_STRING("Alt")) ||
+        keyName.Equals(NS_LITERAL_STRING("AltGraph"))) {
+      aEvent.mFlags.mOnlyChromeDispatch = true;
+    }
+  }
+
   if (aEvent.message == NS_KEY_PRESS ||
       !BeforeAfterKeyboardEventEnabled()) {
     EventDispatcher::Dispatch(aTarget, mPresContext,
@@ -10866,6 +10877,8 @@ void nsIPresShell::InitializeStatics()
   gCaptureTouchList = new nsRefPtrHashtable<nsUint32HashKey, dom::Touch>;
   gPointerCaptureList = new nsClassHashtable<nsUint32HashKey, PointerCaptureInfo>;
   gActivePointersIds = new nsClassHashtable<nsUint32HashKey, PointerInfo>;
+  Preferences::AddBoolVarCache(&sSuppressModifierKeyEvents,
+                               "privacy.suppressModifierKeyEvents", false);
 }
 
 void nsIPresShell::ReleaseStatics()
