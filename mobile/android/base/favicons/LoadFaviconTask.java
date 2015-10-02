@@ -24,6 +24,7 @@ import org.mozilla.gecko.favicons.decoders.FaviconDecoder;
 import org.mozilla.gecko.favicons.decoders.LoadFaviconResult;
 import org.mozilla.gecko.util.GeckoJarReader;
 import org.mozilla.gecko.util.IOUtils;
+import org.mozilla.gecko.util.ProxySettings;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import java.io.IOException;
@@ -129,10 +130,9 @@ public class LoadFaviconTask {
             return null;
         }
         
-        HttpHost torProxy = new HttpHost("127.0.0.1", 8118);
         HttpGet request = new HttpGet(faviconURI);
         request.setHeader("User-Agent", GeckoAppShell.getGeckoInterface().getDefaultUAString());
-        httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, torProxy);
+        httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, ProxySettings.getProxyHost());
         
         HttpResponse response = httpClient.execute(request);
         if (response == null) {
