@@ -24,6 +24,7 @@ import java.nio.channels.FileChannel;
 import java.util.zip.GZIPOutputStream;
 
 import org.mozilla.gecko.AppConstants.Versions;
+import org.mozilla.gecko.util.ProxySettings;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -354,8 +355,7 @@ public class CrashReporter extends AppCompatActivity
         Log.i(LOGTAG, "server url: " + spec);
         try {
             URL url = new URL(spec);
-            Proxy torProxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", 8118));
-            HttpURLConnection conn = (HttpURLConnection)url.openConnection(torProxy);
+            HttpURLConnection conn = (HttpURLConnection)url.openConnection(ProxySettings.getProxy());
             conn.setRequestMethod("POST");
             String boundary = generateBoundary();
             conn.setDoOutput(true);
