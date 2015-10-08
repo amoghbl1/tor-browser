@@ -1,0 +1,118 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugs.torproject.org/15564
+-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Test for Tor Browser Bug 15564</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <script type="text/javascript;version=1.7" src="bug15502_utils.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
+</head>
+<body>
+<p id="display"></p>
+<div id="content"></div>
+
+<script class="testbody" type="application/javascript;version=1.7">
+
+// __setPref(key, value)__.
+// Set a pref value asynchronously, returning a promise that resolves
+// when it succeeds.
+let setPref = function* (key, value) {
+  return new Promise(function(resolve, reject) {
+    SpecialPowers.pushPrefEnv({"set": [[key, value]]}, resolve);
+  });
+};
+
+// ## Testing constants
+let domain1 = "http://example.com",
+    domain2 = "http://example.net",
+    path = "/tests/dom/base/test/",
+    child_page = "bug15564_child_page.html";
+
+// __tabIO(domain, child, input)__.
+// Open a parent page at the given `domain`, in a new tab. The
+// parent page should then open a `child` iframe. Post an
+// `input` message to the child. Returns [tab, response].
+let tabIO = function* (domain, child, input) {
+  // Open a new tab with a parent page at the given (first-party) domain.
+  tab = window.open(domain + path + "bug15502_tab.html", "_blank");
+  // Wait for the parent page to report that it has completed loading.
+  yield receiveMessage(tab); // ready message
+  // Send a message to the parent page, with a URL for the child page.
+  // The first-party page will load the child page in an iframe.
+  // (Note that every child page always has the same origin, example.org,
+  // but its first-party domain is inherited from the parent page.)
+  sendMessage(tab, "http://example.org" + path + child);
+  // Wait for the child page to report that it has finished loading,
+  // in a message forwarded by the parent page.
+  yield receiveMessage(tab); // ready message
+  // Send the input message to the tab's parent page, which will forward
+  // the message to the child page.
+  sendMessage(tab, input);
+  // The child page will attempt to read a secret random number via a
+  // SharedWorker. If it is unable to find such a number, it
+  // generates a new random number, posts it to the SharedWorker,
+  // and also posts it back to us.
+  // Wait for a message containing the number from the child page,
+  // forwarded by the parent page. Return the tab and the response.
+  return [tab, yield receiveMessage(tab)];
+};
+
+// __sharedWorkerTest(isolationOn, domainA, domainB, childPage)__.
+// Run a test where we set the pref "privacy.thirdparty.isolate" to on or off,
+// and then create a SharedWorker under first-party `domainA`, using the page `child_page`,
+// and then a matching SharedWorker under first-party `domainB`, and see if they match.
+let sharedWorkerTest = function* (isolationOn, domainA, domainB, child_page) {
+  // Set the pref to reflect whether we want isolation on or off.
+  // 2 means always on; 0 means always off.
+  yield setPref("privacy.thirdparty.isolate", isolationOn ? 2 : 0);
+  // Open two tabs with parent pages embedding child iframes. The parent (first-party)
+  // domains are set to domainA and domainB (which may be the same or different).
+  // The child page always has origin example.org, but gets its first-party domain
+  // from the parent page. Report results: are child pages able to share information?
+  let input = isolationOn + "|" + domainA + "|" + domainB,
+      [tabA, firstResult] = yield tabIO(domainA, child_page, input),
+      [tabB, secondResult] = yield tabIO(domainB, child_page, input),
+      description = domainA + ":" + child_page + "->" +
+                    domainB + ":" + child_page +
+                    ", isolation " + (isolationOn ? "on." : "off.");
+  // If the child pages both report the same random number, then they have shared
+  // that number via a SharedWorker. Otherwise sharing was denied.
+  if (isolationOn && domainA !== domainB) {
+    // The isolation pref is enabled and first-party domains of the two child pages
+    // are different, so sharing should have been prevented.
+    ok(firstResult !== secondResult, description + " Deny sharing SharedWorker");
+  } else {
+    // The isolation pref is disabled, or the first-party domain is the same for
+    // both child pages, so the secret data should have been shared.
+    ok(firstResult === secondResult, description + " Allow sharing SharedWorker");
+  }
+  // Clean up tabs now that this test has finished.
+  tabA.close();
+  tabB.close();
+};
+
+// ## The main test
+// Run a coroutine that tests various combinations of domains
+// methods, and isolation states for sharing (or not sharing) SharedWorkers.
+add_task(function* () {
+  let domainA = domain1;
+  for (let isolate of [false, true]) {
+    for (let domainB of [domain1, domain2]) {
+       // For the given isolation state, and a pair of first-party domains
+       // (which may or may not be different), test if secret data can be
+       // shared via a SharedWorker, and if that matches the intended behavior.
+       // Here domainA is always domain1, and domainB is either
+       // domain1 or domain2.
+       yield sharedWorkerTest(isolate, domainA, domainB, child_page);
+    }
+  }
+});
+
+</script>
+
+</body>
+</html>
