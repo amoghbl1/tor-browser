@@ -30,12 +30,15 @@ class RuntimeService final : public nsIObserver
   {
     WorkerPrivate* mWorkerPrivate;
     nsCString mScriptSpec;
+    nsCString mIsolationKey;
     nsCString mName;
 
     SharedWorkerInfo(WorkerPrivate* aWorkerPrivate,
                      const nsACString& aScriptSpec,
+                     const nsACString& aIsolationKey,
                      const nsACString& aName)
-    : mWorkerPrivate(aWorkerPrivate), mScriptSpec(aScriptSpec), mName(aName)
+    : mWorkerPrivate(aWorkerPrivate), mScriptSpec(aScriptSpec),
+        mIsolationKey(aIsolationKey), mName(aName)
     { }
   };
 

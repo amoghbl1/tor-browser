@@ -66,6 +66,7 @@
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
 #include "WorkerThread.h"
+#include "ThirdPartyUtil.h"
 
 #ifdef ENABLE_TESTS
 #include "BackgroundChildImpl.h"
@@ -258,11 +259,13 @@ GetWorkerPref(const nsACString& aPref,
 // This function creates a key for a SharedWorker composed by "name|scriptSpec".
 // If the name contains a '|', this will be replaced by '||'.
 void
-GenerateSharedWorkerKey(const nsACString& aScriptSpec, const nsACString& aName,
+GenerateSharedWorkerKey(const nsACString& aScriptSpec,
+                        const nsACString& aIsolationKey,
+                        const nsACString& aName,
                         bool aPrivateBrowsing, nsCString& aKey)
 {
   aKey.Truncate();
-  aKey.SetCapacity(aScriptSpec.Length() + aName.Length() + 3);
+  aKey.SetCapacity(aScriptSpec.Length() + aName.Length() + aIsolationKey.Length() + 4);
   aKey.Append(aPrivateBrowsing ? "1|" : "0|");
 
   nsACString::const_iterator start, end;
@@ -278,6 +281,9 @@ GenerateSharedWorkerKey(const nsACString& aScriptSpec, const nsACString& aName,
 
   aKey.Append('|');
   aKey.Append(aScriptSpec);
+
+  aKey.Append('|');
+  aKey.Append(aIsolationKey);
 }
 
 void
@@ -1512,13 +1518,16 @@ RuntimeService::RegisterWorker(JSContext* aCx, WorkerPrivate* aWorkerPrivate)
 
     if (isSharedWorker) {
       const nsCString& sharedWorkerName = aWorkerPrivate->WorkerName();
+      const nsCString& isolationKey = aWorkerPrivate->IsolationKey();
       nsAutoCString key;
-      GenerateSharedWorkerKey(sharedWorkerScriptSpec, sharedWorkerName,
+      GenerateSharedWorkerKey(sharedWorkerScriptSpec, isolationKey,
+                              sharedWorkerName,
                               aWorkerPrivate->IsInPrivateBrowsing(), key);
       MOZ_ASSERT(!domainInfo->mSharedWorkerInfos.Get(key));
 
       SharedWorkerInfo* sharedWorkerInfo =
         new SharedWorkerInfo(aWorkerPrivate, sharedWorkerScriptSpec,
+                             isolationKey,
                              sharedWorkerName);
       domainInfo->mSharedWorkerInfos.Put(key, sharedWorkerInfo);
     }
@@ -1591,7 +1600,7 @@ RuntimeService::RemoveSharedWorker(WorkerDomainInfo* aDomainInfo,
     if (data->mWorkerPrivate == aWorkerPrivate) {
 #ifdef DEBUG
       nsAutoCString key;
-      GenerateSharedWorkerKey(data->mScriptSpec, data->mName,
+      GenerateSharedWorkerKey(data->mScriptSpec, data->mIsolationKey, data->mName,
                               aWorkerPrivate->IsInPrivateBrowsing(), key);
       MOZ_ASSERT(iter.Key() == key);
 #endif
@@ -2339,7 +2348,7 @@ RuntimeService::CreateSharedWorkerFromLoadInfo(JSContext* aCx,
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsAutoCString key;
-    GenerateSharedWorkerKey(scriptSpec, aName,
+    GenerateSharedWorkerKey(scriptSpec, aLoadInfo->mIsolationKey, aName,
                             aLoadInfo->mPrivateBrowsing, key);
 
     if (mDomainMap.Get(aLoadInfo->mDomain, &domainInfo) &&

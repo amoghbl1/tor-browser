@@ -252,6 +252,7 @@ struct WorkerLoadInfo
 
   nsAutoPtr<mozilla::ipc::PrincipalInfo> mPrincipalInfo;
   nsCString mDomain;
+  nsCString mIsolationKey;
 
   nsString mServiceWorkerCacheName;
 
