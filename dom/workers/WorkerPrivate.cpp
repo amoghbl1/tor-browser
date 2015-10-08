@@ -4355,6 +4355,7 @@ WorkerPrivate::GetLoadInfo(JSContext* aCx, nsPIDOMWindow* aWindow,
     }
 
     loadInfo.mDomain = aParent->Domain();
+    loadInfo.mIsolationKey = aParent->IsolationKey();
     loadInfo.mFromWindow = aParent->IsFromWindow();
     loadInfo.mWindowID = aParent->WindowID();
     loadInfo.mIndexedDBAllowed = aParent->IsIndexedDBAllowed();
@@ -4420,6 +4421,10 @@ WorkerPrivate::GetLoadInfo(JSContext* aCx, nsPIDOMWindow* aWindow,
 
       loadInfo.mBaseURI = document->GetDocBaseURI();
       loadInfo.mLoadGroup = document->GetDocumentLoadGroup();
+
+      nsCString isolationKey;
+      ThirdPartyUtil::GetFirstPartyHost(document, isolationKey);
+      loadInfo.mIsolationKey = isolationKey;
 
       // Use the document's NodePrincipal as our principal if we're not being
       // called from chrome.
