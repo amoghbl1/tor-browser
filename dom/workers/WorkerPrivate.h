@@ -451,6 +451,12 @@ public:
     return mLoadInfo.mDomain;
   }
 
+  const nsCString&
+  IsolationKey() const
+  {
+    return mLoadInfo.mIsolationKey;
+  }
+
   bool
   IsFromWindow() const
   {
