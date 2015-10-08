@@ -98,6 +98,7 @@
 #include "ServiceWorkerManager.h"
 #include "ServiceWorkerWindowClient.h"
 #include "SharedWorker.h"
+#include "ThirdPartyUtil.h"
 #include "WorkerDebuggerManager.h"
 #include "WorkerFeature.h"
 #include "WorkerRunnable.h"
@@ -1798,6 +1799,7 @@ WorkerLoadInfo::StealFrom(WorkerLoadInfo& aOther)
   mPrincipalInfo = aOther.mPrincipalInfo.forget();
 
   mDomain = aOther.mDomain;
+  mIsolationKey = aOther.mIsolationKey;
   mServiceWorkerCacheName = aOther.mServiceWorkerCacheName;
   mWindowID = aOther.mWindowID;
   mServiceWorkerID = aOther.mServiceWorkerID;
@@ -4195,6 +4197,7 @@ WorkerPrivate::GetLoadInfo(JSContext* aCx, nsPIDOMWindow* aWindow,
     }
 
     loadInfo.mDomain = aParent->Domain();
+    loadInfo.mIsolationKey = aParent->IsolationKey();
     loadInfo.mFromWindow = aParent->IsFromWindow();
     loadInfo.mWindowID = aParent->WindowID();
     loadInfo.mStorageAllowed = aParent->IsStorageAllowed();
@@ -4272,6 +4275,10 @@ WorkerPrivate::GetLoadInfo(JSContext* aCx, nsPIDOMWindow* aWindow,
 
       loadInfo.mBaseURI = document->GetDocBaseURI();
       loadInfo.mLoadGroup = document->GetDocumentLoadGroup();
+
+      nsCString isolationKey;
+      ThirdPartyUtil::GetFirstPartyHost(document, isolationKey);
+      loadInfo.mIsolationKey = isolationKey;
 
       // Use the document's NodePrincipal as our principal if we're not being
       // called from chrome.
