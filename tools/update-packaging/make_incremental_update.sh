@@ -64,7 +64,8 @@ check_for_forced_update() {
     fi
 
     # If the file in the skip list ends with /*, do a prefix match.
-    # This allows TorBrowser/Data/Browser/profile.default/extensions/https-everywhere@eff.org/* to be used to force all HTTPS Everywhere files to be updated.
+    # This allows TorBrowser/Data/Browser/profile.default/extensions/https-everywhere-eff@eff.org/*
+    # to be used to force all HTTPS Everywhere files to be updated.
     f_suffix=${f##*/}
     if [[ $f_suffix = "*" ]]; then
       f_prefix="${f%\/\*}";
@@ -122,7 +123,7 @@ archivefiles="updatev2.manifest updatev3.manifest"
 # If the NoScript or HTTPS Everywhere extensions have changed between
 # releases, add them to the "force updates" list.
 ext_path='TorBrowser/Data/Browser/profile.default/extensions'
-https_everywhere='https-everywhere@eff.org'
+https_everywhere='https-everywhere-eff@eff.org'
 noscript='{73a6fe31-595d-460b-a920-fcc0f8843232}.xpi'
 
 # NoScript is a packed extension, so we simply compare the old and the new
@@ -144,12 +145,14 @@ https_everywhere_install_rdf="$ext_path/$https_everywhere/install.rdf"
 diff "$olddir/$https_everywhere_install_rdf"     \
       "$newdir/$https_everywhere_install_rdf" > /dev/null
 rc=$?
-if [ $rc -gt 1 ]; then
+if [ $rc -gt 1 -a -e "$olddir/$https_everywhere_install_rdf" ]; then
   notice "Unexpected exit $rc from $https_everywhere_install_rdf diff command"
   exit 2
-elif [ $rc -eq 1 ]; then
+elif [ $rc -ge 1 ]; then
   requested_forced_updates="$requested_forced_updates $ext_path/$https_everywhere/*"
-  directories_to_remove="$directories_to_remove $ext_path/$https_everywhere"
+  # Make sure we delete the pre 5.1.0 HTTPS Everywhere as well in case it
+  # exists. The extension ID got changed with the version bump to 5.1.0.
+  directories_to_remove="$directories_to_remove $ext_path/https-everywhere@eff.org $ext_path/$https_everywhere"
 fi
 
 mkdir -p "$workdir"
