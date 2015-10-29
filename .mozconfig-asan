@@ -1,17 +1,12 @@
 . $topsrcdir/browser/config/mozconfig
 
-export CFLAGS="-fsanitize=address -Dxmalloc=myxmalloc -fsanitize=undefined"
-# When compiling with GCC 4.9.0 we need the libstdc++ either shipped with the
-# bundles or link statically against it. We chose the latter as a) the
-# resulting size of the bundle is smaller and b) there would probably occur
-# issues with our Gitian setup as we compile GCC without LIBFAKETIME being set
-# due to bug 11459.
-export CXXFLAGS="-fsanitize=address -Dxmalloc=myxmalloc -fsanitize=undefined -static-libstdc++"
-export LDFLAGS="-fsanitize=address -fsanitize=undefined"
+export CFLAGS="-fsanitize=address -Dxmalloc=myxmalloc"
+export CXXFLAGS="-fsanitize=address -Dxmalloc=myxmalloc"
+# We need to add -ldl explicitely due to bug 1213698
+export LDFLAGS="-fsanitize=address -ldl"
 
-mk_add_option sMOZ_OBJDIR=@TOPSRCDIR@/obj-@CONFIG_GUESS@
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-@CONFIG_GUESS@
 mk_add_options MOZ_APP_DISPLAYNAME="Tor Browser"
-mk_add_options MOZ_MAKE_FLAGS="-j4"
 mk_add_options MOZILLA_OFFICIAL=1
 mk_add_options BUILD_OFFICIAL=1
 
@@ -25,7 +20,8 @@ ac_add_options --enable-official-branding
 
 ac_add_options --enable-tor-browser-update
 ac_add_options --enable-update-packaging
-ac_add_options --disable-verify-mar
+ac_add_options --enable-signmar
+ac_add_options --enable-verify-mar
 
 ac_add_options --disable-strip
 ac_add_options --disable-install-strip
@@ -35,3 +31,11 @@ ac_add_options --disable-maintenance-service
 ac_add_options --disable-crashreporter
 ac_add_options --disable-webrtc
 #ac_add_options --disable-ctypes
+ac_add_options --disable-eme
+# We disable generating the startup cache to avoid crashing during the packaging
+# step due to Ubuntu Lucid being special:
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61408.
+# Going this road and not backing out the feature responsible for this seems
+# like the safer way even if it costs a bit start-up speed. But, hey, ASan
+# builds are already slower.
+ac_add_options --disable-startupcache
