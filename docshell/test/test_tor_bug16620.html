@@ -1,0 +1,129 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+  Tor Bug 16620: Clear window.name when no referrer sent.
+                 https://trac.torproject.org/projects/tor/ticket/16620
+-->
+<meta charset="utf-8">
+<head>
+  <title>Test for Tor Bug 16620 - Clear window.name when no referrer sent</title>
+  <script type="application/javascript"
+          src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://trac.torproject.org/projects/tor/ticket/16620">Tor Bug 16620</a>
+<script type="application/javascript;version=1.7">
+
+// ## Test constants
+const kTestPath = "/tests/docshell/test/";
+const kFile = "tor_bug16620.html";
+const kBaseURL1 = "http://example.com";
+const kBaseURL2 = "http://example.net";
+
+let gTests = [
+  // Test #1: Same domain:
+  { startURL: kBaseURL1, destURL: kBaseURL1,
+    expectIsolation: false },
+
+  // Test #2: Different top-level domains:
+  { startURL: kBaseURL1, destURL: kBaseURL2,
+    expectIsolation: false },
+
+  // Test #3: Same domain, rel="noreferrer" on link:
+  { startURL: kBaseURL1, destURL: kBaseURL1, noReferrerOnLink: true,
+    expectIsolation: true },
+
+  // Test #4: Same domain, "no-referrer" meta tag in document:
+  { startURL: kBaseURL1, destURL: kBaseURL1, noReferrerInMetaTag: true,
+    expectIsolation: true },
+
+  // Test #5: Like test 4, but reset window.name during unload:
+  // (similar to http://www.thomasfrank.se/sessvarsTestPage1.html)
+  { startURL: kBaseURL1, destURL: kBaseURL1, noReferrerInMetaTag: true,
+    resetInUnload: true,
+    expectIsolation: true },
+
+  // Test #6: Data URL as destination (no referrer):
+  { startURL: kBaseURL1,
+    expectIsolation: true },
+];
+
+let gCurTest = 0;
+let gCurWinName, gChildWin, gDataURL;
+
+// ## Utility functions
+function generateRandomName()
+{
+  // Generate a random 6 character string using 0-9 and a-z.
+  return ((1 + Math.random()).toString(36) + '000000').substr(2, 6);
+}
+
+function startNextTest() {
+  ++gCurTest;
+  if (gCurTest > gTests.length) {
+    SimpleTest.finish();
+  } else {
+    let curTest = gTests[gCurTest - 1];
+    let url = curTest.startURL + kTestPath + kFile + "?firstDocLoaded";
+    gCurWinName = generateRandomName();
+    gChildWin = window.open(url, gCurWinName);
+  }
+}
+
+// ## Add a message event listener.
+window.addEventListener("message", function(aEvent) {
+    if (aEvent.source !== gChildWin)
+      return;
+
+//    console.log("parent received message:" + JSON.stringify(aEvent.data));
+
+    let curTest = gTests[gCurTest - 1];
+    let state = aEvent.data.state;
+    let winName = aEvent.data.winName;
+    if ("firstDocLoaded" == state) {
+      ok(winName === gCurWinName, "Test #" + gCurTest +
+                 " - first document's name matches window.open parameter");
+
+      // Send an "openURL" message to the loaded document.
+      let url2 = (curTest.destURL)
+                  ? curTest.destURL + kTestPath + kFile + "?secondDocLoaded"
+                  : gDataURL;
+      let noReferrerOnLink = (curTest.noReferrerOnLink === true);
+      let noReferrerInMetaTag = (curTest.noReferrerInMetaTag === true);
+      let resetInUnload = (curTest.resetInUnload === true);
+      aEvent.source.postMessage({ action: "openURL", url: url2,
+                                  noReferrerOnLink: noReferrerOnLink,
+                                  noReferrerInMetaTag: noReferrerInMetaTag,
+                                  resetInUnload: resetInUnload },
+                                aEvent.origin);
+    } else if ("secondDocLoaded" == state) {
+      if (curTest.expectIsolation) {
+        ok(winName === "",
+           "Test #" + gCurTest + " - second document: name was cleared");
+      } else {
+        ok(winName === gCurWinName,
+           "Test #" + gCurTest + " - second document: name was preserved");
+      }
+
+      gChildWin.close();
+      startNextTest();
+    }
+  }, false);
+
+SimpleTest.waitForExplicitFinish();
+
+// Read file contents, construct a data URL (used by some tests), and
+// then start the first test.
+let url = kTestPath + kFile;
+let xhr = new XMLHttpRequest();
+xhr.open("GET", url);
+xhr.onload = function() {
+  gDataURL = "data:text/html;charset=utf-8,"
+             + encodeURIComponent(this.responseText);
+  startNextTest();
+}
+xhr.send();
+</script>
+</body>
+</html>
