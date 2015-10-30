@@ -1,0 +1,51 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+  Tor Bug 16620: Clear window.name when no referrer sent.
+                 https://trac.torproject.org/projects/tor/ticket/16620
+-->
+<head>
+  <meta charset="UTF-8">
+  <title>Supporting Doc for Tor Bug 16620 Tests</title>
+</head>
+<body>
+<a id="link" href="">secondDoc</a>
+
+<script type="application/javascript;version=1.7">
+// Extract test state from our query string, defaulting to
+// "secondDocLoaded" to support use of this HTML content within
+// a data URI (where query strings are not supported).
+let state = (location.search.length > 0) ? location.search.substr(1)
+                                         : "secondDocLoaded";
+
+// Notify the test driver.
+opener.postMessage({ state: state, winName: window.name }, "*");
+
+// Add a message event listener to process "openURL" actions.
+window.addEventListener("message", function(aEvent) {
+  if (aEvent.data.action == "openURL") {
+    if (aEvent.data.noReferrerInMetaTag) {
+      let metaElem = document.createElement("meta");
+      metaElem.name = "referrer";
+      metaElem.content = "no-referrer";
+      document.head.appendChild(metaElem);
+    }
+
+    let linkElem = document.getElementById("link");
+    linkElem.href = aEvent.data.url;
+    if (aEvent.data.noReferrerOnLink)
+      linkElem.rel = "noreferrer";
+
+    if (aEvent.data.resetInUnload) {
+      let tmpName = window.name;
+      window.addEventListener("unload", function() {
+        window.name = tmpName;
+      }, false);
+    }
+
+    linkElem.click();
+  }
+}, false);
+</script>
+</body>
+</html>

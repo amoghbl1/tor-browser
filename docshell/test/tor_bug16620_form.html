@@ -1,0 +1,51 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+  Tor Bug 16620: Clear window.name when no referrer sent.
+                 https://trac.torproject.org/projects/tor/ticket/16620
+
+  Regression test for bug 18168: iframe-based AJAX call opening in new tab
+-->
+<head>
+  <meta charset="UTF-8">
+  <title>Supporting Form-based Doc for Tor Bug 16620 Tests</title>
+</head>
+<body>
+
+<script type="application/javascript;version=1.7">
+document.addEventListener("DOMContentLoaded", function () {
+  addPostTarget();
+}, false);
+
+
+function addPostTarget()
+{
+  let frameName = location.search.substr(1);
+  let form = document.getElementById("postform");
+  let iframe = document.createElement("iframe");
+  iframe.style.border = "1px solid red";
+  iframe.src = "about:blank";
+  form.target = iframe.name = iframe.id = frameName;
+  document.body.appendChild(iframe);
+
+  let didSubmit = false;
+  iframe.onload = function() {
+    if (!didSubmit) {
+      didSubmit = true;
+      let submitButton = document.getElementById("submitButton");
+      submitButton.click();
+    } else {
+      // Form submission complete. Report iframe's name to test driver.
+      opener.postMessage({ state: "formPostDone", winName: iframe.name }, "*");
+    }
+  };
+}
+
+</script>
+<form name="postform" id="postform"
+      action="data:text/plain;charset=utf-8,Hello%20world"
+      method="POST" enctype="multipart/form-data">
+  <input type="hidden" name="field1" value="value1"><br>
+  <input id="submitButton" type="submit" value="Post It">
+</body>
+</html>
