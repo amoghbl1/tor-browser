@@ -1,0 +1,212 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+  Tor Bug 16620: Clear window.name when no referrer sent.
+                 https://trac.torproject.org/projects/tor/ticket/16620
+-->
+<meta charset="utf-8">
+<head>
+  <title>Test for Tor Bug 16620 - Clear window.name when no referrer sent</title>
+  <script type="application/javascript"
+          src="/tests/SimpleTest/SimpleTest.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://trac.torproject.org/projects/tor/ticket/16620">Tor Bug 16620</a>
+<script type="application/javascript;version=1.7">
+
+// ## Test constants
+const kTestPath = "/tests/docshell/test/";
+const kLinkFile = "tor_bug16620.html";
+const kFormFile = "tor_bug16620_form.html";
+const kBaseURL1 = "http://example.com";
+const kBaseURL1_https = "https://example.com";
+const kBaseURL2 = "http://example.net";
+const kSendReferrerPref = "network.http.sendRefererHeader";
+const kSendReferrerNever = 0;
+const kSendReferrerForUserAction = 1;
+const kSendReferrerAlways = 2;
+
+let gTests = [
+  // Test #1: Same domain; never send referrer.
+  { startURL: kBaseURL1, destURL: kBaseURL1,
+    referrerPref: kSendReferrerNever,
+    expectIsolation: true },
+
+  // Test #2: Same domain; send referrer upon user action.
+  { startURL: kBaseURL1, destURL: kBaseURL1,
+    referrerPref: kSendReferrerForUserAction,
+    expectIsolation: false },
+
+  // Test #3: Same domain; always send referrer.
+  { startURL: kBaseURL1, destURL: kBaseURL1,
+    referrerPref: kSendReferrerAlways,
+    expectIsolation: false },
+
+  // Test #4: Different top-level domains; never send referrer.
+  { startURL: kBaseURL1, destURL: kBaseURL2,
+    referrerPref: kSendReferrerNever,
+    expectIsolation: true },
+
+  // Test #5: Different top-level domains; send referrer upon user action.
+  { startURL: kBaseURL1, destURL: kBaseURL2,
+    referrerPref: kSendReferrerForUserAction,
+    expectIsolation: false },
+
+  // Test #6: Different top-level domains; always send referrer.
+  { startURL: kBaseURL1, destURL: kBaseURL2,
+    referrerPref: kSendReferrerAlways,
+    expectIsolation: false },
+
+  // Test #7: https -> http transition.
+  { startURL: kBaseURL1_https, destURL: kBaseURL1,
+    referrerPref: kSendReferrerForUserAction,
+    expectIsolation: true },
+
+  // Test #8: Same domain, rel="noreferrer" on link.
+  { startURL: kBaseURL1, destURL: kBaseURL1, noReferrerOnLink: true,
+    referrerPref: kSendReferrerAlways,
+    expectIsolation: true },
+
+  // Test #9: Same domain, "no-referrer" meta tag in document.
+  { startURL: kBaseURL1, destURL: kBaseURL1, noReferrerInMetaTag: true,
+    referrerPref: kSendReferrerAlways,
+    expectIsolation: true },
+
+  // Test #10: Like test #9, but reset window.name during unload.
+  // (similar to http://www.thomasfrank.se/sessvarsTestPage1.html)
+  { startURL: kBaseURL1, destURL: kBaseURL1, noReferrerInMetaTag: true,
+    resetInUnload: true,
+    referrerPref: kSendReferrerAlways,
+    expectIsolation: true },
+
+  // Test #11: Data URL as destination (no referrer).
+  { startURL: kBaseURL1,
+    referrerPref: kSendReferrerAlways,
+    expectIsolation: true },
+
+  // Test #12: Ensure that window.name is preserved when a dynamically loaded
+  // iframe is used to perform a form post (regression test for Tor bug 18168).
+  { startURL: kBaseURL1,
+    isFormTest: true,
+    referrerPref: kSendReferrerAlways,
+    expectIsolation: false },
+];
+
+let gCurTest = 0;
+let gCurWinName, gChildWin, gDataURL;
+
+// ## Utility functions
+function generateRandomName()
+{
+  // Generate a random 6 character string using 0-9 and a-z.
+  return ((1 + Math.random()).toString(36) + '000000').substr(2, 6);
+}
+
+function startNextTest() {
+  ++gCurTest;
+  if (gCurTest > gTests.length) {
+    SimpleTest.finish();
+  } else {
+    let curTest = gTests[gCurTest - 1];
+    if ("referrerPref" in curTest)
+      SpecialPowers.setIntPref(kSendReferrerPref, curTest.referrerPref);
+    else
+      SpecialPowers.setIntPref(kSendReferrerPref, kSendReferrerForUserAction);
+    gCurWinName = generateRandomName();
+    let url = curTest.startURL + kTestPath;
+    if (curTest.isFormTest === true) {
+      url += kFormFile + "?" + gCurWinName;
+      gChildWin = window.open(url, undefined);
+    } else {
+      url += kLinkFile + "?firstDocLoaded";
+      gChildWin = window.open(url, gCurWinName);
+    }
+  }
+}
+
+// ## Add a message event listener.
+window.addEventListener("message", function(aEvent) {
+    if (aEvent.source !== gChildWin)
+      return;
+
+//    console.log("parent received message:" + JSON.stringify(aEvent.data));
+
+    let proceedToNextTest = false;
+    let curTest = gTests[gCurTest - 1];
+    let state = aEvent.data.state;
+    let winName = aEvent.data.winName;
+    if ("firstDocLoaded" == state) {
+      // Process response from step one of the link-based  tests.
+      let step1Passed = (winName === gCurWinName);
+      if (!step1Passed) {
+        ok(step1Passed, "Test #" + gCurTest +
+                 " - first document's name matches window.open parameter");
+        proceedToNextTest = true;
+      }
+
+      // Send an "openURL" message to the loaded document.
+      let url2 = (curTest.destURL)
+                  ? curTest.destURL + kTestPath + kLinkFile + "?secondDocLoaded"
+                  : gDataURL;
+      let noReferrerOnLink = (curTest.noReferrerOnLink === true);
+      let noReferrerInMetaTag = (curTest.noReferrerInMetaTag === true);
+      let resetInUnload = (curTest.resetInUnload === true);
+      aEvent.source.postMessage({ action: "openURL", url: url2,
+                                  noReferrerOnLink: noReferrerOnLink,
+                                  noReferrerInMetaTag: noReferrerInMetaTag,
+                                  resetInUnload: resetInUnload },
+                                aEvent.origin);
+    } else if ("secondDocLoaded" == state) {
+      // Process response from step two of the link-based tests.
+      if (curTest.expectIsolation) {
+        ok(winName === "",
+           "Test #" + gCurTest + " - second document: name was cleared");
+      } else {
+        ok(winName === gCurWinName,
+           "Test #" + gCurTest + " - second document: name was preserved");
+      }
+      proceedToNextTest = true;
+    } else if ("formPostDone" == state) {
+      // Process response from the form post tests.
+      if (curTest.expectIsolation) {
+        ok(winName === "",
+           "Test #" + gCurTest + " - iframe form post: name was cleared");
+      } else {
+        ok(winName === gCurWinName,
+           "Test #" + gCurTest + " - iframe form post: name was preserved");
+      }
+      proceedToNextTest = true;
+
+    }
+
+    if (proceedToNextTest) {
+      gChildWin.close();
+      startNextTest();
+    }
+  }, false);
+
+  SimpleTest.waitForExplicitFinish();
+
+  if (SpecialPowers.getBoolPref("security.nocertdb")) {
+    // Mochitests don't simulate https correctly with "security.nocertdb"
+    // enabled.  See https://bugs.torproject.org/18087
+    ok(false, "Please disable the pref `security.nocertdb` before running this test.");
+    SimpleTest.finish();
+  } else {
+
+    // Read file contents, construct a data URL (used by some tests), and
+    // then start the first test.
+    let url = kTestPath + kLinkFile;
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", url);
+    xhr.onload = function() {
+      gDataURL = "data:text/html;charset=utf-8,"
+                 + encodeURIComponent(this.responseText);
+      startNextTest();
+    }
+    xhr.send();
+  }
+</script>
+</body>
+</html>
