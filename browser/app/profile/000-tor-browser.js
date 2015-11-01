@@ -203,6 +203,10 @@ pref("devtools.appmanager.enabled", false);
 // restrictive DNS look-up policy. We use "127.0.0.1" instead of "localhost" as
 // a workaround. See bug 16523 for more details.
 pref("devtools.debugger.chrome-debugging-host", "127.0.0.1");
+// Don't show the "Open with" option on the download dialog if the preference
+// is |true|. This helps to avoid confusion e.g. in case the browser is
+// sandboxed. See bug 17502 for details.
+pref("browser.download.forbid_open_with", false);
 // Disable mozTCPSocket for sure (bug 18863)
 pref("dom.mozTCPSocket.enabled", false);
 
