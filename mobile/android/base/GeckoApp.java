@@ -105,6 +105,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AbsoluteLayout;
 import android.widget.FrameLayout;
 import android.widget.ListView;
@@ -1255,6 +1256,9 @@ public abstract class GeckoApp
         super.onCreate(savedInstanceState);
 
         GeckoScreenOrientation.getInstance().update(getResources().getConfiguration().orientation);
+
+        // disable screenshots and pic in "recent apps"
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
 
         setContentView(getLayout());
 
