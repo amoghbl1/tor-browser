@@ -156,6 +156,13 @@
                 <data android:pathPattern=".*\\.xpi" />
             </intent-filter>
 
+            <!-- receive triggers from panickit apps -->
+            <intent-filter>
+                <action android:name="info.guardianproject.panic.action.TRIGGER" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
 #ifdef MOZ_ANDROID_BEAM
             <intent-filter>
                 <action android:name="android.nfc.action.NDEF_DISCOVERED"/>
