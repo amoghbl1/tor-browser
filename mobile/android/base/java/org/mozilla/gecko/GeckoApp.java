@@ -152,6 +152,8 @@ public abstract class GeckoApp
 
     public static final String INTENT_REGISTER_STUMBLER_LISTENER = "org.mozilla.gecko.STUMBLER_REGISTER_LOCAL_LISTENER";
 
+    public static final String ACTION_PANIC_TRIGGER        = "info.guardianproject.panic.action.TRIGGER";
+
     public static final String EXTRA_STATE_BUNDLE          = "stateBundle";
 
     public static final String LAST_SELECTED_TAB           = "lastSelectedTab";
@@ -520,48 +522,52 @@ public abstract class GeckoApp
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.quit) {
-            // Make sure the Guest Browsing notification goes away when we quit.
-            GuestSession.hideNotification(this);
-
-            final SharedPreferences prefs = GeckoSharedPrefs.forProfile(this);
-            final Set<String> clearSet =
-                    PrefUtils.getStringSet(prefs, ClearOnShutdownPref.PREF, new HashSet<String>());
-
-            final JSONObject clearObj = new JSONObject();
-            for (String clear : clearSet) {
-                try {
-                    clearObj.put(clear, true);
-                } catch (JSONException ex) {
-                    Log.e(LOGTAG, "Error adding clear object " + clear, ex);
-                }
-            }
-
-            final JSONObject res = new JSONObject();
-            try {
-                res.put("sanitize", clearObj);
-            } catch (JSONException ex) {
-                Log.e(LOGTAG, "Error adding sanitize object", ex);
-            }
-
-            // If the user has opted out of session restore, and does want to clear history
-            // we also want to prevent the current session info from being saved.
-            if (clearObj.has("private.data.history")) {
-                final String sessionRestore = getSessionRestorePreference(getSharedPreferences());
-                try {
-                    res.put("dontSaveSession", "quit".equals(sessionRestore));
-                } catch (JSONException ex) {
-                    Log.e(LOGTAG, "Error adding session restore data", ex);
-                }
-            }
-
-            GeckoAppShell.notifyObservers("Browser:Quit", res.toString());
-            // We don't call doShutdown() here because this creates a race condition which can
-            // cause the clearing of private data to fail. Instead, we shut down the UI only after
-            // we're done sanitizing.
+            quitAndClear();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void quitAndClear() {
+        // Make sure the Guest Browsing notification goes away when we quit.
+        GuestSession.hideNotification(this);
+
+        final SharedPreferences prefs = GeckoSharedPrefs.forProfile(this);
+        final Set<String> clearSet =
+            PrefUtils.getStringSet(prefs, ClearOnShutdownPref.PREF, new HashSet<String>());
+
+        final JSONObject clearObj = new JSONObject();
+        for (String clear : clearSet) {
+            try {
+                clearObj.put(clear, true);
+            } catch(JSONException ex) {
+                Log.e(LOGTAG, "Error adding clear object " + clear, ex);
+            }
+        }
+
+        final JSONObject res = new JSONObject();
+        try {
+            res.put("sanitize", clearObj);
+        } catch(JSONException ex) {
+            Log.e(LOGTAG, "Error adding sanitize object", ex);
+        }
+
+        // If the user has opted out of session restore, and does want to clear history
+        // we also want to prevent the current session info from being saved.
+        if (clearObj.has("private.data.history")) {
+            final String sessionRestore = getSessionRestorePreference(getSharedPreferences());
+            try {
+                res.put("dontSaveSession", "quit".equals(sessionRestore));
+            } catch(JSONException ex) {
+                Log.e(LOGTAG, "Error adding session restore data", ex);
+            }
+        }
+        
+        GeckoAppShell.notifyObservers("Browser:Quit", res.toString());
+        // We don't call doShutdown() here because this creates a race condition which can
+        // cause the clearing of private data to fail. Instead, we shut down the UI only after
+        // we're done sanitizing.
     }
 
     @Override
@@ -1625,6 +1631,8 @@ public abstract class GeckoApp
             // Copy extras.
             settingsIntent.putExtras(intent.getUnsafe());
             startActivity(settingsIntent);
+        } else if (ACTION_PANIC_TRIGGER.equals(action)) {
+            quitAndClear();
         }
 
         //app state callbacks
