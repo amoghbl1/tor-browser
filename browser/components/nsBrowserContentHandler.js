@@ -573,6 +573,13 @@ nsBrowserContentHandler.prototype = {
             // into account because that requires waiting for the session file
             // to be read. If a crash occurs after updating, before restarting,
             // we may open the startPage in addition to restoring the session.
+            //
+            // Tor Browser: Instead of opening the post-update "override page"
+            // directly, an about:tbupdate page is opened that includes a link
+            // to the override page as well as text from the first part of the
+            // local ChangeLog.txt file. The override page URL comes from the
+            // openURL attribute within the updates.xml file or, if no showURL
+            // action is present, from the startup.homepage_override_url pref.
             var ss = Components.classes["@mozilla.org/browser/sessionstartup;1"]
                                .getService(Components.interfaces.nsISessionStartup);
             willRestoreSession = ss.isAutomaticRestoreEnabled();
@@ -585,6 +592,11 @@ nsBrowserContentHandler.prototype = {
 #ifdef TOR_BROWSER_VERSION
             overridePage = overridePage.replace("%OLD_TOR_BROWSER_VERSION%",
                                                 old_tbversion);
+#endif
+
+#ifdef TOR_BROWSER_UPDATE
+            if (overridePage)
+              overridePage = "about:tbupdate?" + encodeURIComponent(overridePage);
 #endif
             break;
         }
