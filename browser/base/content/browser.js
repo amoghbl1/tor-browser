@@ -259,6 +259,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "LoginManagerParent",
 
 var gInitialPages = [
   "about:tor",
+#ifdef TOR_BROWSER_UPDATE
+  "about:tbupdate",
+#endif
   "about:blank",
   "about:newtab",
   "about:home",
@@ -2425,8 +2428,14 @@ function URLBarSetURI(aURI) {
 
     // Replace initial page URIs with an empty string
     // only if there's no opener (bug 370555).
+#ifdef TOR_BROWSER_UPDATE
+    if (gInitialPages.indexOf(uri.spec.split('?')[0]) != -1 &&
+        checkEmptyPageOrigin(gBrowser.selectedBrowser, uri))
+#else
     if (gInitialPages.indexOf(uri.spec) != -1 &&
-        checkEmptyPageOrigin(gBrowser.selectedBrowser, uri)) {
+        checkEmptyPageOrigin(gBrowser.selectedBrowser, uri))
+#endif
+    {
       value = "";
     } else {
       value = losslessDecodeURI(uri);
@@ -7043,7 +7052,11 @@ var gIdentityHandler = {
       this._uriHasHost = false;
     }
 
-    let whitelist = /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|home|license|newaddon|permissions|preferences|privatebrowsing|rights|sessionrestore|support|welcomeback)(?:[?#]|$)/i;
+#ifdef TOR_BROWSER_UPDATE
+    let whitelist = /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|home|license|newaddon|permissions|preferences|privatebrowsing|rights|sessionrestore|support|welcomeback|tor|tbupdate)(?:[?#]|$)/i;
+#else
+    let whitelist = /^(?:accounts|addons|cache|config|crashes|customizing|downloads|healthreport|home|license|newaddon|permissions|preferences|privatebrowsing|rights|sessionrestore|support|welcomeback|tor)(?:[?#]|$)/i;
+#endif
     this._isSecureInternalUI = uri.schemeIs("about") && whitelist.test(uri.path);
 
     this._sslStatus = gBrowser.securityUI
