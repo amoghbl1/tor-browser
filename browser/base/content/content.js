@@ -11,6 +11,9 @@ Cu.import("resource:///modules/ContentWebRTC.jsm");
 Cu.import("resource:///modules/ContentObservers.jsm");
 Cu.import("resource://gre/modules/InlineSpellChecker.jsm");
 Cu.import("resource://gre/modules/InlineSpellCheckerContent.jsm");
+#ifdef TOR_BROWSER_UPDATE
+Cu.import("resource://gre/modules/NetUtil.jsm");
+#endif
 
 XPCOMUtils.defineLazyModuleGetter(this, "E10SUtils",
   "resource:///modules/E10SUtils.jsm");
@@ -559,6 +562,67 @@ let AboutReaderListener = {
   },
 };
 AboutReaderListener.init();
+
+#ifdef TOR_BROWSER_UPDATE
+let AboutTBUpdateListener = {
+  init: function(chromeGlobal) {
+    chromeGlobal.addEventListener('AboutTBUpdateLoad', this, false, true);
+  },
+
+  get isAboutTBUpdate() {
+    return content.document.documentURI.split('?')[0].toLowerCase()
+           == "about:tbupdate";
+  },
+
+  handleEvent: function(aEvent) {
+    if (this.isAboutTBUpdate && (aEvent.type == "AboutTBUpdateLoad"))
+      this.onPageLoad();
+  },
+
+  onPageLoad: function() {
+    let doc = content.document;
+    doc.getElementById("infolink").setAttribute("href", this.getPostUpdateURL());
+    doc.getElementById("changelog").textContent = this.getChangeLogText();
+  },
+
+  // Extract the post update URL from this page's query string.
+  getPostUpdateURL: function() {
+    let idx = content.document.documentURI.indexOf('?');
+    if (idx > 0)
+      return decodeURIComponent(content.document.documentURI.substring(idx+1));
+
+    // No query string: use the default URL.
+    return Services.urlFormatter.formatURLPref("startup.homepage_override_url");
+  },
+
+  // Read and return the text from the beginning of the changelog file that is
+  // located at TorBrowser/Docs/ChangeLog.txt.
+  // When electrolysis is enabled we will need to adopt an architecture that is
+  // more similar to the one that is used for about:home (see AboutHomeListener
+  // in this file and browser/modules/AboutHome.jsm).
+  getChangeLogText: function() {
+    try {
+      // "DefProfRt" is .../TorBrowser/Data/Browser
+      let f = Cc["@mozilla.org/file/directory_service;1"]
+                .getService(Ci.nsIProperties).get("DefProfRt", Ci.nsIFile);
+      f = f.parent.parent;  // Remove "Data/Browser"
+      f.appendRelativePath("Docs/ChangeLog.txt");
+
+      let fs = Cc["@mozilla.org/network/file-input-stream;1"]
+                 .createInstance(Ci.nsIFileInputStream);
+      fs.init(f, -1, 0, 0);
+      let s = NetUtil.readInputStreamToString(fs, fs.available());
+      fs.close();
+
+      // Truncate at the first empty line.
+      return s.replace(/[\r\n][\r\n][\s\S]*$/m, "");
+    } catch (e) {}
+
+    return "";
+  },
+};
+AboutTBUpdateListener.init(this);
+#endif
 
 // An event listener for custom "WebChannelMessageToChrome" events on pages
 addEventListener("WebChannelMessageToChrome", function (e) {
