@@ -138,6 +138,13 @@ static RedirEntry kRedirMap[] = {
     nsIAboutModule::ALLOW_SCRIPT |
     nsIAboutModule::HIDE_FROM_ABOUTABOUT |
     nsIAboutModule::MAKE_UNLINKABLE },
+#ifdef TOR_BROWSER_UPDATE
+  { "tbupdate", "chrome://browser/content/abouttbupdate/aboutTBUpdate.xhtml",
+    nsIAboutModule::URI_SAFE_FOR_UNTRUSTED_CONTENT |
+    nsIAboutModule::ALLOW_SCRIPT |
+    nsIAboutModule::MAKE_UNLINKABLE |
+    nsIAboutModule::HIDE_FROM_ABOUTABOUT },
+#endif
 };
 static const int kRedirTotal = ArrayLength(kRedirMap);
 

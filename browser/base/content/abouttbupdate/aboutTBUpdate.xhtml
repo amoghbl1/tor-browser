@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html [
+  <!ENTITY % htmlDTD
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "DTD/xhtml1-strict.dtd">
+  %htmlDTD;
+  <!ENTITY % globalDTD SYSTEM "chrome://global/locale/global.dtd">
+  %globalDTD;
+  <!ENTITY % tbUpdateDTD SYSTEM "chrome://browser/locale/aboutTBUpdate.dtd">
+  %tbUpdateDTD;
+]>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>&aboutTBUpdate.title;</title>
+  <link rel="stylesheet" type="text/css"
+        href="chrome://browser/content/abouttbupdate/aboutTBUpdate.css"/>
+  <script src="chrome://browser/content/abouttbupdate/aboutTBUpdate.js"
+          type="text/javascript;version=1.7"/>
+</head>
+<body dir="&locale.dir;" onload="init()">
+<div id="torbrowser-version"/>
+<div id="logo"/>
+<div id="msg">
+<div id="msg-updated">&aboutTBUpdate.updated;</div>
+<div>&aboutTBUpdate.linkPrefix;<a id="infolink">&aboutTBUpdate.linkLabel;</a>&aboutTBUpdate.linkSuffix;
+</div>
+</div>
+<br clear="all"/>
+<div id="changelog-container">
+<div id="changelog-heading">&aboutTBUpdate.changeLogHeading;</div>
+<div id="changelog"></div>
+</div>
+</body>
+</html>

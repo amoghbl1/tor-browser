@@ -1,0 +1,54 @@
+body {
+  font-family: sans-serif;
+  font-size: 110%;
+  background-image: -moz-linear-gradient(top, #ffffff, #ffffff 10%, #d5ffd5 50%, #d5ffd5);
+  background-attachment: fixed;
+  background-size: 100% 100%;
+}
+
+#torbrowser-version {
+  /* These CSS rules match the about:tor page */
+  position: fixed;
+  top: 6px;
+  right: 6px;
+  height: 30px;
+  width: 200px;
+  white-space: pre-wrap;
+  text-align: right;
+  color: #4d4d4d;
+  font-family: "Liberation Sans", Arial, Helvetica, sans-serif;
+  font-size: 14px;
+}
+
+#logo {
+  background-image: url("chrome://browser/content/abouttbupdate/aboutTBUpdateLogo.png");
+  height: 128px;
+  width: 128px;
+  margin: 20px;
+  float: left;
+}
+
+#msg {
+  margin-top: 50px;
+  float: left;
+}
+
+#msg-updated {
+  font-size: 120%;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+#changelog-container {
+  margin: 0px 20px 20px 20px;
+}
+
+#changelog-heading {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+#changelog {
+  margin-left: 20px;
+  white-space: pre;
+}
