@@ -1,7 +1,7 @@
 . $topsrcdir/browser/config/mozconfig
 
-export CFLAGS="-fsanitize=address -Dxmalloc=myxmalloc"
-export CXXFLAGS="-fsanitize=address -Dxmalloc=myxmalloc"
+export CFLAGS="-fsanitize=address -Dxmalloc=myxmalloc -fwrapv"
+export CXXFLAGS="-fsanitize=address -Dxmalloc=myxmalloc -fwrapv"
 # We need to add -ldl explicitely due to bug 1213698
 export LDFLAGS="-fsanitize=address -ldl"
 
