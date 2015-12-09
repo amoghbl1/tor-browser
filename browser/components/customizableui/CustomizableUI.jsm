@@ -1313,6 +1313,11 @@ var CustomizableUIInternal = {
       throw new Error("buildWidget was passed a non-widget to build.");
     }
 
+    if (aWidget.onIsHidden && aWidget.onIsHidden()) {
+      LOG("Skipping hidden widget " + aWidget.id + " of type " + aWidget.type);
+      return undefined;
+    }
+
     LOG("Building " + aWidget.id + " of type " + aWidget.type);
 
     let node;
@@ -2341,6 +2346,7 @@ var CustomizableUIInternal = {
       widget._introducedInVersion = aData.introducedInVersion || 0;
     }
 
+    this.wrapWidgetEventHandler("onIsHidden", widget);
     this.wrapWidgetEventHandler("onBeforeCreated", widget);
     this.wrapWidgetEventHandler("onClick", widget);
     this.wrapWidgetEventHandler("onCreated", widget);
@@ -3167,6 +3173,8 @@ this.CustomizableUI = {
    *                             of the widget.
    * - viewId:        Only useful for views (and required there): the id of the
    *                  <panelview> that should be shown when clicking the widget.
+   * - onIsHidden():  Called to check whether a widget should be hidden
+   *                  (optional; returns a Boolean value).
    * - onBuild(aDoc): Only useful for custom widgets (and required there); a
    *                  function that will be invoked with the document in which
    *                  to build a widget. Should return the DOM node that has

@@ -606,6 +606,9 @@ const CustomizableWidgets = [
     id: "social-share-button",
     // custom build our button so we can attach to the share command
     type: "custom",
+    onIsHidden: function() {
+      return !Services.prefs.getBoolPref("loop.enabled");
+    },
     onBuild: function(aDocument) {
       let node = aDocument.createElementNS(kNSXUL, "toolbarbutton");
       node.setAttribute("id", this.id);
