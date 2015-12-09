@@ -933,12 +933,10 @@ const CustomizableWidgets = [
     // Not in private browsing, see bug 1108187.
     showInPrivateBrowsing: false,
     introducedInVersion: 4,
+    onIsHidden: function() {
+      return !Services.prefs.getBoolPref("loop.enabled");
+    },
     onBuild: function(aDocument) {
-      // If we're not supposed to see the button, return zip.
-      if (!Services.prefs.getBoolPref("loop.enabled")) {
-        return null;
-      }
-
       let node = aDocument.createElementNS(kNSXUL, "toolbarbutton");
       node.setAttribute("id", this.id);
       node.classList.add("toolbarbutton-1");
