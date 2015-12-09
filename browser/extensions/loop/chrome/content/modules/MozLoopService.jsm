@@ -1296,7 +1296,7 @@ this.MozLoopService = {
 
     // Don't do anything if loop is not enabled.
     if (!Services.prefs.getBoolPref("loop.enabled")) {
-      return Promise.reject(new Error("loop is not enabled"));
+      return Promise.resolve();
     }
 
     if (Services.prefs.getPrefType("loop.fxa.enabled") == Services.prefs.PREF_BOOL) {
