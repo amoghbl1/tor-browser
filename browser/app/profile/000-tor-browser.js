@@ -31,6 +31,9 @@ pref("browser.slowStartup.notificationDisabled", true);
 pref("browser.slowStartup.maxSamples", 0);
 pref("browser.slowStartup.samples", 0);
 
+// Disable the "Refresh" prompt that is displayed for stale profiles.
+pref("browser.disableResetPrompt", true);
+
 // Disk activity: Disable Browsing History Storage
 pref("browser.privatebrowsing.autostart", true);
 pref("browser.cache.disk.enable", false);
