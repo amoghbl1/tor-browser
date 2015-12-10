@@ -17,6 +17,9 @@ let expectedPrefs = [
    ["startup.homepage_welcome_url", ""],
    ["startup.homepage_override_url", ""],
 
+   // Disable the "Refresh" prompt that is displayed for stale profiles.
+   ["browser.disableResetPrompt", true],
+
    // Disk activity: Disable Browsing History Storage
    ["browser.privatebrowsing.autostart", true],
    ["browser.cache.disk.enable", false],
@@ -175,7 +178,7 @@ let getPref = function (prefName) {
   if (type === gPrefService.PREF_BOOL) return gPrefService.getBoolPref(prefName);
   if (type === gPrefService.PREF_STRING) return gPrefService.getCharPref(prefName);
   // Something went wrong.
-  throw new Error("Can't access pref.");
+  throw new Error("Can't access pref " + prefName);
 };
 
 let testPref = function([key, expectedValue]) {
