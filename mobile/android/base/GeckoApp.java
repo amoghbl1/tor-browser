@@ -105,6 +105,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewStub;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AbsoluteLayout;
 import android.widget.FrameLayout;
 import android.widget.ListView;
@@ -141,6 +142,7 @@ public abstract class GeckoApp
     public static final String ACTION_LAUNCH_SETTINGS      = "org.mozilla.gecko.SETTINGS";
     public static final String ACTION_LOAD                 = "org.mozilla.gecko.LOAD";
     public static final String ACTION_INIT_PW              = "org.mozilla.gecko.INIT_PW";
+    public static final String ACTION_PANIC_TRIGGER        = "info.guardianproject.panic.action.TRIGGER";
 
     public static final String EXTRA_STATE_BUNDLE          = "stateBundle";
 
@@ -450,6 +452,14 @@ public abstract class GeckoApp
     @Override
     public boolean onOptionsItemSelected(MenuItem item) { 
         if (item.getItemId() == R.id.quit) {
+            quitAndClear();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void quitAndClear() {
             // Make sure the Guest Browsing notification goes away when we quit.
             GuestSession.hideNotification(this);
 
@@ -487,10 +497,6 @@ public abstract class GeckoApp
             GeckoAppShell.sendEventToGeckoSync(
                     GeckoEvent.createBroadcastEvent("Browser:Quit", res.toString()));
             
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -1256,6 +1262,9 @@ public abstract class GeckoApp
 
         GeckoScreenOrientation.getInstance().update(getResources().getConfiguration().orientation);
 
+        // disable screenshots and pic in "recent apps"
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+
         setContentView(getLayout());
 
         // Set up Gecko layout.
@@ -1842,6 +1851,8 @@ public abstract class GeckoApp
             // Copy extras.
             settingsIntent.putExtras(intent.getUnsafe());
             startActivity(settingsIntent);
+        } else if (ACTION_PANIC_TRIGGER.equals(action)) {
+            quitAndClear();
         }
     }
 

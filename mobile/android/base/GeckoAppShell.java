@@ -54,6 +54,8 @@ import org.mozilla.gecko.util.NativeJSObject;
 import org.mozilla.gecko.util.ProxySelector;
 import org.mozilla.gecko.util.ThreadUtils;
 
+import info.guardianproject.netcipher.proxy.OrbotHelper;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.PendingIntent;
@@ -127,6 +129,8 @@ public class GeckoAppShell
 
     private static boolean restartScheduled;
     private static GeckoEditableListener editableListener;
+
+    private static String torStatus;
 
     private static final CrashHandler CRASH_HANDLER = new CrashHandler() {
         @Override
@@ -209,6 +213,8 @@ public class GeckoAppShell
 
     static private int sDensityDpi;
     static private int sScreenDepth;
+
+    static final Queue<Intent> PENDING_URL_INTENTS = new ConcurrentLinkedQueue<Intent>();
 
     /* Default colors. */
     private static final float[] DEFAULT_LAUNCHER_ICON_HSV = { 32.0f, 1.0f, 1.0f };
@@ -389,6 +395,16 @@ public class GeckoAppShell
             while (!PENDING_EVENTS.isEmpty()) {
                 final GeckoEvent e = PENDING_EVENTS.poll();
                 notifyGeckoOfEvent(e);
+            }
+        } catch (NoSuchElementException e) {}
+    }
+
+    static void sendPendingUrlIntents() {
+        try {
+            Context context = getContext();
+            while (!PENDING_URL_INTENTS.isEmpty()) {
+                final Intent intent = PENDING_URL_INTENTS.poll();
+                context.startActivity(intent);
             }
         } catch (NoSuchElementException e) {}
     }
@@ -1099,6 +1115,12 @@ public class GeckoAppShell
         }
 
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        if (!OrbotHelper.STATUS_ON.equals(torStatus)) {
+            PENDING_URL_INTENTS.add(intent);
+            return true;
+        }
+
         try {
             context.startActivity(intent);
             return true;
@@ -2685,5 +2707,16 @@ public class GeckoAppShell
             return null;
         }
         return Environment.getExternalStoragePublicDirectory(systemType).getAbsolutePath();
+    }
+
+    public static void setTorStatus(Intent intent) {
+        torStatus = intent.getStringExtra(OrbotHelper.EXTRA_STATUS);
+        if (OrbotHelper.STATUS_ON.equals(torStatus)) {
+            sendPendingUrlIntents();
+        }
+    }
+
+    public static String getTorStatus() {
+        return torStatus;
     }
 }
