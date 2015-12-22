@@ -1023,8 +1023,6 @@ BaselineScript::toggleProfilerInstrumentation(bool enable)
     JitSpew(JitSpew_BaselineIC, "  toggling profiling %s for BaselineScript %p",
             enable ? "on" : "off", this);
 
-    AutoWritableJitCode awjc(method());
-
     // Toggle the jump
     CodeLocationLabel enterToggleLocation(method_, CodeOffset(profilerEnterToggleOffset_));
     CodeLocationLabel exitToggleLocation(method_, CodeOffset(profilerExitToggleOffset_));
@@ -1136,11 +1134,16 @@ jit::AddSizeOfBaselineData(JSScript* script, mozilla::MallocSizeOf mallocSizeOf,
 void
 jit::ToggleBaselineProfiling(JSRuntime* runtime, bool enable)
 {
+    JitRuntime* jrt = runtime->jitRuntime();
+    if (!jrt)
+        return;
+
     for (ZonesIter zone(runtime, SkipAtoms); !zone.done(); zone.next()) {
         for (gc::ZoneCellIter i(zone, gc::AllocKind::SCRIPT); !i.done(); i.next()) {
             JSScript* script = i.get<JSScript>();
             if (!script->hasBaselineScript())
                 continue;
+            AutoWritableJitCode awjc(script->baselineScript()->method());
             script->baselineScript()->toggleProfilerInstrumentation(enable);
         }
     }
