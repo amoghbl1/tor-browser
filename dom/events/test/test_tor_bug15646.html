@@ -1,0 +1,159 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://trac.torproject.org/15646
+-->
+<head>
+  <title>Test for Bug 15646</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://trac.torproject.org/15466">Tor Bug 15646</a>
+<p id="display"></p>
+<div id="content" style="display: none">
+
+</div>
+<pre id="test">
+</pre>
+<span id="testTarget" style="border: 1px solid black;">testTarget</span>
+<script type="application/javascript;version=1.7">
+  SimpleTest.waitForExplicitFinish();
+  let miscKeyData = [
+    ["Alt", "AltLeft", 18],
+    ["ArrowDown", "ArrowDown", 40],
+    ["ArrowLeft", "ArrowLeft", 37],
+    ["ArrowRight", "ArrowRight", 39],
+    ["ArrowUp", "ArrowUp", 38],
+    ["Backspace", "Backspace", 8],
+    ["CapsLock", "CapsLock", 20],
+    ["ContextMenu", "ContextMenu", 93],
+    ["Control", "ControlLeft", 17],
+    ["Delete", "Delete", 46],
+    ["End", "End", 35],
+    ["Enter", "Enter", 13],
+    ["Escape", "Escape", 27],
+    ["Help", "Help", 6],
+    ["Home", "Home", 36],
+    ["Insert", "Insert", 45],
+    ["Meta", "OSLeft", 91],
+    ["PageDown", "PageDown", 34],
+    ["PageUp", "PageUp", 33],
+    ["Pause", "Pause", 19],
+    ["PrintScreen", "PrintScreen", 44],
+    ["ScrollLock", "ScrollLock", 145],
+    ["Shift", "ShiftLeft", 16],
+    ["Tab", "Tab", 9],
+    [" ", "Space", 32],
+    [",", "Comma", 188],
+    [".", "Period", 190],
+    ["/", "Slash", 191],
+    [";", "Semicolon", 59],
+    ["'", "Quote", 222],
+    ["[", "BracketLeft", 219],
+    ["]", "BracketRight", 221],
+    ["`", "Backquote", 192],
+    ["\\", "Backslash", 220],
+    ["-", "Minus", 173],
+    ["=", "Equal", 61],
+  ];
+  let uppers = [], lowers = [];
+  for (let i = 65; i < 91; ++i) {
+    let upperChar = String.fromCharCode(i);
+    lowers.push([upperChar.toLowerCase(), "Key" + upperChar, i]);
+    uppers.push([upperChar, "Key" + upperChar, i]);
+  }
+  let fnKeys = [];
+  for (let i = 1; i < 25; ++i) {
+    let keyName = "F" + i,
+        keyCode = i + 111;
+    fnKeys.push([keyName, keyName, keyCode]);
+  }
+  let digits = [];
+  for (let i = 0; i < 10; ++i) {
+    let keyName = "" + i,
+        keyCode = 48 + i;
+    digits.push([keyName, "Digit" + keyName, keyCode]);
+  }
+  let allKeyData = miscKeyData.concat(lowers).concat(fnKeys).concat(digits);
+  let pushPref = function (key, value) {
+    return new Promise(resolve => {
+      SpecialPowers.pushPrefEnv({"set": [[key, value]]}, resolve);
+    });
+  };
+  let miscShiftKeyData = [
+    ["!", "Digit1", 49],
+    ["@", "Digit2", 50],
+    ["#", "Digit3", 51],
+    ["$", "Digit4", 52],
+    ["%", "Digit5", 53],
+    ["^", "Digit6", 54],
+    ["&", "Digit7", 55],
+    ["*", "Digit8", 56],
+    ["(", "Digit9", 57],
+    [")", "Digit0", 48],
+    ["<", "Comma", 188],
+    [">", "Period", 190],
+    ["?", "Slash", 191],
+    [":", "Semicolon", 59],
+    ["\"", "Quote", 222],
+    ["{", "BracketLeft", 219],
+    ["}", "BracketRight", 221],
+    ["~", "Backquote", 192],
+    ["|", "Backslash", 220],
+    ["_", "Minus", 173],
+    ["+", "Equal", 61],
+  ];
+  let allShiftKeyData = miscShiftKeyData.concat(uppers);
+
+  // __dispatchAndListen(target, eventObject)__.
+  // Dispatch the given event to the target object.
+  // Return a promise that resolves to the event when
+  // that event is received by an event listener.
+  let dispatchAndListen = function (target, eventObject) {
+    let eventType = eventObject.type;
+    return new Promise(function (resolve, reject) {
+      let listenFunction = function (event) {
+        target.removeEventListener(eventType, listenFunction);
+        resolve(event);
+      };
+      target.addEventListener(eventType, listenFunction);
+      target.dispatchEvent(eventObject);
+    });
+  };
+
+  // Run tests asynchronously.
+  spawn_task(function* () {
+    for (let keyData of [allKeyData, allShiftKeyData]) {
+      for (let resistFingerprinting of [false, true]) {
+        let expectedShiftKey = keyData === allShiftKeyData && resistFingerprinting;
+        yield pushPref("privacy.resistFingerprinting", resistFingerprinting);
+        for (let [keyName, code, keyCode] of keyData) {
+          let keyboardEvent = new KeyboardEvent("keydown", { key : keyName, altKey : true, location : 2 });
+          let receivedEvent = yield dispatchAndListen(document.body, keyboardEvent);
+          let expectedKeyCode = resistFingerprinting ? keyCode : 0;
+          is(receivedEvent.keyCode, expectedKeyCode,
+             "Event.keyCode should be " + expectedKeyCode);
+          is(receivedEvent.shiftKey, expectedShiftKey,
+             "Event.shiftKey should be " + expectedShiftKey);
+          if (expectedShiftKey) {
+            ok(!receivedEvent.altKey,
+               "Alt should be suppressed for fake shift keys.");
+          }
+          if (resistFingerprinting) {
+            let expectedCode = code;
+            is(receivedEvent.code, expectedCode,
+               "Event.code should be " + expectedCode);
+            ok(receivedEvent.location === 0 || receivedEvent.location === 1,
+               "Event.location should be 0 or 1.");
+          }
+        }
+      }
+    }
+    SimpleTest.finish();
+  });
+
+</script>
+</body>
+</html>
