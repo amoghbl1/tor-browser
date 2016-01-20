@@ -5,4 +5,3 @@ wikipedia
 startpage
 yahoo
 google
-duckduckgo
