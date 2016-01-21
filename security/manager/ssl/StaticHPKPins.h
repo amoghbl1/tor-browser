@@ -117,7 +117,7 @@ static const char kEquifax_Secure_eBusiness_CA_1Fingerprint[] =
 
 /* FacebookBackup */
 static const char kFacebookBackupFingerprint[] =
-  "1ww8E0AYsR2oX5lndk2hwp2Uosk=";
+  "q4PO2G2cbkZhZ82+JgmRUyGMoAeozA+BSXVXQWB8XWQ=";
 
 /* GOOGLE_PIN_COMODORSADomainValidationSecureServerCA */
 static const char kGOOGLE_PIN_COMODORSADomainValidationSecureServerCAFingerprint[] =
@@ -221,7 +221,7 @@ static const char kGo_Daddy_Root_Certificate_Authority___G2Fingerprint[] =
 
 /* GoogleBackup2048 */
 static const char kGoogleBackup2048Fingerprint[] =
-  "vq7OyjSnqOco9nyMCDGdy77eijM=";
+  "IPMbDAjLVSGntGO3WP53X/zilCVndez5YJ2+vJvhJsA=";
 
 /* Network Solutions Certificate Authority */
 static const char kNetwork_Solutions_Certificate_AuthorityFingerprint[] =
@@ -229,11 +229,11 @@ static const char kNetwork_Solutions_Certificate_AuthorityFingerprint[] =
 
 /* SpiderOak2 */
 static const char kSpiderOak2Fingerprint[] =
-  "D0fS/hquA6QprluciyO1hlFUAxg=";
+  "7Y3UnxbffL8aFPXsOJBpGasgpDmngpIhAxGKdQRklQQ=";
 
 /* SpiderOak3 */
 static const char kSpiderOak3Fingerprint[] =
-  "l5JoIXv4lztZ+C6TJWgxZCHQzS4=";
+  "LkER54vOdlygpTsbYvlpMq1CE/lDAG1AP9xmdtwvV2A=";
 
 /* Starfield Class 2 CA */
 static const char kStarfield_Class_2_CAFingerprint[] =
@@ -257,11 +257,11 @@ static const char kStartCom_Certification_Authority_G2Fingerprint[] =
 
 /* Swehack */
 static const char kSwehackFingerprint[] =
-  "ng2GUCh9uhHgvZrqlWClUEzq7Kk=";
+  "FdaffE799rVb3oyAuhJ2mBW/XJwD07Uajb2G6YwSAEw=";
 
 /* SwehackBackup */
 static const char kSwehackBackupFingerprint[] =
-  "tlSyv06uDprsaNIyrTAd7qgFMRw=";
+  "z6cuswA6E1vgFkCjUsbEYo0Lf3aP8M8YOvwkoiGzDCo=";
 
 /* TC TrustCenter Class 3 CA II */
 static const char kTC_TrustCenter_Class_3_CA_IIFingerprint[] =
@@ -273,19 +273,19 @@ static const char kTestSPKIFingerprint[] =
 
 /* Tor1 */
 static const char kTor1Fingerprint[] =
-  "juNxSTv9UANmpC9kF5GKpmWNx3Y=";
+  "bYz9JTDk89X3qu3fgswG+lBQso5vI0N1f0Rx4go4nLo=";
 
 /* Tor2 */
 static const char kTor2Fingerprint[] =
-  "lia43lPolzSPVIq34Dw57uYcLD8=";
+  "xXCxhTdn7uxXneJSbQCqoAvuW3ZtQl2pDVTf2sewS8w=";
 
 /* Tor3 */
 static const char kTor3Fingerprint[] =
-  "rzEyQIKOh77j87n5bjWUNguXF8Y=";
+  "CleC1qwUR8JPgH1nXvSe2VHxDe5/KfNs96EusbfSOfo=";
 
 /* Twitter1 */
 static const char kTwitter1Fingerprint[] =
-  "Vv7zwhR9TtOIN/29MFI4cgHld40=";
+  "vU9M48LzD/CF34wE5PPf4nBwRyosy06X21J0ap8yS5s=";
 
 /* UTN USERFirst Email Root CA */
 static const char kUTN_USERFirst_Email_Root_CAFingerprint[] =
@@ -345,11 +345,11 @@ static const char kXRamp_Global_CA_RootFingerprint[] =
 
 /* YahooBackup1 */
 static const char kYahooBackup1Fingerprint[] =
-  "uwnZN/atr9+khywDukPzmD9kFiY=";
+  "2fRAUXyxl4A1/XHrKNBmc8bTkzA7y4FB/GLJuNAzCqY=";
 
 /* YahooBackup2 */
 static const char kYahooBackup2Fingerprint[] =
-  "Ui85k1YWcCl0z/4IlMvrDmI5zEo=";
+  "dolnbtzEBnELx/9lOEQ22e6OZO/QNb6VSSX2XHA3E7A=";
 
 /* thawte Primary Root CA */
 static const char kthawte_Primary_Root_CAFingerprint[] =
@@ -369,13 +369,8 @@ struct StaticFingerprints {
   const char* const* data;
 };
 
-struct StaticPinset {
-  const StaticFingerprints* sha1;
-  const StaticFingerprints* sha256;
-};
-
 /* PreloadedHPKPins.json pinsets */
-static const char* kPinset_google_root_pems_sha256_Data[] = {
+static const char* kPinset_google_root_pems_Data[] = {
   kEquifax_Secure_CAFingerprint,
   kComodo_Trusted_Services_rootFingerprint,
   kCOMODO_ECC_Certification_AuthorityFingerprint,
@@ -432,17 +427,12 @@ static const char* kPinset_google_root_pems_sha256_Data[] = {
   kAffirmTrust_PremiumFingerprint,
   kAddTrust_Qualified_Certificates_RootFingerprint,
 };
-static const StaticFingerprints kPinset_google_root_pems_sha256 = {
-  sizeof(kPinset_google_root_pems_sha256_Data) / sizeof(const char*),
-  kPinset_google_root_pems_sha256_Data
+static const StaticFingerprints kPinset_google_root_pems = {
+  sizeof(kPinset_google_root_pems_Data) / sizeof(const char*),
+  kPinset_google_root_pems_Data
 };
 
-static const StaticPinset kPinset_google_root_pems = {
-  nullptr,
-  &kPinset_google_root_pems_sha256
-};
-
-static const char* kPinset_mozilla_sha256_Data[] = {
+static const char* kPinset_mozilla_Data[] = {
   kGeoTrust_Global_CA_2Fingerprint,
   kthawte_Primary_Root_CA___G3Fingerprint,
   kthawte_Primary_Root_CAFingerprint,
@@ -464,113 +454,61 @@ static const char* kPinset_mozilla_sha256_Data[] = {
   kDigiCert_Global_Root_CAFingerprint,
   kGeoTrust_Primary_Certification_Authority___G2Fingerprint,
 };
-static const StaticFingerprints kPinset_mozilla_sha256 = {
-  sizeof(kPinset_mozilla_sha256_Data) / sizeof(const char*),
-  kPinset_mozilla_sha256_Data
+static const StaticFingerprints kPinset_mozilla = {
+  sizeof(kPinset_mozilla_Data) / sizeof(const char*),
+  kPinset_mozilla_Data
 };
 
-static const StaticPinset kPinset_mozilla = {
-  nullptr,
-  &kPinset_mozilla_sha256
-};
-
-static const char* kPinset_mozilla_services_sha256_Data[] = {
+static const char* kPinset_mozilla_services_Data[] = {
   kDigiCert_Global_Root_CAFingerprint,
 };
-static const StaticFingerprints kPinset_mozilla_services_sha256 = {
-  sizeof(kPinset_mozilla_services_sha256_Data) / sizeof(const char*),
-  kPinset_mozilla_services_sha256_Data
+static const StaticFingerprints kPinset_mozilla_services = {
+  sizeof(kPinset_mozilla_services_Data) / sizeof(const char*),
+  kPinset_mozilla_services_Data
 };
 
-static const StaticPinset kPinset_mozilla_services = {
-  nullptr,
-  &kPinset_mozilla_services_sha256
-};
-
-static const char* kPinset_mozilla_test_sha256_Data[] = {
+static const char* kPinset_mozilla_test_Data[] = {
   kEnd_Entity_Test_CertFingerprint,
 };
-static const StaticFingerprints kPinset_mozilla_test_sha256 = {
-  sizeof(kPinset_mozilla_test_sha256_Data) / sizeof(const char*),
-  kPinset_mozilla_test_sha256_Data
-};
-
-static const StaticPinset kPinset_mozilla_test = {
-  nullptr,
-  &kPinset_mozilla_test_sha256
+static const StaticFingerprints kPinset_mozilla_test = {
+  sizeof(kPinset_mozilla_test_Data) / sizeof(const char*),
+  kPinset_mozilla_test_Data
 };
 
 /* Chrome static pinsets */
-static const char* kPinset_test_sha256_Data[] = {
+static const char* kPinset_test_Data[] = {
   kTestSPKIFingerprint,
 };
-static const StaticFingerprints kPinset_test_sha256 = {
-  sizeof(kPinset_test_sha256_Data) / sizeof(const char*),
-  kPinset_test_sha256_Data
+static const StaticFingerprints kPinset_test = {
+  sizeof(kPinset_test_Data) / sizeof(const char*),
+  kPinset_test_Data
 };
 
-static const StaticPinset kPinset_test = {
-  nullptr,
-  &kPinset_test_sha256
-};
-
-static const char* kPinset_google_sha1_Data[] = {
-  kGoogleBackup2048Fingerprint,
-};
-static const StaticFingerprints kPinset_google_sha1 = {
-  sizeof(kPinset_google_sha1_Data) / sizeof(const char*),
-  kPinset_google_sha1_Data
-};
-
-static const char* kPinset_google_sha256_Data[] = {
+static const char* kPinset_google_Data[] = {
   kGOOGLE_PIN_GoogleG2Fingerprint,
+  kGoogleBackup2048Fingerprint,
   kGeoTrust_Global_CAFingerprint,
 };
-static const StaticFingerprints kPinset_google_sha256 = {
-  sizeof(kPinset_google_sha256_Data) / sizeof(const char*),
-  kPinset_google_sha256_Data
+static const StaticFingerprints kPinset_google = {
+  sizeof(kPinset_google_Data) / sizeof(const char*),
+  kPinset_google_Data
 };
 
-static const StaticPinset kPinset_google = {
-  &kPinset_google_sha1,
-  &kPinset_google_sha256
-};
-
-static const char* kPinset_tor_sha1_Data[] = {
-  kTor1Fingerprint,
-  kTor2Fingerprint,
+static const char* kPinset_tor_Data[] = {
   kTor3Fingerprint,
-};
-static const StaticFingerprints kPinset_tor_sha1 = {
-  sizeof(kPinset_tor_sha1_Data) / sizeof(const char*),
-  kPinset_tor_sha1_Data
-};
-
-static const char* kPinset_tor_sha256_Data[] = {
   kDigiCert_High_Assurance_EV_Root_CAFingerprint,
   kGOOGLE_PIN_LetsEncryptAuthorityPrimary_X1_X3Fingerprint,
+  kTor1Fingerprint,
   kGOOGLE_PIN_RapidSSLFingerprint,
   kGOOGLE_PIN_LetsEncryptAuthorityBackup_X2_X4Fingerprint,
+  kTor2Fingerprint,
 };
-static const StaticFingerprints kPinset_tor_sha256 = {
-  sizeof(kPinset_tor_sha256_Data) / sizeof(const char*),
-  kPinset_tor_sha256_Data
-};
-
-static const StaticPinset kPinset_tor = {
-  &kPinset_tor_sha1,
-  &kPinset_tor_sha256
+static const StaticFingerprints kPinset_tor = {
+  sizeof(kPinset_tor_Data) / sizeof(const char*),
+  kPinset_tor_Data
 };
 
-static const char* kPinset_twitterCom_sha1_Data[] = {
-  kTwitter1Fingerprint,
-};
-static const StaticFingerprints kPinset_twitterCom_sha1 = {
-  sizeof(kPinset_twitterCom_sha1_Data) / sizeof(const char*),
-  kPinset_twitterCom_sha1_Data
-};
-
-static const char* kPinset_twitterCom_sha256_Data[] = {
+static const char* kPinset_twitterCom_Data[] = {
   kVerisign_Class_2_Public_Primary_Certification_Authority___G2Fingerprint,
   kVerisign_Class_3_Public_Primary_Certification_Authority___G2Fingerprint,
   kGeoTrust_Global_CA_2Fingerprint,
@@ -591,26 +529,14 @@ static const char* kPinset_twitterCom_sha256_Data[] = {
   kGeoTrust_Primary_Certification_Authority___G3Fingerprint,
   kDigiCert_Global_Root_CAFingerprint,
   kGeoTrust_Primary_Certification_Authority___G2Fingerprint,
-};
-static const StaticFingerprints kPinset_twitterCom_sha256 = {
-  sizeof(kPinset_twitterCom_sha256_Data) / sizeof(const char*),
-  kPinset_twitterCom_sha256_Data
-};
-
-static const StaticPinset kPinset_twitterCom = {
-  &kPinset_twitterCom_sha1,
-  &kPinset_twitterCom_sha256
-};
-
-static const char* kPinset_twitterCDN_sha1_Data[] = {
   kTwitter1Fingerprint,
 };
-static const StaticFingerprints kPinset_twitterCDN_sha1 = {
-  sizeof(kPinset_twitterCDN_sha1_Data) / sizeof(const char*),
-  kPinset_twitterCDN_sha1_Data
+static const StaticFingerprints kPinset_twitterCom = {
+  sizeof(kPinset_twitterCom_Data) / sizeof(const char*),
+  kPinset_twitterCom_Data
 };
 
-static const char* kPinset_twitterCDN_sha256_Data[] = {
+static const char* kPinset_twitterCDN_Data[] = {
   kVerisign_Class_2_Public_Primary_Certification_Authority___G2Fingerprint,
   kComodo_Trusted_Services_rootFingerprint,
   kCOMODO_Certification_AuthorityFingerprint,
@@ -651,19 +577,15 @@ static const char* kPinset_twitterCDN_sha256_Data[] = {
   kDigiCert_Global_Root_CAFingerprint,
   kGeoTrust_Primary_Certification_Authority___G2Fingerprint,
   kComodo_AAA_Services_rootFingerprint,
+  kTwitter1Fingerprint,
   kAddTrust_Qualified_Certificates_RootFingerprint,
 };
-static const StaticFingerprints kPinset_twitterCDN_sha256 = {
-  sizeof(kPinset_twitterCDN_sha256_Data) / sizeof(const char*),
-  kPinset_twitterCDN_sha256_Data
+static const StaticFingerprints kPinset_twitterCDN = {
+  sizeof(kPinset_twitterCDN_Data) / sizeof(const char*),
+  kPinset_twitterCDN_Data
 };
 
-static const StaticPinset kPinset_twitterCDN = {
-  &kPinset_twitterCDN_sha1,
-  &kPinset_twitterCDN_sha256
-};
-
-static const char* kPinset_dropbox_sha256_Data[] = {
+static const char* kPinset_dropbox_Data[] = {
   kEntrust_Root_Certification_Authority___EC1Fingerprint,
   kGOOGLE_PIN_ThawtePremiumServerFingerprint,
   kthawte_Primary_Root_CA___G3Fingerprint,
@@ -683,72 +605,35 @@ static const char* kPinset_dropbox_sha256_Data[] = {
   kDigiCert_Global_Root_CAFingerprint,
   kGeoTrust_Primary_Certification_Authority___G2Fingerprint,
 };
-static const StaticFingerprints kPinset_dropbox_sha256 = {
-  sizeof(kPinset_dropbox_sha256_Data) / sizeof(const char*),
-  kPinset_dropbox_sha256_Data
+static const StaticFingerprints kPinset_dropbox = {
+  sizeof(kPinset_dropbox_Data) / sizeof(const char*),
+  kPinset_dropbox_Data
 };
 
-static const StaticPinset kPinset_dropbox = {
-  nullptr,
-  &kPinset_dropbox_sha256
-};
-
-static const char* kPinset_facebook_sha1_Data[] = {
-  kFacebookBackupFingerprint,
-};
-static const StaticFingerprints kPinset_facebook_sha1 = {
-  sizeof(kPinset_facebook_sha1_Data) / sizeof(const char*),
-  kPinset_facebook_sha1_Data
-};
-
-static const char* kPinset_facebook_sha256_Data[] = {
+static const char* kPinset_facebook_Data[] = {
   kGOOGLE_PIN_DigiCertECCSecureServerCAFingerprint,
   kDigiCert_High_Assurance_EV_Root_CAFingerprint,
   kGOOGLE_PIN_SymantecClass3EVG3Fingerprint,
+  kFacebookBackupFingerprint,
 };
-static const StaticFingerprints kPinset_facebook_sha256 = {
-  sizeof(kPinset_facebook_sha256_Data) / sizeof(const char*),
-  kPinset_facebook_sha256_Data
-};
-
-static const StaticPinset kPinset_facebook = {
-  &kPinset_facebook_sha1,
-  &kPinset_facebook_sha256
+static const StaticFingerprints kPinset_facebook = {
+  sizeof(kPinset_facebook_Data) / sizeof(const char*),
+  kPinset_facebook_Data
 };
 
-static const char* kPinset_spideroak_sha1_Data[] = {
+static const char* kPinset_spideroak_Data[] = {
   kSpiderOak2Fingerprint,
   kSpiderOak3Fingerprint,
-};
-static const StaticFingerprints kPinset_spideroak_sha1 = {
-  sizeof(kPinset_spideroak_sha1_Data) / sizeof(const char*),
-  kPinset_spideroak_sha1_Data
-};
-
-static const char* kPinset_spideroak_sha256_Data[] = {
   kDigiCert_High_Assurance_EV_Root_CAFingerprint,
   kGeoTrust_Global_CAFingerprint,
 };
-static const StaticFingerprints kPinset_spideroak_sha256 = {
-  sizeof(kPinset_spideroak_sha256_Data) / sizeof(const char*),
-  kPinset_spideroak_sha256_Data
+static const StaticFingerprints kPinset_spideroak = {
+  sizeof(kPinset_spideroak_Data) / sizeof(const char*),
+  kPinset_spideroak_Data
 };
 
-static const StaticPinset kPinset_spideroak = {
-  &kPinset_spideroak_sha1,
-  &kPinset_spideroak_sha256
-};
-
-static const char* kPinset_yahoo_sha1_Data[] = {
-  kYahooBackup2Fingerprint,
+static const char* kPinset_yahoo_Data[] = {
   kYahooBackup1Fingerprint,
-};
-static const StaticFingerprints kPinset_yahoo_sha1 = {
-  sizeof(kPinset_yahoo_sha1_Data) / sizeof(const char*),
-  kPinset_yahoo_sha1_Data
-};
-
-static const char* kPinset_yahoo_sha256_Data[] = {
   kVerisign_Class_2_Public_Primary_Certification_Authority___G2Fingerprint,
   kVeriSign_Class_3_Public_Primary_Certification_Authority___G5Fingerprint,
   kGeoTrust_Primary_Certification_AuthorityFingerprint,
@@ -756,6 +641,7 @@ static const char* kPinset_yahoo_sha256_Data[] = {
   kVeriSign_Class_3_Public_Primary_Certification_Authority___G4Fingerprint,
   kDigiCert_High_Assurance_EV_Root_CAFingerprint,
   kVerisign_Class_2_Public_Primary_Certification_Authority___G3Fingerprint,
+  kYahooBackup2Fingerprint,
   kGeoTrust_Global_CAFingerprint,
   kVeriSign_Universal_Root_Certification_AuthorityFingerprint,
   kGeoTrust_Universal_CAFingerprint,
@@ -763,42 +649,25 @@ static const char* kPinset_yahoo_sha256_Data[] = {
   kDigiCert_Global_Root_CAFingerprint,
   kGeoTrust_Primary_Certification_Authority___G2Fingerprint,
 };
-static const StaticFingerprints kPinset_yahoo_sha256 = {
-  sizeof(kPinset_yahoo_sha256_Data) / sizeof(const char*),
-  kPinset_yahoo_sha256_Data
+static const StaticFingerprints kPinset_yahoo = {
+  sizeof(kPinset_yahoo_Data) / sizeof(const char*),
+  kPinset_yahoo_Data
 };
 
-static const StaticPinset kPinset_yahoo = {
-  &kPinset_yahoo_sha1,
-  &kPinset_yahoo_sha256
-};
-
-static const char* kPinset_swehackCom_sha1_Data[] = {
+static const char* kPinset_swehackCom_Data[] = {
   kSwehackFingerprint,
-  kSwehackBackupFingerprint,
-};
-static const StaticFingerprints kPinset_swehackCom_sha1 = {
-  sizeof(kPinset_swehackCom_sha1_Data) / sizeof(const char*),
-  kPinset_swehackCom_sha1_Data
-};
-
-static const char* kPinset_swehackCom_sha256_Data[] = {
   kDST_Root_CA_X3Fingerprint,
   kGOOGLE_PIN_LetsEncryptAuthorityPrimary_X1_X3Fingerprint,
   kGOOGLE_PIN_COMODORSADomainValidationSecureServerCAFingerprint,
   kGOOGLE_PIN_LetsEncryptAuthorityBackup_X2_X4Fingerprint,
+  kSwehackBackupFingerprint,
 };
-static const StaticFingerprints kPinset_swehackCom_sha256 = {
-  sizeof(kPinset_swehackCom_sha256_Data) / sizeof(const char*),
-  kPinset_swehackCom_sha256_Data
-};
-
-static const StaticPinset kPinset_swehackCom = {
-  &kPinset_swehackCom_sha1,
-  &kPinset_swehackCom_sha256
+static const StaticFingerprints kPinset_swehackCom = {
+  sizeof(kPinset_swehackCom_Data) / sizeof(const char*),
+  kPinset_swehackCom_Data
 };
 
-static const char* kPinset_nightx_sha256_Data[] = {
+static const char* kPinset_nightx_Data[] = {
   kCOMODO_Certification_AuthorityFingerprint,
   kDigiCert_Assured_ID_Root_CAFingerprint,
   kVeriSign_Class_3_Public_Primary_Certification_Authority___G5Fingerprint,
@@ -810,14 +679,9 @@ static const char* kPinset_nightx_sha256_Data[] = {
   kDigiCert_Global_Root_CAFingerprint,
   kGOOGLE_PIN_LetsEncryptAuthorityBackup_X2_X4Fingerprint,
 };
-static const StaticFingerprints kPinset_nightx_sha256 = {
-  sizeof(kPinset_nightx_sha256_Data) / sizeof(const char*),
-  kPinset_nightx_sha256_Data
-};
-
-static const StaticPinset kPinset_nightx = {
-  nullptr,
-  &kPinset_nightx_sha256
+static const StaticFingerprints kPinset_nightx = {
+  sizeof(kPinset_nightx_Data) / sizeof(const char*),
+  kPinset_nightx_Data
 };
 
 /* Domainlist */
@@ -827,7 +691,7 @@ struct TransportSecurityPreload {
   const bool mTestMode;
   const bool mIsMoz;
   const int32_t mId;
-  const StaticPinset *pinset;
+  const StaticFingerprints* pinset;
 };
 
 /* Sort hostnames for binary search. */
