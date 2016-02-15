@@ -24,6 +24,11 @@ pref("app.update.promptWaitTime", 3600);
 pref("app.update.badge", true);
 pref("extensions.hotfix.id", ""); // Bug 16837: Disable hotfix updates as they may cause compat issues
 
+#ifdef XP_WIN
+// For now, disable staged updates on Windows (see #18292).
+pref("app.update.staging.enabled", false);
+#endif
+
 // Disable "Slow startup" warnings and associated disk history
 // (bug #13346)
 pref("browser.slowStartup.notificationDisabled", true);
