@@ -7,5 +7,4 @@
 DIRS += [
     'loop',
     'pdfjs',
-    'shumway',
 ]

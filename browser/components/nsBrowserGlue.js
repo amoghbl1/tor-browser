@@ -79,11 +79,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "PdfJs",
 XPCOMUtils.defineLazyModuleGetter(this, "ProcessHangMonitor",
                                   "resource:///modules/ProcessHangMonitor.jsm");
 
-#ifdef NIGHTLY_BUILD
-XPCOMUtils.defineLazyModuleGetter(this, "ShumwayUtils",
-                                  "resource://shumway/ShumwayUtils.jsm");
-#endif
-
 XPCOMUtils.defineLazyModuleGetter(this, "webrtcUI",
                                   "resource:///modules/webrtcUI.jsm");
 
@@ -1079,13 +1074,6 @@ BrowserGlue.prototype = {
     // With older versions of the extension installed, this load will fail
     // passively.
     Services.ppmm.loadProcessScript("resource://pdf.js/pdfjschildbootstrap.js", true);
-
-#ifdef NIGHTLY_BUILD
-    // Registering Shumway bootstrap script the child processes.
-    Services.ppmm.loadProcessScript("chrome://shumway/content/bootstrap-content.js", true);
-    // Initializing Shumway (shall be run after child script registration).
-    ShumwayUtils.init();
-#endif
 
 #ifdef XP_WIN
     // For windows seven, initialize the jump list module.
