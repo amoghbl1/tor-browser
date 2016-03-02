@@ -2222,7 +2222,7 @@ nsImageFrame::LoadIcon(const nsAString& aSpec,
                        nullptr,      /* principal (not relevant for icons) */
                        loadGroup,
                        gIconLoad,
-                       nullptr,      /* Not associated with any particular document */
+                       aPresContext->Document(),
                        loadFlags,
                        nullptr,
                        contentPolicyType,
