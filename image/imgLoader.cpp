@@ -1400,6 +1400,9 @@ imgLoader::MinimizeCaches()
 bool
 imgLoader::PutIntoCache(const ImageCacheKey& aKey, imgCacheEntry* entry)
 {
+  if (!aKey.IsIsolated()) {
+    return false;
+  }
   imgCacheTable& cache = GetCache(aKey);
 
   LOG_STATIC_FUNC_WITH_PARAM(gImgLog,

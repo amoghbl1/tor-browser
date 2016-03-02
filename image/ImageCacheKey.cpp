@@ -14,6 +14,7 @@
 #include "nsIDOMDocument.h"
 #include "nsIDocument.h"
 #include "nsPrintfCString.h"
+#include "ThirdPartyUtil.h"
 
 namespace mozilla {
 
@@ -53,11 +54,17 @@ ImageCacheKey::ImageCacheKey(nsIURI* aURI, nsIDOMDocument* aDocument)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
+  nsresult rv = ThirdPartyUtil::GetFirstPartyHost(aNode, mIsolationKey);
+  mIsIsolated = NS_SUCCEEDED(rv);
+
   if (URISchemeIs(mURI, "blob")) {
     mBlobSerial = BlobSerial(mURI);
   }
 
-  mHash = ComputeHash(mURI, mBlobSerial, mControlledDocument);
+  nsCOMPtr<nsIDocument> doc = do_QueryInterface(aDocument);
+  /* rv = */ ThirdPartyUtil::GetFirstPartyHost(doc, mIsolationKey);
+
+  mHash = ComputeHash(mURI, mBlobSerial, mControlledDocument, mIsolationKey);
 }
 
 ImageCacheKey::ImageCacheKey(ImageURL* aURI, nsIDOMDocument* aDocument)
@@ -67,11 +74,17 @@ ImageCacheKey::ImageCacheKey(ImageURL* aURI, nsIDOMDocument* aDocument)
 {
   MOZ_ASSERT(aURI);
 
+  nsresult rv = ThirdPartyUtil::GetFirstPartyHost(aNode, mIsolationKey);
+  mIsIsolated = NS_SUCCEEDED(rv);
+
   if (URISchemeIs(mURI, "blob")) {
     mBlobSerial = BlobSerial(mURI);
   }
 
-  mHash = ComputeHash(mURI, mBlobSerial, mControlledDocument);
+  nsCOMPtr<nsIDocument> doc = do_QueryInterface(aDocument);
+  /* rv = */ ThirdPartyUtil::GetFirstPartyHost(doc, mIsolationKey);
+
+  mHash = ComputeHash(mURI, mBlobSerial, mControlledDocument, mIsolationKey);
 }
 
 ImageCacheKey::ImageCacheKey(const ImageCacheKey& aOther)
@@ -80,6 +93,7 @@ ImageCacheKey::ImageCacheKey(const ImageCacheKey& aOther)
   , mControlledDocument(aOther.mControlledDocument)
   , mHash(aOther.mHash)
   , mIsChrome(aOther.mIsChrome)
+  , mIsolationKey(aOther.mIsolationKey)
 { }
 
 ImageCacheKey::ImageCacheKey(ImageCacheKey&& aOther)
@@ -88,6 +102,7 @@ ImageCacheKey::ImageCacheKey(ImageCacheKey&& aOther)
   , mControlledDocument(aOther.mControlledDocument)
   , mHash(aOther.mHash)
   , mIsChrome(aOther.mIsChrome)
+  , mIsolationKey(aOther.mIsolationKey)
 { }
 
 bool
@@ -95,6 +110,10 @@ ImageCacheKey::operator==(const ImageCacheKey& aOther) const
 {
   // Don't share the image cache between a controlled document and anything else.
   if (mControlledDocument != aOther.mControlledDocument) {
+    return false;
+  }
+  // Make sure they belong to the same isolation key.
+  if (mIsolationKey != aOther.mIsolationKey) {
     return false;
   }
   if (mBlobSerial || aOther.mBlobSerial) {
@@ -117,7 +136,8 @@ ImageCacheKey::Spec() const
 /* static */ uint32_t
 ImageCacheKey::ComputeHash(ImageURL* aURI,
                            const Maybe<uint64_t>& aBlobSerial,
-                           void* aControlledDocument)
+                           void* aControlledDocument,
+                           const nsACString& aIsolationKey)
 {
   // Since we frequently call Hash() several times in a row on the same
   // ImageCacheKey, as an optimization we compute our hash once and store it.
@@ -131,13 +151,13 @@ ImageCacheKey::ComputeHash(ImageURL* aURI,
     // the same.
     nsAutoCString ref;
     aURI->GetRef(ref);
-    return HashGeneric(*aBlobSerial, HashString(ref + ptr));
+    return HashGeneric(*aBlobSerial, HashString(ref + ptr + NS_LITERAL_CSTRING("@") + aIsolationKey));
   }
 
   // For non-blob URIs, we hash the URI spec.
   nsAutoCString spec;
   aURI->GetSpec(spec);
-  return HashString(spec + ptr);
+  return HashString(spec + ptr + NS_LITERAL_CSTRING("@") + aIsolationKey);
 }
 
 /* static */ void*
