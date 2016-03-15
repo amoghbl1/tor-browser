@@ -18,6 +18,7 @@
 
 #include "asmjs/AsmJSModule.h"
 
+#include "mozilla/Atomics.h"
 #include "mozilla/BinarySearch.h"
 #include "mozilla/Compression.h"
 #include "mozilla/EnumeratedRange.h"
@@ -51,6 +52,7 @@ using namespace js;
 using namespace js::jit;
 using namespace js::wasm;
 using namespace js::frontend;
+using mozilla::Atomic;
 using mozilla::BinarySearch;
 using mozilla::Compression::LZ4;
 using mozilla::MakeEnumeratedRange;
@@ -61,17 +63,26 @@ using mozilla::PodZero;
 using mozilla::Swap;
 using JS::GenericNaN;
 
+// Limit the number of concurrent wasm code allocations per process. Note that
+// on Linux, the real maximum is ~32k, as each module requires 2 maps (RW/RX),
+// and the kernel's default max_map_count is ~65k.
+static Atomic<uint32_t> wasmCodeAllocations(0);
+static const uint32_t MaxWasmCodeAllocations = 16384;
+
 static uint8_t*
 AllocateExecutableMemory(ExclusiveContext* cx, size_t bytes)
 {
-    // On most platforms, this will allocate RWX memory. On iOS, or when
-    // --non-writable-jitcode is used, this will allocate RW memory. In this
-    // case, DynamicallyLinkModule will reprotect the code as RX.
+    // Allocate RW memory. DynamicallyLinkModule will reprotect the code as RX.
     unsigned permissions =
         ExecutableAllocator::initialProtectionFlags(ExecutableAllocator::Writable);
-    void* p = AllocateExecutableMemory(nullptr, bytes, permissions, "asm-js-code", AsmJSPageSize);
-    if (!p)
+    void* p = nullptr;
+    if (wasmCodeAllocations++ < MaxWasmCodeAllocations)
+        p = AllocateExecutableMemory(nullptr, bytes, permissions, "asm-js-code", AsmJSPageSize);
+    if (!p) {
+        wasmCodeAllocations--;
         ReportOutOfMemory(cx);
+    }
+
     return (uint8_t*)p;
 }
 
@@ -122,6 +133,8 @@ AsmJSModule::~AsmJSModule()
             exitDatum.baselineScript->removeDependentAsmJSModule(exit);
         }
 
+        MOZ_ASSERT(wasmCodeAllocations > 0);
+        wasmCodeAllocations--;
         DeallocateExecutableMemory(code_, pod.totalBytes_, AsmJSPageSize);
     }
 
