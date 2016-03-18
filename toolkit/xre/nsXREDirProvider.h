@@ -100,6 +100,12 @@ public:
    */
   nsresult GetProfileDir(nsIFile* *aResult);
 
+  /**
+   * Get the TorBrowser user data directory by calling the
+   * TorBrowser_GetUserDataDir() utility function.
+   */
+  nsresult GetTorBrowserUserDataDir(nsIFile* *aFile);
+
 protected:
   nsresult GetFilesInternal(const char* aProperty, nsISimpleEnumerator** aResult);
   nsresult GetUserDataDirectoryHome(nsIFile* *aFile, bool aLocal);
@@ -107,7 +113,6 @@ protected:
 #if defined(XP_UNIX) || defined(XP_MACOSX)
   static nsresult GetSystemExtensionsDirectory(nsIFile** aFile);
 #endif
-  nsresult GetAppRootDir(nsIFile* *aFile);
   static nsresult EnsureDirectoryExists(nsIFile* aDirectory);
   void EnsureProfileFileExists(nsIFile* aFile);
 

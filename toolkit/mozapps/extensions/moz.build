@@ -30,10 +30,13 @@ EXTRA_PP_COMPONENTS += [
 ]
 
 EXTRA_JS_MODULES += [
-    'AddonManager.jsm',
     'ChromeManifestParser.jsm',
     'DeferredSave.jsm',
     'LightweightThemeManager.jsm',
+]
+
+EXTRA_PP_JS_MODULES += [
+    'AddonManager.jsm',
 ]
 
 JAR_MANIFESTS += ['jar.mn']
