@@ -38,6 +38,8 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/Telemetry.h"
 
+#include "TorFileUtils.h"
+
 #include <stdlib.h>
 
 #ifdef XP_WIN
@@ -1057,40 +1059,48 @@ nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
                                       getter_AddRefs(updRoot));
   NS_ENSURE_SUCCESS(rv, rv);
 
-#else
+#elif defined(TOR_BROWSER_UPDATE)
+  // For Tor Browser, we store update history, etc. within the UpdateInfo
+  // directory under the user data directory.
+  nsresult rv = GetTorBrowserUserDataDir(getter_AddRefs(updRoot));
+  NS_ENSURE_SUCCESS(rv, rv);
+  rv = updRoot->AppendNative(NS_LITERAL_CSTRING("UpdateInfo"));
+  NS_ENSURE_SUCCESS(rv, rv);
+#if defined(XP_MACOSX) && defined(TOR_BROWSER_DATA_OUTSIDE_APP_DIR)
+  // Since the TorBrowser-Data directory may be shared among different
+  // installations of the application, embed the app path in the update dir
+  // so that the update history is partitioned. This is much less likely to
+  // be an issue on Linux or Windows because the Tor Browser packages for
+  // those platforms include a "container" folder that provides partitioning
+  // by default, and we do not support use of a shared, OS-recommended area
+  // for user data on those platforms.
+  nsCOMPtr<nsIFile> appFile;
+  bool per = false;
+  rv = GetFile(XRE_EXECUTABLE_FILE, &per, getter_AddRefs(appFile));
+  NS_ENSURE_SUCCESS(rv, rv);
+  nsCOMPtr<nsIFile> appRootDirFile;
+  nsAutoString appDirPath;
+  if (NS_FAILED(appFile->GetParent(getter_AddRefs(appRootDirFile))) ||
+      NS_FAILED(appRootDirFile->GetPath(appDirPath))) {
+    return NS_ERROR_FAILURE;
+  }
+
+  int32_t dotIndex = appDirPath.RFind(".app");
+  if (dotIndex == kNotFound) {
+    dotIndex = appDirPath.Length();
+  }
+  appDirPath = Substring(appDirPath, 1, dotIndex - 1);
+  rv = updRoot->AppendRelativePath(appDirPath);
+  NS_ENSURE_SUCCESS(rv, rv);
+#endif
+#else // ! TOR_BROWSER_UPDATE
   nsCOMPtr<nsIFile> appFile;
   bool per = false;
   nsresult rv = GetFile(XRE_EXECUTABLE_FILE, &per, getter_AddRefs(appFile));
   NS_ENSURE_SUCCESS(rv, rv);
   rv = appFile->GetParent(getter_AddRefs(updRoot));
   NS_ENSURE_SUCCESS(rv, rv);
-
 #ifdef XP_MACOSX
-#ifdef TOR_BROWSER_UPDATE
-#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
-  // For Tor Browser, we cannot store update history, etc. under the user's
-  // home directory. Instead, we place it under
-  // Tor Browser.app/../TorBrowser-Data/UpdateInfo/
-  nsCOMPtr<nsIFile> appRootDir;
-  rv = GetAppRootDir(getter_AddRefs(appRootDir));
-  NS_ENSURE_SUCCESS(rv, rv);
-  nsCOMPtr<nsIFile> localDir;
-  rv = appRootDir->GetParent(getter_AddRefs(localDir));
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("TorBrowser-Data"
-                                     XPCOM_FILE_PATH_SEPARATOR "UpdateInfo"));
-#else
-  // For Tor Browser, we cannot store update history, etc. under the user's home directory.
-  // Instead, we place it under Tor Browser.app/TorBrowser/UpdateInfo/
-  nsCOMPtr<nsIFile> localDir;
-  rv = GetAppRootDir(getter_AddRefs(localDir));
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = localDir->AppendNative(NS_LITERAL_CSTRING("TorBrowser"));
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = localDir->AppendNative(NS_LITERAL_CSTRING("UpdateInfo"));
-#endif
-  NS_ENSURE_SUCCESS(rv, rv);
-#else
   nsCOMPtr<nsIFile> appRootDirFile;
   nsCOMPtr<nsIFile> localDir;
   nsAutoString appDirPath;
@@ -1121,7 +1131,6 @@ nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
       NS_FAILED(localDir->AppendRelativePath(appDirPath))) {
     return NS_ERROR_FAILURE;
   }
-#endif
 
   localDir.forget(aResult);
   return NS_OK;
@@ -1215,7 +1224,7 @@ nsXREDirProvider::GetUpdateRootDir(nsIFile* *aResult)
   NS_ENSURE_SUCCESS(rv, rv);
 
 #endif // XP_WIN
-#endif
+#endif // ! TOR_BROWSER_UPDATE
   updRoot.forget(aResult);
   return NS_OK;
 }
@@ -1268,13 +1277,18 @@ nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile, bool aLocal)
   // Copied from nsAppFileLocationProvider (more or less)
   NS_ENSURE_ARG_POINTER(aFile);
   nsCOMPtr<nsIFile> localDir;
+  nsresult rv = GetTorBrowserUserDataDir(getter_AddRefs(localDir));
+  NS_ENSURE_SUCCESS(rv, rv);
 
-  nsresult rv = GetAppRootDir(getter_AddRefs(localDir));
-  NS_ENSURE_SUCCESS(rv, rv);
-  rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("TorBrowser"
-                                     XPCOM_FILE_PATH_SEPARATOR "Data"
+#if !defined(ANDROID)
+#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
+  rv = localDir->AppendNative(NS_LITERAL_CSTRING("Browser"));
+#else
+  rv = localDir->AppendRelativeNativePath(NS_LITERAL_CSTRING("Data"
                                      XPCOM_FILE_PATH_SEPARATOR "Browser"));
+#endif
   NS_ENSURE_SUCCESS(rv, rv);
+#endif
 
   if (aLocal) {
     rv = localDir->AppendNative(NS_LITERAL_CSTRING("Caches"));
@@ -1377,42 +1391,15 @@ nsXREDirProvider::GetUserDataDirectory(nsIFile** aFile, bool aLocal,
 }
 
 nsresult
-nsXREDirProvider::GetAppRootDir(nsIFile* *aFile)
+nsXREDirProvider::GetTorBrowserUserDataDir(nsIFile* *aFile)
 {
   NS_ENSURE_ARG_POINTER(aFile);
-  nsCOMPtr<nsIFile> appRootDir;
-
-  nsresult rv = GetAppDir()->Clone(getter_AddRefs(appRootDir));
+  nsCOMPtr<nsIFile> exeFile;
+  bool per = false;
+  nsresult rv = GetFile(XRE_EXECUTABLE_FILE, &per, getter_AddRefs(exeFile));
   NS_ENSURE_SUCCESS(rv, rv);
-
-  int levelsToRemove = 1; // In FF21+, appDir points to browser subdirectory.
-#if defined(XP_MACOSX)
-  levelsToRemove += 2;
-#endif
-  while (appRootDir && (levelsToRemove > 0)) {
-    // When crawling up the hierarchy, components named "." do not count.
-    nsAutoCString removedName;
-    rv = appRootDir->GetNativeLeafName(removedName);
-    NS_ENSURE_SUCCESS(rv, rv);
-    bool didRemove = !removedName.Equals(".");
-
-    // Remove a directory component.
-    nsCOMPtr<nsIFile> parentDir;
-    rv = appRootDir->GetParent(getter_AddRefs(parentDir));
-    NS_ENSURE_SUCCESS(rv, rv);
-    appRootDir = parentDir;
-
-    if (didRemove)
-      --levelsToRemove;
-  }
-
-  if (!appRootDir)
-    return NS_ERROR_FAILURE;
-
-  appRootDir.forget(aFile);
-  return NS_OK;
+  return TorBrowser_GetUserDataDir(exeFile, aFile);
 }
-
 
 nsresult
 nsXREDirProvider::EnsureDirectoryExists(nsIFile* aDirectory)
