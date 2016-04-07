@@ -36,6 +36,8 @@ struct DataInfo
 static nsClassHashtable<nsCStringHashKey, DataInfo>* gDataTable;
 static nsCOMPtr<mozIThirdPartyUtil> gThirdPartyUtilService;
 
+/**
+//defined but not used
 static nsCString GetFirstPartyHostFromCaller() {
   if (!gThirdPartyUtilService) {
     gThirdPartyUtilService = do_GetService(THIRDPARTYUTIL_CONTRACTID);
@@ -44,6 +46,7 @@ static nsCString GetFirstPartyHostFromCaller() {
   gThirdPartyUtilService->GetFirstPartyHostFromCaller(host);
   return host;
 }
+*/
 
 // Memory reporting for the hash table.
 namespace mozilla {
