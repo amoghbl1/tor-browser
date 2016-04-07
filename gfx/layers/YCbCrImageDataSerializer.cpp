@@ -150,6 +150,13 @@ YCbCrImageDataDeserializerBase::ComputeMinBufferSize(const gfx::IntSize& aYSize,
     gfxDebug() << "Non-positive YCbCr buffer size request " << aYSize.height << "x" << aYSize.width << ", " << aCbCrSize.height << "x" << aCbCrSize.width;
     return 0;
   }
+
+  if (!gfx::Factory::AllowedSurfaceSize(aYSize) ||
+      aCbCrSize.width > aYSize.width ||
+      aCbCrSize.height > aYSize.height) {
+    return 0;
+  }
+
   return ComputeOffset(aYSize.height, aYStride)
          + 2 * ComputeOffset(aCbCrSize.height, aCbCrStride)
          + MOZ_ALIGN_WORD(sizeof(YCbCrBufferInfo));
@@ -287,7 +294,9 @@ YCbCrImageDataDeserializer::ToDataSourceSurface()
   }
 
   DataSourceSurface::MappedSurface map;
-  result->Map(DataSourceSurface::MapType::WRITE, &map);
+  if (NS_WARN_IF(!result->Map(DataSourceSurface::MapType::WRITE, &map))) {
+    return nullptr;
+  }
 
   gfx::ConvertYCbCrToRGB32(GetYData(), GetCbData(), GetCrData(),
                            map.mData,

@@ -879,7 +879,12 @@
             if (sizedIconUrl) {
               sizedIconUrl = this.PlacesUtils.getImageURLForResolution(window, sizedIconUrl);
             }
-            if (sizedIconUrl != aTab.getAttribute("image")) {
+            let firstPartyURI = browser.currentURI.spec;
+            if (sizedIconUrl !== aTab.getAttribute("image") || firstPartyURI !== aTab.getAttribute("firstparty")) {
+              if (firstPartyURI)
+                aTab.setAttribute("firstparty", firstPartyURI);
+              else
+                aTab.removeAttribute("firstparty");
               if (sizedIconUrl)
                 aTab.setAttribute("image", sizedIconUrl);
               else
@@ -1285,7 +1290,7 @@
             return;
 
           // This event should be dispatched when any of these attributes change:
-          // label, crop, busy, image, selected
+          // label, crop, busy, image, selected, firstparty
           var event = document.createEvent("Events");
           event.initEvent("TabAttrModified", true, false);
           aTab.dispatchEvent(event);
@@ -5106,7 +5111,13 @@
 
       <field name="mOverCloseButton">false</field>
       <field name="mCorrespondingMenuitem">null</field>
+
+      <!--
+      While it would make sense to track this in a field, the field will get nuked
+      once the node is gone from the DOM, which causes us to think the tab is not
+      closed, which causes us to make wrong decisions. So we use an expando instead.
       <field name="closing">false</field>
+      -->
 
       <method name="_mouseenter">
         <body><![CDATA[
@@ -5281,6 +5292,7 @@
             aMenuitem.setAttribute("busy", aTab.getAttribute("busy"));
             aMenuitem.removeAttribute("image");
           } else {
+            aMenuitem.setAttribute("firstparty", aTab.getAttribute("firstparty"));
             aMenuitem.setAttribute("image", aTab.getAttribute("image"));
             aMenuitem.removeAttribute("busy");
           }

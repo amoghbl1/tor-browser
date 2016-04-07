@@ -627,7 +627,11 @@ DataTextureSourceD3D11::Update(DataSourceSurface* aSurface,
     }
 
     DataSourceSurface::MappedSurface map;
-    aSurface->Map(DataSourceSurface::MapType::READ, &map);
+    if (!aSurface->Map(DataSourceSurface::MapType::READ, &map)) {
+      gfxCriticalError() << "Failed to map surface.";
+      Reset();
+      return false;
+    }
 
     if (aDestRegion) {
       nsIntRegionRectIterator iter(*aDestRegion);
@@ -838,6 +842,10 @@ SyncObjectD3D11::FinalizeFrame()
     hr = mutex->AcquireSync(0, 20000);
 
     if (hr == WAIT_TIMEOUT) {
+      if (gfxWindowsPlatform::GetPlatform()->DidRenderingDeviceReset()) {
+        gfxWarning() << "AcquireSync timed out because of device reset.";
+        return;
+      }
       MOZ_CRASH();
     }
 
@@ -862,6 +870,10 @@ SyncObjectD3D11::FinalizeFrame()
     hr = mutex->AcquireSync(0, 20000);
 
     if (hr == WAIT_TIMEOUT) {
+      if (gfxWindowsPlatform::GetPlatform()->DidRenderingDeviceReset()) {
+        gfxWarning() << "AcquireSync timed out because of device reset.";
+        return;
+      }
       MOZ_CRASH();
     }
 

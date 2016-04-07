@@ -106,13 +106,15 @@ nsHTTPDownloadEvent::Run()
 
   chan->SetLoadFlags(nsIRequest::LOAD_ANONYMOUS);
 
-  // If we have an isolation key, use it as the isolation key for this channel.
+  // If we have an isolation key, use it as the  URI for this channel.
   if (!mRequestSession->mIsolationKey.IsEmpty()) {
     nsCOMPtr<nsIHttpChannelInternal> channelInternal(do_QueryInterface(chan));
     if (channelInternal) {
-      nsCOMPtr<nsIURI> pageURI;
-      nsresult rv = NS_NewURI(getter_AddRefs(pageURI), mRequestSession->mIsolationKey.get());
-      channelInternal->SetDocumentURI(pageURI);
+      nsCString documentURISpec("https://");
+      documentURISpec.Append(mRequestSession->mIsolationKey);
+      nsCOMPtr<nsIURI> documentURI;
+      /* nsresult rv = */ NS_NewURI(getter_AddRefs(documentURI), documentURISpec);
+      channelInternal->SetDocumentURI(documentURI);
     }
   }
 

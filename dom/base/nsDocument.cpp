@@ -226,6 +226,7 @@
 #include "nsLocation.h"
 #include "mozilla/dom/FontFaceSet.h"
 #include "mozilla/dom/BoxObject.h"
+#include "ThirdPartyUtil.h"
 
 #ifdef MOZ_MEDIA_NAVIGATOR
 #include "mozilla/MediaManager.h"
@@ -1575,7 +1576,8 @@ nsIDocument::nsIDocument()
     mIsBeingUsedAsImage(false),
     mHasLinksToUpdate(false),
     mPartID(0),
-    mDidFireDOMContentLoaded(true)
+    mDidFireDOMContentLoaded(true),
+    mSVGStatus(mozilla::dom::SVGStatus_Unknown)
 {
   SetInDocument();
 
@@ -1776,8 +1778,12 @@ nsDocument::~nsDocument()
 
   mPendingTitleChangeEvent.Revoke();
 
-  for (uint32_t i = 0; i < mHostObjectURIs.Length(); ++i) {
-    nsHostObjectProtocolHandler::RemoveDataEntry(mHostObjectURIs[i]);
+  nsCString isolationKey;
+  nsresult rv = ThirdPartyUtil::GetFirstPartyHost(this, isolationKey);
+  if (NS_SUCCEEDED(rv)) {
+    for (uint32_t i = 0; i < mHostObjectURIs.Length(); ++i) {
+      nsHostObjectProtocolHandler::RemoveDataEntry(mHostObjectURIs[i], isolationKey);
+    }
   }
 
   // We don't want to leave residual locks on images. Make sure we're in an
@@ -2156,8 +2162,12 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsDocument)
     NS_IMPL_CYCLE_COLLECTION_UNLINK(mCSSLoader)
   }
 
-  for (uint32_t i = 0; i < tmp->mHostObjectURIs.Length(); ++i) {
-    nsHostObjectProtocolHandler::RemoveDataEntry(tmp->mHostObjectURIs[i]);
+  nsCString isolationKey;
+  nsresult rv = ThirdPartyUtil::GetFirstPartyHost(tmp, isolationKey);
+  if (NS_SUCCEEDED(rv)) {
+    for (uint32_t i = 0; i < tmp->mHostObjectURIs.Length(); ++i) {
+      nsHostObjectProtocolHandler::RemoveDataEntry(tmp->mHostObjectURIs[i], isolationKey);
+    }
   }
 
   // We own only the items in mDOMMediaQueryLists that have listeners;
@@ -2419,6 +2429,8 @@ nsDocument::ResetToURI(nsIURI *aURI, nsILoadGroup *aLoadGroup,
   mReferrer.Truncate();
 
   mXMLDeclarationBits = 0;
+
+  mSVGStatus = SVGStatus_Unknown;
 
   // Now get our new principal
   if (aPrincipal) {
@@ -3928,7 +3940,7 @@ void
 nsDocument::DeleteShell()
 {
   mExternalResourceMap.HideViewers();
-  if (IsEventHandlingEnabled()) {
+  if (IsEventHandlingEnabled() && !AnimationsPaused()) {
     RevokeAnimationFrameNotifications();
   }
 
@@ -4687,7 +4699,7 @@ nsDocument::SetScriptGlobalObject(nsIScriptGlobalObject *aScriptGlobalObject)
     // our layout history state now.
     mLayoutHistoryState = GetLayoutHistoryState();
 
-    if (mPresShell && !EventHandlingSuppressed()) {
+    if (mPresShell && !EventHandlingSuppressed() && !AnimationsPaused()) {
       RevokeAnimationFrameNotifications();
     }
 
@@ -10276,7 +10288,8 @@ nsIDocument::ScheduleFrameRequestCallback(const FrameRequestCallbackHolder& aCal
   DebugOnly<FrameRequest*> request =
     mFrameRequestCallbacks.AppendElement(FrameRequest(aCallback, newHandle));
   NS_ASSERTION(request, "This is supposed to be infallible!");
-  if (!alreadyRegistered && mPresShell && IsEventHandlingEnabled()) {
+  if (!alreadyRegistered && mPresShell && IsEventHandlingEnabled() &&
+      !AnimationsPaused()) {
     mPresShell->GetPresContext()->RefreshDriver()->
       ScheduleFrameRequestCallbacks(this);
   }

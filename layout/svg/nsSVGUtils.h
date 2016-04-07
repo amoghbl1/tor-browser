@@ -30,6 +30,7 @@
 class gfxContext;
 class gfxPattern;
 class nsFrameList;
+class nsIChannel;
 class nsIContent;
 class nsIDocument;
 class nsIFrame;

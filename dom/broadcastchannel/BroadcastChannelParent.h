@@ -24,11 +24,13 @@ class BroadcastChannelParent final : public PBroadcastChannelParent
 public:
   void CheckAndDeliver(const ClonedMessageData& aData,
                        const nsString& aOrigin,
+                       const nsString& aFirstPartyHost,
                        const nsString& aChannel,
                        bool aPrivateBrowsing);
 
 private:
   BroadcastChannelParent(const nsAString& aOrigin,
+                         const nsAString& aFirstPartyHost,
                          const nsAString& aChannel,
                          bool aPrivateBrowsing);
   ~BroadcastChannelParent();
@@ -42,6 +44,7 @@ private:
 
   nsRefPtr<BroadcastChannelService> mService;
   nsString mOrigin;
+  nsString mFirstPartyHost;
   nsString mChannel;
   bool mPrivateBrowsing;
 };

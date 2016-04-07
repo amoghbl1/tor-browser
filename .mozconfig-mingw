@@ -1,5 +1,4 @@
-#Specify the cross compile
-export CROSS_COMPILE=1
+CROSS_COMPILE=1
 
 ac_add_options --enable-application=browser
 ac_add_options --target=i686-w64-mingw32

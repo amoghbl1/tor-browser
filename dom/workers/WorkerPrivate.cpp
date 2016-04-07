@@ -99,6 +99,7 @@
 #include "WorkerRunnable.h"
 #include "WorkerScope.h"
 #include "WorkerThread.h"
+#include "ThirdPartyUtil.h"
 
 #ifdef XP_WIN
 #undef PostMessage
@@ -708,14 +709,17 @@ class MainThreadReleaseRunnable final : public nsRunnable
   nsTArray<nsCOMPtr<nsISupports>> mDoomed;
   nsTArray<nsCString> mHostObjectURIs;
   nsCOMPtr<nsILoadGroup> mLoadGroupToCancel;
+  nsRefPtr<WorkerPrivate> mWorkerPrivate;
 
 public:
   MainThreadReleaseRunnable(nsTArray<nsCOMPtr<nsISupports>>& aDoomed,
                             nsTArray<nsCString>& aHostObjectURIs,
+                            WorkerPrivate* aWorkerPrivate,
                             nsCOMPtr<nsILoadGroup>& aLoadGroupToCancel)
   {
     mDoomed.SwapElements(aDoomed);
     mHostObjectURIs.SwapElements(aHostObjectURIs);
+    mWorkerPrivate = aWorkerPrivate;
     mLoadGroupToCancel.swap(aLoadGroupToCancel);
   }
 
@@ -731,8 +735,17 @@ public:
 
     mDoomed.Clear();
 
-    for (uint32_t index = 0; index < mHostObjectURIs.Length(); index++) {
-      nsHostObjectProtocolHandler::RemoveDataEntry(mHostObjectURIs[index]);
+    nsCOMPtr<nsIDocument> doc;
+    nsCOMPtr<nsPIDOMWindow> window = mWorkerPrivate->GetWindow();
+    if (window) {
+      doc = window->GetExtantDoc();
+    }
+    nsCString isolationKey;
+    nsresult rv = ThirdPartyUtil::GetFirstPartyHost(doc, isolationKey);
+    if (NS_SUCCEEDED(rv)) {
+      for (uint32_t index = 0; index < mHostObjectURIs.Length(); index++) {
+        nsHostObjectProtocolHandler::RemoveDataEntry(mHostObjectURIs[index], isolationKey);
+      }
     }
 
     return NS_OK;
@@ -782,7 +795,8 @@ private:
     mFinishedWorker->StealHostObjectURIs(hostObjectURIs);
 
     nsRefPtr<MainThreadReleaseRunnable> runnable =
-      new MainThreadReleaseRunnable(doomed, hostObjectURIs, loadGroupToCancel);
+      new MainThreadReleaseRunnable(doomed, hostObjectURIs,
+                                    aWorkerPrivate, loadGroupToCancel);
     if (NS_FAILED(NS_DispatchToMainThread(runnable))) {
       NS_WARNING("Failed to dispatch, going to leak!");
     }
@@ -840,7 +854,7 @@ private:
     mFinishedWorker->StealHostObjectURIs(hostObjectURIs);
 
     nsRefPtr<MainThreadReleaseRunnable> runnable =
-      new MainThreadReleaseRunnable(doomed, hostObjectURIs, loadGroupToCancel);
+      new MainThreadReleaseRunnable(doomed, hostObjectURIs, mFinishedWorker, loadGroupToCancel);
     if (NS_FAILED(NS_DispatchToCurrentThread(runnable))) {
       NS_WARNING("Failed to dispatch, going to leak!");
     }
@@ -4341,6 +4355,7 @@ WorkerPrivate::GetLoadInfo(JSContext* aCx, nsPIDOMWindow* aWindow,
     }
 
     loadInfo.mDomain = aParent->Domain();
+    loadInfo.mIsolationKey = aParent->IsolationKey();
     loadInfo.mFromWindow = aParent->IsFromWindow();
     loadInfo.mWindowID = aParent->WindowID();
     loadInfo.mIndexedDBAllowed = aParent->IsIndexedDBAllowed();
@@ -4406,6 +4421,10 @@ WorkerPrivate::GetLoadInfo(JSContext* aCx, nsPIDOMWindow* aWindow,
 
       loadInfo.mBaseURI = document->GetDocBaseURI();
       loadInfo.mLoadGroup = document->GetDocumentLoadGroup();
+
+      nsCString isolationKey;
+      ThirdPartyUtil::GetFirstPartyHost(document, isolationKey);
+      loadInfo.mIsolationKey = isolationKey;
 
       // Use the document's NodePrincipal as our principal if we're not being
       // called from chrome.
@@ -4644,6 +4663,8 @@ WorkerPrivate::DoRunLoop(JSContext* aCx)
             runnable->Release();
           }
         }
+
+        mPreemptingRunnableInfos.Clear();
 
         // Clear away our MessagePorts.
         mWorkerPorts.Clear();

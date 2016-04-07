@@ -169,6 +169,7 @@ public:
 
     nsAutoPtr<PrincipalInfo> mPrincipalInfo;
     nsCString mDomain;
+    nsCString mIsolationKey;
 
     uint64_t mWindowID;
 
@@ -218,6 +219,7 @@ public:
       mPrincipalInfo = aOther.mPrincipalInfo.forget();
 
       mDomain = aOther.mDomain;
+      mIsolationKey = aOther.mIsolationKey;
       mWindowID = aOther.mWindowID;
       mFromWindow = aOther.mFromWindow;
       mEvalAllowed = aOther.mEvalAllowed;
@@ -530,6 +532,12 @@ public:
   Domain() const
   {
     return mLoadInfo.mDomain;
+  }
+
+  const nsCString&
+  IsolationKey() const
+  {
+    return mLoadInfo.mIsolationKey;
   }
 
   bool

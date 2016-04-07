@@ -22,6 +22,7 @@
 #include "nsPrintfCString.h"
 #include "nsIConsoleService.h"
 #include "nsContentUtils.h"
+#include "nsIContent.h"
 
 NS_IMPL_ISUPPORTS(ThirdPartyUtil, mozIThirdPartyUtil)
 
@@ -31,6 +32,28 @@ NS_IMPL_ISUPPORTS(ThirdPartyUtil, mozIThirdPartyUtil)
 static PRLogModuleInfo *gThirdPartyLog;
 #undef LOG
 #define LOG(args)     PR_LOG(gThirdPartyLog, PR_LOG_DEBUG, args)
+
+// static
+mozIThirdPartyUtil* ThirdPartyUtil::gThirdPartyUtilService = nullptr;
+
+//static
+nsresult
+ThirdPartyUtil::GetFirstPartyHost(nsIChannel* aChannel, nsIDocument* aDocument, nsACString& aResult)
+{
+  if (!gThirdPartyUtilService) {
+    nsresult rv = CallGetService(THIRDPARTYUTIL_CONTRACTID, &gThirdPartyUtilService);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+  nsCOMPtr<nsIURI> isolationURI;
+  nsresult rv = gThirdPartyUtilService->GetFirstPartyIsolationURI(aChannel, aDocument, getter_AddRefs(isolationURI));
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (!isolationURI) {
+    // Isolation is not active.
+    aResult.Truncate();
+    return NS_OK;
+  }
+  return gThirdPartyUtilService->GetFirstPartyHostForIsolation(isolationURI, aResult);
+}
 
 nsresult
 ThirdPartyUtil::Init()
@@ -170,8 +193,17 @@ ThirdPartyUtil::GetOriginatingURI(nsIChannel *aChannel, nsIURI **aURI)
   }
 
   // case 3)
-  if (!topWin)
+  if (!topWin || nsContentUtils::IsChromeWindow(topWin))
+  {
+    if (httpChannelInternal)
+    {
+      httpChannelInternal->GetDocumentURI(aURI);
+      if (*aURI) {
+        return NS_OK;
+      }
+    }
     return NS_ERROR_INVALID_ARG;
+  }
 
   // case 4)
   if (ourWin == topWin) {
@@ -521,12 +553,13 @@ ThirdPartyUtil::IsFirstPartyIsolationActive(nsIChannel *aChannel,
 // is deactivated, then aOutput will return null.
 // Not scriptable due to the use of an nsIDocument parameter.
 NS_IMETHODIMP
-ThirdPartyUtil::GetFirstPartyIsolationURI(nsIChannel *aChannel, nsIDocument *aDoc, nsIURI **aOutput)
+ThirdPartyUtil::GetFirstPartyIsolationURI(nsIChannel *aChannel, nsINode *aNode, nsIURI **aOutput)
 {
+  nsCOMPtr<nsIDocument> aDoc(aNode ? aNode->GetCurrentDoc() : nullptr);
   bool isolationActive = false;
   (void)IsFirstPartyIsolationActive(aChannel, aDoc, &isolationActive);
   if (isolationActive) {
-    return GetFirstPartyURI(aChannel, aDoc, aOutput);
+    return GetFirstPartyURI(aChannel, aNode, aOutput);
   } else {
     // We return a null pointer when isolation is off.
     *aOutput = nullptr;
@@ -537,15 +570,15 @@ ThirdPartyUtil::GetFirstPartyIsolationURI(nsIChannel *aChannel, nsIDocument *aDo
 // Not scriptable due to the use of an nsIDocument parameter.
 NS_IMETHODIMP
 ThirdPartyUtil::GetFirstPartyURI(nsIChannel *aChannel,
-                                 nsIDocument *aDoc,
+                                 nsINode *aNode,
                                  nsIURI **aOutput)
 {
-  return GetFirstPartyURIInternal(aChannel, aDoc, true, aOutput);
+  return GetFirstPartyURIInternal(aChannel, aNode, true, aOutput);
 }
 
 nsresult
 ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
-                                         nsIDocument *aDoc,
+                                         nsINode *aNode,
                                          bool aLogErrors,
                                          nsIURI **aOutput)
 {
@@ -556,6 +589,32 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
     return rv;
 
   *aOutput = nullptr;
+
+  // Favicons, or other items being loaded in chrome that belong
+  // to a particular web site should be assigned that site's first party.
+  if (aNode && aNode->IsElement() && aNode->OwnerDoc() &&
+      nsContentUtils::IsChromeDoc(aNode->OwnerDoc())) {
+    nsTArray<nsINode*> nodeAncestors;
+    nsContentUtils::GetAncestors(aNode, nodeAncestors);
+    for (nsINode* nodeAncestor : nodeAncestors) {
+      if (nodeAncestor->IsElement()) {
+        nsString firstparty;
+        nodeAncestor->AsElement()->GetAttribute(NS_LITERAL_STRING("firstparty"), firstparty);
+        if (!firstparty.IsEmpty()) {
+          nsCOMPtr<nsIURI> tempURI;
+          rv = NS_NewURI(getter_AddRefs(tempURI), firstparty);
+          if (rv != NS_OK) {
+            return rv;
+          } else {
+            NS_ADDREF(*aOutput = tempURI);
+            return NS_OK;
+          }
+        }
+      }
+    }
+  }
+
+  nsCOMPtr<nsIDocument> aDoc(aNode ? aNode->GetCurrentDoc() : nullptr);
 
   if (!aChannel && aDoc) {
     aChannel = aDoc->GetChannel();
@@ -596,13 +655,17 @@ ThirdPartyUtil::GetFirstPartyURIInternal(nsIChannel *aChannel,
 
     if (aDoc->GetWindow()) {
       aDoc->GetWindow()->GetTop(getter_AddRefs(top));
-      top->GetDocument(getter_AddRefs(topDDoc));
+      if (top) {
+        top->GetDocument(getter_AddRefs(topDDoc));
 
-      nsCOMPtr<nsIDocument> topDoc(do_QueryInterface(topDDoc));
-      docURI = topDoc->GetOriginalURI();
-      if (docURI) {
-        // Give us a mutable URI and also addref
-        rv = NS_EnsureSafeToReturn(docURI, aOutput);
+        nsCOMPtr<nsIDocument> topDoc(do_QueryInterface(topDDoc));
+        if (topDoc) {
+          docURI = topDoc->GetOriginalURI();
+          if (docURI) {
+            // Give us a mutable URI and also addref
+            rv = NS_EnsureSafeToReturn(docURI, aOutput);
+          }
+        }
       }
     } else {
       // XXX: Chrome callers (such as NoScript) can end up here
@@ -714,13 +777,4 @@ ThirdPartyUtil::GetFirstPartyHostForIsolation(nsIURI *aFirstPartyURI,
 
   aHost.Append("--");
   return NS_OK;
-}
-
-NS_IMETHODIMP
-ThirdPartyUtil::GetFirstPartyHostFromCaller(nsACString& aHost) {
-  nsCOMPtr<nsIURI> uri;
-  nsresult rv = GetFirstPartyIsolationURI(nullptr,
-                 nsContentUtils::GetDocumentFromCaller(), getter_AddRefs(uri));
-  NS_ENSURE_SUCCESS(rv, rv);
-  return GetFirstPartyHostForIsolation(uri, aHost);
 }

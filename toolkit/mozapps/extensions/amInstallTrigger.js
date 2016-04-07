@@ -61,24 +61,44 @@ RemoteMediator.prototype = {
 
   enabled: function(url) {
     let params = {
-      referer: url,
       mimetype: XPINSTALL_MIMETYPE
     };
     return this.mm.sendSyncMessage(MSG_INSTALL_ENABLED, params)[0];
   },
 
-  install: function(installs, referer, callback, window) {
-    let messageManager = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                         .getInterface(Ci.nsIWebNavigation)
-                         .QueryInterface(Ci.nsIDocShell)
-                         .QueryInterface(Ci.nsIInterfaceRequestor)
-                         .getInterface(Ci.nsIContentFrameMessageManager);
-
+  install: function(installs, principal, callback, window) {
     let callbackID = this._addCallback(callback, installs.uris);
 
     installs.mimetype = XPINSTALL_MIMETYPE;
-    installs.referer = referer;
+    installs.triggeringPrincipal = principal;
     installs.callbackID = callbackID;
+
+    if (Services.appinfo.processType == Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT) {
+      // When running in the main process this might be a frame inside an
+      // in-content UI page, walk up to find the first frame element in a chrome
+      // privileged document
+      let element = window.frameElement;
+      let ssm = Services.scriptSecurityManager;
+      while (element && !ssm.isSystemPrincipal(element.ownerDocument.nodePrincipal))
+        element = element.ownerDocument.defaultView.frameElement;
+
+      if (element) {
+        let listener = Cc["@mozilla.org/addons/integration;1"].
+                       getService(Ci.nsIMessageListener);
+        return listener.wrappedJSObject.receiveMessage({
+          name: MSG_INSTALL_ADDONS,
+          target: element,
+          data: installs,
+        });
+      }
+    }
+
+    // Fall back to sending through the message manager
+    let messageManager = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                               .getInterface(Ci.nsIWebNavigation)
+                               .QueryInterface(Ci.nsIDocShell)
+                               .QueryInterface(Ci.nsIInterfaceRequestor)
+                               .getInterface(Ci.nsIContentFrameMessageManager);
 
     return messageManager.sendSyncMessage(MSG_INSTALL_ADDONS, installs)[0];
   },
@@ -167,7 +187,7 @@ InstallTrigger.prototype = {
       installData.icons.push(iconUrl ? iconUrl.spec : null);
     }
 
-    return this._mediator.install(installData, this._url.spec, callback, this._window);
+    return this._mediator.install(installData, this._principal, callback, this._window);
   },
 
   startSoftwareUpdate: function(url, flags) {

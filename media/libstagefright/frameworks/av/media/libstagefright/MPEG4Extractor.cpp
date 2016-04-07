@@ -62,7 +62,7 @@ public:
 
     virtual status_t read(MediaBuffer **buffer, const ReadOptions *options = NULL);
     virtual status_t fragmentedRead(MediaBuffer **buffer, const ReadOptions *options = NULL);
-    virtual Vector<Indice> exportIndex();
+    virtual nsTArray<Indice> exportIndex();
 
 protected:
     virtual ~MPEG4Source();
@@ -508,12 +508,19 @@ status_t MPEG4Extractor::readMetaData() {
     CHECK_NE(err, (status_t)NO_INIT);
 
     // copy pssh data into file metadata
-    int psshsize = 0;
+    uint64_t psshsize = 0;
     for (size_t i = 0; i < mPssh.size(); i++) {
         psshsize += 20 + mPssh[i].datalen;
+        if (mPssh[i].datalen > kMAX_ALLOCATION - 20 ||
+            psshsize > kMAX_ALLOCATION) {
+            return ERROR_MALFORMED;
+        }
     }
     if (psshsize) {
         char *buf = (char*)malloc(psshsize);
+        if (!buf) {
+            return ERROR_MALFORMED;
+        }
         char *ptr = buf;
         for (size_t i = 0; i < mPssh.size(); i++) {
             memcpy(ptr, mPssh[i].uuid, 20); // uuid + length
@@ -1883,12 +1890,15 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
             if (mFileMetaData != NULL) {
                 ALOGV("chunk_data_size = %lld and data_offset = %lld",
                         chunk_data_size, data_offset);
+                const int kSkipBytesOfDataBox = 16;
+                if (chunk_data_size <= kSkipBytesOfDataBox) {
+                  return ERROR_MALFORMED;
+                }
                 sp<ABuffer> buffer = new ABuffer(chunk_data_size + 1);
                 if (mDataSource->readAt(
                     data_offset, buffer->data(), chunk_data_size) != (ssize_t)chunk_data_size) {
                     return ERROR_IO;
                 }
-                const int kSkipBytesOfDataBox = 16;
                 mFileMetaData->setData(
                     kKeyAlbumArt, MetaData::TYPE_NONE,
                     buffer->data() + kSkipBytesOfDataBox, chunk_data_size - kSkipBytesOfDataBox);
@@ -2435,7 +2445,7 @@ status_t MPEG4Extractor::verifyTrack(Track *track) {
         }
     }
 
-    if (!track->sampleTable->isValid()) {
+    if (!track->sampleTable.get() || !track->sampleTable->isValid()) {
         // Make sure we have all the metadata we need.
         return ERROR_MALFORMED;
     }
@@ -4080,16 +4090,39 @@ status_t MPEG4Source::fragmentedRead(
 static int compositionOrder(MediaSource::Indice* const* indice0,
         MediaSource::Indice* const* indice1)
 {
-  return (*indice0)->start_composition - (*indice1)->start_composition;
+  if ((*indice0)->start_composition > (*indice1)->start_composition) {
+      return 1;
+  } else if ((*indice0)->start_composition == (*indice1)->start_composition) {
+      return 0;
+  } else {
+      return -1;
+  }
 }
 
-Vector<MediaSource::Indice> MPEG4Source::exportIndex()
+class CompositionSorter
 {
-  Vector<Indice> index;
-  if (!mTimescale) {
-    return index;
+public:
+  bool LessThan(MediaSource::Indice* aFirst, MediaSource::Indice* aSecond) const
+  {
+    return aFirst->start_composition < aSecond->start_composition;
   }
 
+  bool Equals(MediaSource::Indice* aFirst, MediaSource::Indice* aSecond) const
+  {
+    return aFirst->start_composition == aSecond->start_composition;
+  }
+};
+
+nsTArray<MediaSource::Indice> MPEG4Source::exportIndex()
+{
+  FallibleTArray<MediaSource::Indice> index;
+  if (!mTimescale) {
+    return nsTArray<MediaSource::Indice>(Move(index));
+  }
+
+  if (!index.SetCapacity(mSampleTable->countSamples())) {
+    return nsTArray<MediaSource::Indice>(Move(index));
+  }
   for (uint32_t sampleIndex = 0; sampleIndex < mSampleTable->countSamples();
           sampleIndex++) {
       off64_t offset;
@@ -4110,29 +4143,30 @@ Vector<MediaSource::Indice> MPEG4Source::exportIndex()
       indice.start_composition = (compositionTime * 1000000ll) / mTimescale;
       // end_composition is overwritten everywhere except the last frame, where
       // the presentation duration is equal to the sample duration.
-      indice.end_composition = ((compositionTime + duration) * 1000000ll) /
-              mTimescale;
+      indice.end_composition =
+          (compositionTime * 1000000ll + duration * 1000000ll) / mTimescale;
       indice.sync = isSyncSample;
-      index.add(indice);
+      MOZ_ALWAYS_TRUE(index.AppendElement(indice));
   }
 
   // Fix up composition durations so we don't end up with any unsightly gaps.
-  if (index.size() != 0) {
-      Indice* array = index.editArray();
-      Vector<Indice*> composition_order;
-      composition_order.reserve(index.size());
-      for (uint32_t i = 0; i < index.size(); i++) {
-          composition_order.add(&array[i]);
+  if (index.Length() != 0) {
+      FallibleTArray<Indice*> composition_order;
+      if (!composition_order.SetCapacity(index.Length())) {
+        return nsTArray<MediaSource::Indice>(Move(index));
+      }
+      for (uint32_t i = 0; i < index.Length(); i++) {
+        MOZ_ALWAYS_TRUE(composition_order.AppendElement(&index[i]));
       }
 
-      composition_order.sort(compositionOrder);
-      for (uint32_t i = 0; i + 1 < composition_order.size(); i++) {
+      composition_order.Sort(CompositionSorter());
+      for (uint32_t i = 0; i + 1 < composition_order.Length(); i++) {
         composition_order[i]->end_composition =
                 composition_order[i + 1]->start_composition;
       }
   }
 
-  return index;
+  return nsTArray<MediaSource::Indice>(Move(index));
 }
 
 MPEG4Extractor::Track *MPEG4Extractor::findTrackByMimePrefix(

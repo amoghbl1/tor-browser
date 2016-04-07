@@ -143,6 +143,26 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 
+// These IsSVG() methods were moved here from nsIContent.h because including
+// nsSVGUtils.h in nsIContent.h (needed to pick up the NS_SVGEnabled()
+// prototype) creates a circular dependency: nsSVGUtils.h includes other
+// headers that define functions that require the complete definition of
+// nsPresContext... but nsPresContext.h includes nsIPresShell.h, which in turn
+// includes nsIContent.h.
+bool
+nsIContent::IsSVG() const
+{
+  return NS_SVGEnabled(mNodeInfo->GetDocument()) &&
+         IsInNamespace(kNameSpaceID_SVG);
+}
+
+bool
+nsIContent::IsSVG(nsIAtom* aTag) const
+{
+  return NS_SVGEnabled(mNodeInfo->GetDocument()) &&
+         mNodeInfo->Equals(aTag, kNameSpaceID_SVG);
+}
+
 nsIAtom*
 nsIContent::DoGetID() const
 {
@@ -1209,9 +1229,7 @@ Element::RemoveAttributeNode(Attr& aAttribute,
   }
 
   OwnerDoc()->WarnOnceAbout(nsIDocument::eRemoveAttributeNode);
-  nsAutoString nameSpaceURI;
-  aAttribute.NodeInfo()->GetNamespaceURI(nameSpaceURI);
-  return Attributes()->RemoveNamedItemNS(nameSpaceURI, aAttribute.NodeInfo()->LocalName(), aError);
+  return Attributes()->RemoveNamedItem(aAttribute.NodeName(), aError);
 }
 
 void

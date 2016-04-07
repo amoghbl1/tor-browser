@@ -43,6 +43,12 @@ namespace indexedDB {
 using namespace mozilla::dom::workers;
 using namespace mozilla::ipc;
 
+namespace {
+
+NS_DEFINE_IID(kIDBRequestIID, PRIVATE_IDBREQUEST_IID);
+
+} // anonymous namespace
+
 IDBRequest::IDBRequest(IDBDatabase* aDatabase)
   : IDBWrapperCache(aDatabase)
 {
@@ -356,12 +362,19 @@ IDBRequest::SetResultCallback(ResultCallback* aCallback)
   JS::Rooted<JS::Value> result(cx);
   nsresult rv = aCallback->GetResult(cx, &result);
   if (NS_WARN_IF(NS_FAILED(rv))) {
-    SetError(rv);
-    mResultVal.setUndefined();
-  } else {
-    mError = nullptr;
-    mResultVal = result;
+    // This can only fail if the structured clone contains a mutable file
+    // and the child is not in the main thread and main process.
+    // In that case CreateAndWrapMutableFile() returns false which shows up
+    // as NS_ERROR_DOM_DATA_CLONE_ERR here.
+    MOZ_ASSERT(rv == NS_ERROR_DOM_DATA_CLONE_ERR);
+
+    // We are not setting a result or an error object here since we want to
+    // throw an exception when the 'result' property is being touched.
+    return;
   }
+
+  mError = nullptr;
+  mResultVal = result;
 
   mHaveResultOrErrorCode = true;
 }
@@ -407,6 +420,9 @@ NS_IMPL_CYCLE_COLLECTION_TRACE_BEGIN_INHERITED(IDBRequest, IDBWrapperCache)
 NS_IMPL_CYCLE_COLLECTION_TRACE_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(IDBRequest)
+  if (aIID.Equals(kIDBRequestIID)) {
+    foundInterface = this;
+  } else
 NS_INTERFACE_MAP_END_INHERITING(IDBWrapperCache)
 
 NS_IMPL_ADDREF_INHERITED(IDBRequest, IDBWrapperCache)
@@ -563,7 +579,7 @@ nsresult
 IDBOpenDBRequest::PostHandleEvent(EventChainPostVisitor& aVisitor)
 {
   nsresult rv =
-    IndexedDatabaseManager::CommonPostHandleEvent(this, mFactory, aVisitor);
+    IndexedDatabaseManager::CommonPostHandleEvent(aVisitor, mFactory);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }

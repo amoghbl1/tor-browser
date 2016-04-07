@@ -15,7 +15,7 @@ config = {
                 "--skip-manifest=../tests/cppunittests/android_cppunittest_manifest.txt"
             ],
             "run_filename": "remotecppunittests.py",
-            "testsdir": "cppunittests"
+            "testsdir": "cppunittest"
         },
         "crashtest": {
             "options": [
@@ -44,8 +44,8 @@ config = {
                 "--localLib=../tests/bin",
                 "--no-slow",
                 "--no-progress",
-                "--tinderbox",
-                "--tbpl"
+                "--format=automation",
+                "--jitflags=all"
             ],
             "run_filename": "jit_test.py",
             "testsdir": "jit-test/jit-test"

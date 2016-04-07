@@ -1601,12 +1601,21 @@ nsDocShell::LoadURI(nsIURI* aURI,
 
   if (owner && mItemType != typeChrome) {
     nsCOMPtr<nsIPrincipal> ownerPrincipal = do_QueryInterface(owner);
-    if (nsContentUtils::IsSystemOrExpandedPrincipal(ownerPrincipal)) {
+    if (nsContentUtils::IsSystemPrincipal(ownerPrincipal)) {
       if (ownerIsExplicit) {
         return NS_ERROR_DOM_SECURITY_ERR;
       }
       owner = nullptr;
       inheritOwner = true;
+    } else if (nsContentUtils::IsExpandedPrincipal(ownerPrincipal)) {
+      if (ownerIsExplicit) {
+        return NS_ERROR_DOM_SECURITY_ERR;
+      }
+      // Don't inherit from the current page.  Just do the safe thing
+      // and pretend that we were loaded by a nullprincipal.
+      owner = do_CreateInstance("@mozilla.org/nullprincipal;1");
+      NS_ENSURE_TRUE(owner, NS_ERROR_FAILURE);
+      inheritOwner = false;
     }
   }
   if (!owner && !inheritOwner && !ownerIsExplicit) {
@@ -5030,24 +5039,32 @@ nsDocShell::DisplayLoadError(nsresult aError, nsIURI* aURI,
       if (errorClass == nsINSSErrorsService::ERROR_CLASS_BAD_CERT) {
         error.AssignLiteral("nssBadCert");
 
-        // if this is a Strict-Transport-Security host and the cert
-        // is bad, don't allow overrides (STS Spec section 7.3).
-        uint32_t type = nsISiteSecurityService::HEADER_HSTS;
+        // If this is an HTTP Strict Transport Security host or a pinned host
+        // and the certificate is bad, don't allow overrides (RFC 6797 section
+        // 12.1, HPKP draft spec section 2.6).
         uint32_t flags =
           mInPrivateBrowsing ? nsISocketProvider::NO_PERMANENT_STORAGE : 0;
         bool isStsHost = false;
+        bool isPinnedHost = false;
         if (XRE_GetProcessType() == GeckoProcessType_Default) {
           nsCOMPtr<nsISiteSecurityService> sss =
             do_GetService(NS_SSSERVICE_CONTRACTID, &rv);
           NS_ENSURE_SUCCESS(rv, rv);
-          rv = sss->IsSecureURI(type, aURI, flags, &isStsHost);
+          rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HSTS, aURI,
+                                flags, &isStsHost);
+          NS_ENSURE_SUCCESS(rv, rv);
+          rv = sss->IsSecureURI(nsISiteSecurityService::HEADER_HPKP, aURI,
+                                flags, &isPinnedHost);
           NS_ENSURE_SUCCESS(rv, rv);
         } else {
           mozilla::dom::ContentChild* cc =
             mozilla::dom::ContentChild::GetSingleton();
           mozilla::ipc::URIParams uri;
           SerializeURI(aURI, uri);
-          cc->SendIsSecureURI(type, uri, flags, &isStsHost);
+          cc->SendIsSecureURI(nsISiteSecurityService::HEADER_HSTS, uri, flags,
+                              &isStsHost);
+          cc->SendIsSecureURI(nsISiteSecurityService::HEADER_HPKP, uri, flags,
+                              &isPinnedHost);
         }
 
         if (Preferences::GetBool(
@@ -5055,11 +5072,16 @@ nsDocShell::DisplayLoadError(nsresult aError, nsIURI* aURI,
           cssClass.AssignLiteral("expertBadCert");
         }
 
-        // HSTS takes precedence over the expert bad cert pref. We
-        // never want to show the "Add Exception" button for HSTS sites.
+        // HSTS/pinning takes precedence over the expert bad cert pref. We
+        // never want to show the "Add Exception" button for these sites.
+        // In the future we should differentiate between an HSTS host and a
+        // pinned host and display a more informative message to the user.
+        if (isStsHost || isPinnedHost) {
+          cssClass.AssignLiteral("badStsCert");
+        }
+
         uint32_t bucketId;
         if (isStsHost) {
-          cssClass.AssignLiteral("badStsCert");
           // measuring STS separately allows us to measure click through
           // rates easily
           bucketId = nsISecurityUITelemetry::WARNING_BAD_CERT_TOP_STS;
@@ -8970,6 +8992,53 @@ nsDocShell::CreateContentViewer(const char* aContentType,
     aOpenedChannel->GetURI(getter_AddRefs(mLoadingURI));
   }
   FirePageHideNotification(!mSavingOldViewer);
+
+  // Tor bug # 16620: Clear window.name if there is no referrer. We make an
+  // exception for new windows, e.g., window.open(url, "MyName").
+  bool isNewWindowTarget = false;
+  nsCOMPtr<nsIPropertyBag2> props(do_QueryInterface(aRequest, &rv));
+  if (props) {
+    props->GetPropertyAsBool(NS_LITERAL_STRING("docshell.newWindowTarget"),
+                             &isNewWindowTarget);
+  }
+
+  if (!isNewWindowTarget) {
+    nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(aOpenedChannel));
+    nsCOMPtr<nsIURI> httpReferrer;
+    if (httpChannel)
+      httpChannel->GetReferrer(getter_AddRefs(httpReferrer));
+
+#ifdef DEBUG_WINDOW_NAME
+    printf("DOCSHELL %p CreateContentViewer - possibly clearing window.name:\n", this);
+    printf("  current window.name: \"%s\"\n",
+           NS_ConvertUTF16toUTF8(mName).get());
+
+    nsAutoCString curSpec, loadingSpec;
+    if (this->mCurrentURI)
+      mCurrentURI->GetSpec(curSpec);
+    if (mLoadingURI)
+      mLoadingURI->GetSpec(loadingSpec);
+    printf("  current URI: %s\n", curSpec.get());
+    printf("  loading URI: %s\n", loadingSpec.get());
+
+    if (!httpReferrer) {
+      printf("  referrer: None\n");
+    } else {
+      nsAutoCString refSpec;
+      httpReferrer->GetSpec(refSpec);
+      printf("  referrer: %s\n", refSpec.get());
+    }
+#endif
+
+    if (!httpReferrer)
+      SetName(NS_LITERAL_STRING(""));
+
+#ifdef DEBUG_WINDOW_NAME
+    printf("  action taken: %s window.name\n",
+           httpReferrer ? "Preserved" : "Cleared");
+#endif
+  }
+
   mLoadingURI = nullptr;
 
   // Set mFiredUnloadEvent = false so that the unload handler for the
@@ -10516,9 +10585,14 @@ nsDocShell::DoURILoad(nsIURI* aURI,
 
   nsCOMPtr<nsINode> requestingNode;
   if (mScriptGlobal) {
-    requestingNode = mScriptGlobal->GetFrameElementInternal();
-    if (!requestingNode) {
+    if (!aFileName.IsVoid()) {
+      // File is being downloaded. Assign current document to requesting node.
       requestingNode = mScriptGlobal->GetExtantDoc();
+    } else {
+      requestingNode = mScriptGlobal->GetFrameElementInternal();
+      if (!requestingNode) {
+        requestingNode = mScriptGlobal->GetExtantDoc();
+      }
     }
   }
 
@@ -13513,7 +13587,7 @@ nsDocShell::OnLinkClickSync(nsIContent* aContent,
     anchor->GetType(typeHint);
     NS_ConvertUTF16toUTF8 utf8Hint(typeHint);
     nsAutoCString type, dummy;
-    NS_ParseContentType(utf8Hint, type, dummy);
+    NS_ParseRequestContentType(utf8Hint, type, dummy);
     CopyUTF8toUTF16(type, typeHint);
   }
 

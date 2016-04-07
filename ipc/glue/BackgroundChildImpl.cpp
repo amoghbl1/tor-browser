@@ -214,6 +214,7 @@ BackgroundChildImpl::DeallocPVsyncChild(PVsyncChild* aActor)
 dom::PBroadcastChannelChild*
 BackgroundChildImpl::AllocPBroadcastChannelChild(const PrincipalInfo& aPrincipalInfo,
                                                  const nsString& aOrigin,
+                                                 const nsString& aFirstPartyHost,
                                                  const nsString& aChannel,
                                                  const bool& aPrivateBrowsing)
 {

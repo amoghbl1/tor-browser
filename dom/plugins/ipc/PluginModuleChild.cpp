@@ -42,7 +42,6 @@
 #include "nsNPAPIPlugin.h"
 
 #ifdef XP_WIN
-#include "COMMessageFilter.h"
 #include "nsWindowsDllInterceptor.h"
 #include "mozilla/widget/AudioSession.h"
 #endif
@@ -264,10 +263,6 @@ PluginModuleChild::InitForChrome(const std::string& aPluginFilename,
                                  MessageLoop* aIOLoop,
                                  IPC::Channel* aChannel)
 {
-#ifdef XP_WIN
-    COMMessageFilter::Initialize(this);
-#endif
-
     NS_ASSERTION(aChannel, "need a channel");
 
     if (!InitGraphics())
@@ -2157,6 +2152,12 @@ PluginModuleChild::InitQuirksModes(const nsCString& aMimeType)
         mQuirks |= QUIRK_ALLOW_OFFLINE_RENDERER;
     } else if (FindInReadable(quicktime, mPluginFilename)) {
         mQuirks |= QUIRK_ALLOW_OFFLINE_RENDERER;
+    }
+#endif
+
+#ifdef OS_WIN
+    if (specialType == nsPluginHost::eSpecialType_Unity) {
+        mQuirks |= QUIRK_UNITY_FIXUP_MOUSE_CAPTURE;
     }
 #endif
 }

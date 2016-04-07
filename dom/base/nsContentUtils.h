@@ -624,7 +624,7 @@ public:
    * keep a mutable version around should pass in a clone.
    *
    * @param aURI uri of the image to be loaded
-   * @param aLoadingDocument the document we belong to
+   * @param aLoadingNode the node we belong to
    * @param aLoadingPrincipal the principal doing the load
    * @param aReferrer the referrer URI
    * @param aReferrerPolicy the referrer-sending policy to use on channel
@@ -636,7 +636,7 @@ public:
    * @return the imgIRequest for the image load
    */
   static nsresult LoadImage(nsIURI* aURI,
-                            nsIDocument* aLoadingDocument,
+                            nsINode* aLoadingNode,
                             nsIPrincipal* aLoadingPrincipal,
                             nsIURI* aReferrer,
                             mozilla::net::ReferrerPolicy aReferrerPolicy,
@@ -1911,6 +1911,16 @@ public:
     return sEncodeDecodeURLHash;
   }
 
+  /*
+   * Returns true if the browser should attempt to prevent content scripts
+   * from collecting distinctive information about the browser that could
+   * be used to "fingerprint" and track the user across websites.
+   */
+  static bool ResistFingerprinting()
+  {
+    return sPrivacyResistFingerprinting;
+  }
+
   /**
    * Returns true if the doc tree branch which contains aDoc contains any
    * plugins which we don't control event dispatch for, i.e. do any plugins
@@ -2010,6 +2020,11 @@ public:
    * Perform cleanup that's appropriate for XPCOM shutdown.
    */
   static void XPCOMShutdown();
+
+  /**
+   * Checks if internal PDF viewer is enabled.
+   */
+  static bool IsPDFJSEnabled();
 
   enum ContentViewerType
   {
@@ -2285,6 +2300,11 @@ public:
                                       CallOnRemoteChildFunction aCallback,
                                       void* aArg);
 
+  /*
+   * Returns true iff an nsIDOMWindow is a chrome window.
+   */
+  static bool IsChromeWindow(nsIDOMWindow* aWindow);
+
 private:
   static bool InitializeEventTable();
 
@@ -2385,6 +2405,7 @@ private:
   static bool sIsUserTimingLoggingEnabled;
   static bool sIsExperimentalAutocompleteEnabled;
   static bool sEncodeDecodeURLHash;
+  static bool sPrivacyResistFingerprinting;
 
   static nsHtml5StringParser* sHTMLFragmentParser;
   static nsIParser* sXMLFragmentParser;

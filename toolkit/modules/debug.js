@@ -42,6 +42,7 @@ this.NS_ASSERT = function NS_ASSERT(condition, message) {
       case "nightly":
       case "aurora":
       case "alpha":
+      case "hardened":
       case "beta":
       case "default":
         releaseBuild = false;

@@ -1437,7 +1437,7 @@ nsComputedDOMStyle::DoGetFontSizeAdjust()
 CSSValue*
 nsComputedDOMStyle::DoGetOSXFontSmoothing()
 {
-  if (!nsContentUtils::IsCallerChrome())
+  if (!nsContentUtils::ThreadsafeIsCallerChrome())
     return nullptr;
 
   nsROCSSPrimitiveValue* val = new nsROCSSPrimitiveValue;

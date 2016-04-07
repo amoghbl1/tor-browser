@@ -1,11 +1,8 @@
-// Import Task.jsm
-let { Task } = SpecialPowers.Cu.import("resource://gre/modules/Task.jsm");
-
 // __listen(target, eventType, timeoutMs, useCapture)__.
 // Calls addEventListener on target, with the given eventType.
 // Returns a Promise that resolves to an Event object, if the event fires.
 // If a timeout occurs, then Promise is rejected with a "Timed out" error.
-// For use with Task.jsm.
+// For use with SpawnTask.js.
 let listen = function (target, eventType, timeoutMs, useCapture) {
   return new Promise(function (resolve, reject) {
     let listenFunction = function (event) {
@@ -13,17 +10,19 @@ let listen = function (target, eventType, timeoutMs, useCapture) {
       resolve(event);
     };
     target.addEventListener(eventType, listenFunction, useCapture);
-    setTimeout(() => reject(new Error("Timed out")), timeoutMs);
+    if (timeoutMs) {
+      setTimeout(() => reject(new Error("Timed out")), timeoutMs);
+    }
   });
 };
 
 // __receiveMessage(source)__.
 // Returns an event object for the next message received from source.
-// A Task.jsm coroutine.
+// A SpawnTask.js coroutine.
 let receiveMessage = function* (source) {
   let event;
   do {
-    event = yield listen(self, "message", 5000, false);
+    event = yield listen(self, "message", null, false);
   } while (event.source !== source);
   return event.data;
 };
@@ -94,7 +93,7 @@ let stringToBlobURL = function (s) {
 // __workerIO(scriptFile, inputString)__.
 // Sends inputString for the worker, and waits
 // for the worker to return an outputString.
-// Task.jsm coroutine.
+// SpawnTask.js coroutine.
 let workerIO = function* (scriptFile, inputString) {
   let worker = new Worker(scriptFile);
   worker.postMessage(inputString);

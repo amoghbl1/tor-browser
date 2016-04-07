@@ -8,6 +8,7 @@
   var xhr = new XMLHttpRequest();
   xhr.open("GET", "http://example.net/browser/netwerk/test/browser/thirdPartyChild.xhr.html", true);
   xhr.send();
+  var worker = new Worker("http://example.net/browser/netwerk/test/browser/thirdPartyChild.worker.js");
 </script>
 </body>
 </html>

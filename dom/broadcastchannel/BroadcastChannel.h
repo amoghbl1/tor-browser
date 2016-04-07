@@ -92,6 +92,7 @@ private:
   BroadcastChannel(nsPIDOMWindow* aWindow,
                    const PrincipalInfo& aPrincipalInfo,
                    const nsAString& aOrigin,
+                   const nsAString& aFirstPartyHost,
                    const nsAString& aChannel,
                    bool aPrivateBrowsing);
 
@@ -112,6 +113,7 @@ private:
   nsAutoPtr<PrincipalInfo> mPrincipalInfo;
 
   nsString mOrigin;
+  nsString mFirstPartyHost;
   nsString mChannel;
   bool mPrivateBrowsing;
 

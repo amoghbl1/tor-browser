@@ -1836,22 +1836,32 @@ nsSocketTransport::OnSocketReady(PRFileDesc *fd, int16_t outFlags)
         mPollTimeout = mTimeouts[TIMEOUT_READ_WRITE];
     }
 
-//STATE_SENDINGGET: handshake proceeded to state "sent connect"
-//one more poll to OnSocketReady will trigger the get request, and state STATE_SENTGET
-//STATE_SENTGET: continue and finish handshake
+    // Tor 3875: Use optimistic data with SOCKS.
+    // To accomplish this, two new states were added that are only used with
+    // SOCKS connections:
+    //   STATE_SENDINGGET - The SOCKS handshake has proceeded to the
+    //                        "sent connect" state; now it is okay to
+    //                         optimistically send some application data (e.g.,
+    //                         an HTTP GET request).
+    //   STATE_SENTGET -    Optimistic data has been sent; make a second call
+    //                        to PR_ConnectContinue() to allow the SOCKS
+    //                        handshake to finish.
     else if (mState == STATE_SENDINGGET) {
         if ((mPollFlags & PR_POLL_WRITE) && (outFlags & ~PR_POLL_READ)) {
-            mOutput.OnSocketReady(NS_OK);
+            mOutput.OnSocketReady(NS_OK);  // Allow application data to be sent.
         }
         mPollTimeout = mTimeouts[TIMEOUT_READ_WRITE];
-        mState = STATE_SENTGET;
+        mPollFlags = (PR_POLL_EXCEPT | PR_POLL_READ);
+        mState = STATE_SENTGET;  // Wait for SOCKS handshake response.
     }
-
     else if (mState == STATE_CONNECTING || mState == STATE_SENTGET) {
         PRStatus status = PR_ConnectContinue(fd, outFlags);
+        bool isUsingSocks = mProxyTransparent && !mProxyHost.IsEmpty();
         if (status == PR_SUCCESS && mState == STATE_CONNECTING) {
             OnSocketConnected();
-            mState = STATE_SENDINGGET;
+            if (isUsingSocks) {
+                mState = STATE_SENDINGGET;
+            }
         }
         else if (status == PR_SUCCESS && mState == STATE_SENTGET) {
             //
@@ -1868,17 +1878,17 @@ nsSocketTransport::OnSocketReady(PRFileDesc *fd, int16_t outFlags)
             // If the connect is still not ready, then continue polling...
             //
             if ((PR_WOULD_BLOCK_ERROR == code) || (PR_IN_PROGRESS_ERROR == code)) {
-                // Set up the select flags for connect...
-                mPollFlags = (PR_POLL_EXCEPT | PR_POLL_WRITE);
-                // Update poll timeout in case it was changed
-                mPollTimeout = mTimeouts[TIMEOUT_CONNECT];
+                if (mState != STATE_SENTGET) {
+                    // Set up the select flags for connect...
+                    mPollFlags = (PR_POLL_EXCEPT | PR_POLL_WRITE);
+                    // Update poll timeout in case it was changed
+                    mPollTimeout = mTimeouts[TIMEOUT_CONNECT];
+                }
             }
             //
             // The SOCKS proxy rejected our request. Find out why.
             //
-            else if (PR_UNKNOWN_ERROR == code &&
-                     mProxyTransparent &&
-                     !mProxyHost.IsEmpty()) {
+            else if (PR_UNKNOWN_ERROR == code && isUsingSocks) {
                 code = PR_GetOSError();
                 mCondition = ErrorAccordingToNSPR(code);
             }

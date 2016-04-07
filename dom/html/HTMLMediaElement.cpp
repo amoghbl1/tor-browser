@@ -90,6 +90,7 @@
 #include "ImageContainer.h"
 #include "nsRange.h"
 #include <algorithm>
+#include "ThirdPartyUtil.h"
 
 #ifdef PR_LOGGING
 static PRLogModuleInfo* gMediaElementLog;
@@ -521,7 +522,11 @@ HTMLMediaElement::GetMozMediaSourceObject() const
 {
   nsRefPtr<MediaSource> source;
   if (mLoadingSrc && IsMediaSourceURI(mLoadingSrc)) {
-    NS_GetSourceForMediaSourceURI(mLoadingSrc, getter_AddRefs(source));
+    nsCString isolationKey;
+    nsresult rv = ThirdPartyUtil::GetFirstPartyHost(GetOwnerDocument(), isolationKey);
+    if (NS_SUCCEEDED(rv)) {
+      NS_GetSourceForMediaSourceURI(mLoadingSrc, isolationKey, getter_AddRefs(source));
+    }
   }
   return source.forget();
 }
@@ -676,6 +681,7 @@ void HTMLMediaElement::AbortExistingLoads()
     mMediaSource = nullptr;
   }
 
+  RemoveMediaElementFromURITable();
   mLoadingSrc = nullptr;
 
   if (mNetworkState == nsIDOMHTMLMediaElement::NETWORK_LOADING ||
@@ -871,6 +877,7 @@ void HTMLMediaElement::SelectResource()
       NS_ASSERTION(!mIsLoadingFromSourceChildren,
         "Should think we're not loading from source children by default");
 
+      RemoveMediaElementFromURITable();
       mLoadingSrc = uri;
       UpdatePreloadAction();
       if (mPreloadAction == HTMLMediaElement::PRELOAD_NONE) {
@@ -1009,6 +1016,7 @@ void HTMLMediaElement::LoadFromSourceChildren()
       continue;
     }
 
+    RemoveMediaElementFromURITable();
     mLoadingSrc = uri;
     NS_ASSERTION(mNetworkState == nsIDOMHTMLMediaElement::NETWORK_LOADING,
                  "Network state should be loading");
@@ -1191,7 +1199,10 @@ nsresult HTMLMediaElement::LoadResource()
 
   if (IsMediaStreamURI(mLoadingSrc)) {
     nsRefPtr<DOMMediaStream> stream;
-    rv = NS_GetStreamForMediaStreamURI(mLoadingSrc, getter_AddRefs(stream));
+    nsCString isolationKey;
+    rv = ThirdPartyUtil::GetFirstPartyHost(GetOwnerDocument(), isolationKey);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = NS_GetStreamForMediaStreamURI(mLoadingSrc, isolationKey, getter_AddRefs(stream));
     if (NS_FAILED(rv)) {
       nsCString specUTF8;
       mLoadingSrc->GetSpec(specUTF8);
@@ -1206,7 +1217,10 @@ nsresult HTMLMediaElement::LoadResource()
 
   if (IsMediaSourceURI(mLoadingSrc)) {
     nsRefPtr<MediaSource> source;
-    rv = NS_GetSourceForMediaSourceURI(mLoadingSrc, getter_AddRefs(source));
+    nsCString isolationKey;
+    rv = ThirdPartyUtil::GetFirstPartyHost(GetOwnerDocument(), isolationKey);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = NS_GetSourceForMediaSourceURI(mLoadingSrc, isolationKey, getter_AddRefs(source));
     if (NS_FAILED(rv)) {
       nsCString specUTF8;
       mLoadingSrc->GetSpec(specUTF8);
@@ -1988,15 +2002,13 @@ HTMLMediaElement::AddMediaElementToURITable()
 void
 HTMLMediaElement::RemoveMediaElementFromURITable()
 {
-  NS_ASSERTION(MediaElementTableCount(this, mLoadingSrc) == 1,
-    "Before remove, should have a single entry for element in element table");
-  NS_ASSERTION(mDecoder, "Don't call this without decoder!");
-  NS_ASSERTION(mLoadingSrc, "Can't have decoder without source!");
-  if (!gElementTable)
+  if (!mDecoder || !mLoadingSrc || !gElementTable) {
     return;
+  }
   MediaElementSetForURI* entry = gElementTable->GetEntry(mLoadingSrc);
-  if (!entry)
+  if (!entry) {
     return;
+  }
   entry->mElements.RemoveElement(this);
   if (entry->mElements.IsEmpty()) {
     gElementTable->RemoveEntry(mLoadingSrc);
@@ -2012,11 +2024,13 @@ HTMLMediaElement::RemoveMediaElementFromURITable()
 HTMLMediaElement*
 HTMLMediaElement::LookupMediaElementURITable(nsIURI* aURI)
 {
-  if (!gElementTable)
+  if (!gElementTable) {
     return nullptr;
+  }
   MediaElementSetForURI* entry = gElementTable->GetEntry(aURI);
-  if (!entry)
+  if (!entry) {
     return nullptr;
+  }
   for (uint32_t i = 0; i < entry->mElements.Length(); ++i) {
     HTMLMediaElement* elem = entry->mElements[i];
     bool equal;
@@ -3229,6 +3243,7 @@ void HTMLMediaElement::DecodeError()
   if (mDecoder) {
     ShutdownDecoder();
   }
+  RemoveMediaElementFromURITable();
   mLoadingSrc = nullptr;
   if (mIsLoadingFromSourceChildren) {
     mError = nullptr;

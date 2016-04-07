@@ -29,6 +29,8 @@
 using namespace mozilla;
 
 #define MAX_PREVIEW_SIZE 180
+// bug 1184009
+#define MAX_PREVIEW_SOURCE_SIZE 4096
 
 nsIFile *nsFilePicker::mPrevDisplayDirectory = nullptr;
 
@@ -95,13 +97,16 @@ UpdateFilePreviewWidget(GtkFileChooser *file_chooser,
   GdkPixbufFormat *preview_format = gdk_pixbuf_get_file_info(image_filename,
                                                              &preview_width,
                                                              &preview_height);
-  if (!preview_format) {
+  if (!preview_format ||
+      preview_width <= 0 || preview_height <= 0 ||
+      preview_width > MAX_PREVIEW_SOURCE_SIZE ||
+      preview_height > MAX_PREVIEW_SOURCE_SIZE) {
     g_free(image_filename);
     gtk_file_chooser_set_preview_widget_active(file_chooser, FALSE);
     return;
   }
 
-  GdkPixbuf *preview_pixbuf;
+  GdkPixbuf *preview_pixbuf = nullptr;
   // Only scale down images that are too big
   if (preview_width > MAX_PREVIEW_SIZE || preview_height > MAX_PREVIEW_SIZE) {
     preview_pixbuf = gdk_pixbuf_new_from_file_at_size(image_filename,

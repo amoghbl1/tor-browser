@@ -6,6 +6,7 @@ https://bugs.torproject.org/15502
 <head>
   <meta http-equiv="content-type" content="text/html; charset=utf-8">
   <title>Page blobifier for Tor Browser Bug 15502</title>
+  <script type="text/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
   <script type="text/javascript;version=1.7" src="bug15502_utils.js"></script>
 </head>
 <body>
@@ -13,7 +14,7 @@ https://bugs.torproject.org/15502
 
 <script type="text/javascript;version=1.7">
 
-Task.spawn(function* () {
+spawnTask(function* () {
   sendMessage(window.parent, "ready");
   let message = yield receiveMessage(window.parent),
       blobURL = stringToBlobURL(message);

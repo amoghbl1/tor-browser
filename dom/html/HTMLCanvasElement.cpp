@@ -532,18 +532,19 @@ HTMLCanvasElement::ToBlob(JSContext* aCx,
     return;
   }
 
-#ifdef DEBUG
   if (mCurrentContext) {
     // We disallow canvases of width or height zero, and set them to 1, so
     // we will have a discrepancy with the sizes of the canvas and the context.
     // That discrepancy is OK, the rest are not.
     nsIntSize elementSize = GetWidthHeight();
-    MOZ_ASSERT(elementSize.width == mCurrentContext->GetWidth() ||
-               (elementSize.width == 0 && mCurrentContext->GetWidth() == 1));
-    MOZ_ASSERT(elementSize.height == mCurrentContext->GetHeight() ||
-               (elementSize.height == 0 && mCurrentContext->GetHeight() == 1));
+    if ((elementSize.width != mCurrentContext->GetWidth() &&
+         (elementSize.width != 0 || mCurrentContext->GetWidth() != 1)) ||
+        (elementSize.height != mCurrentContext->GetHeight() &&
+         (elementSize.height != 0 || mCurrentContext->GetHeight() != 1))) {
+    aRv.Throw(NS_ERROR_FAILURE);
+    return;
+    }
   }
-#endif
 
   // Check site-specific permission and display prompt if appropriate.
   // If no permission, return all-white, opaque image data.
@@ -836,19 +837,21 @@ HTMLCanvasElement::UpdateContext(JSContext* aCx, JS::Handle<JS::Value> aNewConte
 
   nsIntSize sz = GetWidthHeight();
 
-  nsresult rv = mCurrentContext->SetIsOpaque(HasAttr(kNameSpaceID_None, nsGkAtoms::moz_opaque));
+  nsCOMPtr<nsICanvasRenderingContextInternal> currentContext = mCurrentContext;
+
+  nsresult rv = currentContext->SetIsOpaque(HasAttr(kNameSpaceID_None, nsGkAtoms::moz_opaque));
   if (NS_FAILED(rv)) {
     mCurrentContext = nullptr;
     return rv;
   }
 
-  rv = mCurrentContext->SetContextOptions(aCx, aNewContextOptions);
+  rv = currentContext->SetContextOptions(aCx, aNewContextOptions);
   if (NS_FAILED(rv)) {
     mCurrentContext = nullptr;
     return rv;
   }
 
-  rv = mCurrentContext->SetDimensions(sz.width, sz.height);
+  rv = currentContext->SetDimensions(sz.width, sz.height);
   if (NS_FAILED(rv)) {
     mCurrentContext = nullptr;
     return rv;

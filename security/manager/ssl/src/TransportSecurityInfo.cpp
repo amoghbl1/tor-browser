@@ -107,13 +107,6 @@ TransportSecurityInfo::SetIsolationKey(const char* isolationKey)
   return NS_OK;
 }
 
-nsresult
-TransportSecurityInfo::GetIsolationKey(char** isolationKey)
-{
-  *isolationKey = (mIsolationKey) ? NS_strdup(mIsolationKey) : nullptr;
-  return NS_OK;
-}
-
 PRErrorCode
 TransportSecurityInfo::GetErrorCode() const
 {

@@ -882,7 +882,7 @@ Event::GetScreenCoords(nsPresContext* aPresContext,
                        WidgetEvent* aEvent,
                        LayoutDeviceIntPoint aPoint)
 {
-  if (!nsContentUtils::IsCallerChrome()) {
+  if (!nsContentUtils::ThreadsafeIsCallerChrome()) {
     // For non-chrome callers, return client coordinates instead.
     // For some events, the result will be zero; specifically, for dragend
     // events (there is no widget associated with dragend events, which
