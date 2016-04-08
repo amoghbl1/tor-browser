@@ -49,10 +49,11 @@ nsHttpConnectionInfo::nsHttpConnectionInfo(const nsACString &originHost,
                                            const nsACString &npnToken,
                                            const nsACString &username,
                                            nsProxyInfo *proxyInfo,
+                                           const nsACString &isolationKey,
                                            bool endToEndSSL)
     : mRoutedPort(443)
 {
-    Init(originHost, originPort, npnToken, username, proxyInfo, endToEndSSL);
+    Init(originHost, originPort, npnToken, username, proxyInfo, isolationKey, endToEndSSL);
 }
 
 nsHttpConnectionInfo::nsHttpConnectionInfo(const nsACString &originHost,
@@ -60,6 +61,7 @@ nsHttpConnectionInfo::nsHttpConnectionInfo(const nsACString &originHost,
                                            const nsACString &npnToken,
                                            const nsACString &username,
                                            nsProxyInfo *proxyInfo,
+                                           const nsACString &isolationKey,
                                            const nsACString &routedHost,
                                            int32_t routedPort)
 
@@ -70,7 +72,7 @@ nsHttpConnectionInfo::nsHttpConnectionInfo(const nsACString &originHost,
     if (!originHost.Equals(routedHost) || (originPort != routedPort)) {
         mRoutedHost = routedHost;
     }
-    Init(originHost, originPort, npnToken, username, proxyInfo, true);
+    Init(originHost, originPort, npnToken, username, proxyInfo, isolationKey, true);
 }
 
 void
@@ -78,12 +80,14 @@ nsHttpConnectionInfo::Init(const nsACString &host, int32_t port,
                            const nsACString &npnToken,
                            const nsACString &username,
                            nsProxyInfo* proxyInfo,
+                           const nsACString &isolationKey,
                            bool e2eSSL)
 {
     LOG(("Init nsHttpConnectionInfo @%p\n", this));
 
     mUsername = username;
     mProxyInfo = proxyInfo;
+    mIsolationKey = isolationKey;
     mEndToEndSSL = e2eSSL;
     mUsingConnect = false;
     mNPNToken = npnToken;
@@ -216,6 +220,8 @@ void nsHttpConnectionInfo::BuildHashKey()
         mHashKey.Append(mNPNToken);
         mHashKey.AppendLiteral("}");
     }
+
+    mHashKey.Append(mIsolationKey);
 }
 
 void
@@ -231,11 +237,12 @@ nsHttpConnectionInfo::Clone() const
 {
     nsHttpConnectionInfo *clone;
     if (mRoutedHost.IsEmpty()) {
-        clone = new nsHttpConnectionInfo(mOrigin, mOriginPort, mNPNToken, mUsername, mProxyInfo, mEndToEndSSL);
+        clone = new nsHttpConnectionInfo(mOrigin, mOriginPort, mNPNToken, mUsername, mProxyInfo,
+                                         mIsolationKey, mEndToEndSSL);
     } else {
         MOZ_ASSERT(mEndToEndSSL);
         clone = new nsHttpConnectionInfo(mOrigin, mOriginPort, mNPNToken, mUsername, mProxyInfo,
-                                         mRoutedHost, mRoutedPort);
+                                         mIsolationKey, mRoutedHost, mRoutedPort);
     }
 
     if (!mNetworkInterfaceId.IsEmpty()) {
@@ -262,7 +269,8 @@ nsHttpConnectionInfo::CloneAsDirectRoute(nsHttpConnectionInfo **outCI)
 
     RefPtr<nsHttpConnectionInfo> clone =
         new nsHttpConnectionInfo(mOrigin, mOriginPort,
-                                 EmptyCString(), mUsername, mProxyInfo, mEndToEndSSL);
+                                 EmptyCString(), mUsername, mProxyInfo,
+                                 mIsolationKey, mEndToEndSSL);
     // Make sure the anonymous, insecure-scheme, and private flags are transferred
     clone->SetAnonymous(GetAnonymous());
     clone->SetPrivate(GetPrivate());
@@ -287,7 +295,8 @@ nsHttpConnectionInfo::CreateWildCard(nsHttpConnectionInfo **outParam)
 
     RefPtr<nsHttpConnectionInfo> clone;
     clone = new nsHttpConnectionInfo(NS_LITERAL_CSTRING("*"), 0,
-                                     mNPNToken, mUsername, mProxyInfo, true);
+                                     mNPNToken, mUsername, mProxyInfo,
+                                     mIsolationKey, true);
     // Make sure the anonymous and private flags are transferred!
     clone->SetAnonymous(GetAnonymous());
     clone->SetPrivate(GetPrivate());

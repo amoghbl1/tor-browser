@@ -1107,6 +1107,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
         const char *host       = mOriginHost.get();
         int32_t     port       = (int32_t) mOriginPort;
         nsCOMPtr<nsIProxyInfo> proxyInfo = mProxyInfo;
+        const char *isolationKey = mIsolationKey.IsEmpty() ? nullptr : mIsolationKey.get();
         uint32_t    controlFlags = 0;
 
         uint32_t i;
@@ -1143,7 +1144,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                                          mHttpsProxy ? mProxyHost.get() : host,
                                          mHttpsProxy ? mProxyPort : port,
                                          proxyInfo,
-                                         controlFlags, &fd,
+                                         isolationKey, controlFlags, &fd,
                                          getter_AddRefs(secinfo));
 
                 if (NS_SUCCEEDED(rv) && !fd) {
@@ -1157,7 +1158,7 @@ nsSocketTransport::BuildSocket(PRFileDesc *&fd, bool &proxyTransparent, bool &us
                 // to the stack (such as pushing an io layer)
                 rv = provider->AddToSocket(mNetAddr.raw.family,
                                            host, port, proxyInfo,
-                                           controlFlags, fd,
+                                           isolationKey, controlFlags, fd,
                                            getter_AddRefs(secinfo));
             }
             // controlFlags = 0; not used below this point...
@@ -2317,6 +2318,20 @@ nsSocketTransport::SetNetworkInterfaceId(const nsACString_internal &aNetworkInte
 {
     MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread, "wrong thread");
     mNetworkInterfaceId = aNetworkInterfaceId;
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSocketTransport::GetIsolationKey(nsACString &value)
+{
+    value = mIsolationKey;
+    return NS_OK;
+}
+
+NS_IMETHODIMP
+nsSocketTransport::SetIsolationKey(const nsACString &value)
+{
+    mIsolationKey = value;
     return NS_OK;
 }
 

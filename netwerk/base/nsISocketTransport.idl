@@ -28,7 +28,7 @@ native NetAddr(mozilla::net::NetAddr);
  * NOTE: This is a free-threaded interface, meaning that the methods on
  * this interface may be called from any thread.
  */
-[scriptable, uuid(79221831-85e2-43a8-8152-05d77d6fde31)]
+[scriptable, uuid(4e2dc9d0-125e-4f8e-8c93-845f3de5cd8a)]
 interface nsISocketTransport : nsITransport
 {
     /**
@@ -43,6 +43,12 @@ interface nsISocketTransport : nsITransport
      * For Unix domain sockets, this is zero.
      */
     readonly attribute long port;
+
+    /**
+     * Get the port for the underlying socket connection.
+     * For Unix domain sockets, this is zero.
+     */
+    attribute AUTF8String isolationKey;
 
     /**
      * The platform-specific network interface id that this socket

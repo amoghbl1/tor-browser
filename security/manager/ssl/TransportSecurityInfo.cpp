@@ -99,6 +99,13 @@ TransportSecurityInfo::GetPort(int32_t *aPort)
   return NS_OK;
 }
 
+nsresult
+TransportSecurityInfo::SetIsolationKey(const char* isolationKey)
+{
+  mIsolationKey.Adopt(isolationKey ? NS_strdup(isolationKey) : 0);
+  return NS_OK;
+}
+
 PRErrorCode
 TransportSecurityInfo::GetErrorCode() const
 {

@@ -105,6 +105,18 @@ nsHTTPDownloadEvent::Run()
   chan->SetLoadFlags(nsIRequest::LOAD_ANONYMOUS |
                      nsIChannel::LOAD_BYPASS_SERVICE_WORKER);
 
+  // If we have an isolation key, use it as the  URI for this channel.
+  if (!mRequestSession->mIsolationKey.IsEmpty()) {
+    nsCOMPtr<nsIHttpChannelInternal> channelInternal(do_QueryInterface(chan));
+    if (channelInternal) {
+      nsCString documentURISpec("https://");
+      documentURISpec.Append(mRequestSession->mIsolationKey);
+      nsCOMPtr<nsIURI> documentURI;
+      /* nsresult rv = */ NS_NewURI(getter_AddRefs(documentURI), documentURISpec);
+      channelInternal->SetDocumentURI(documentURI);
+    }
+  }
+
   // Create a loadgroup for this new channel.  This way if the channel
   // is redirected, we'll have a way to cancel the resulting channel.
   nsCOMPtr<nsILoadGroup> lg = do_CreateInstance(NS_LOADGROUP_CONTRACTID);
@@ -205,6 +217,7 @@ SECStatus nsNSSHttpRequestSession::createFcn(SEC_HTTP_SERVER_SESSION session,
                                              const char *http_protocol_variant,
                                              const char *path_and_query_string,
                                              const char *http_request_method, 
+                                             const char *isolationKey,
                                              const PRIntervalTime timeout, 
                                              SEC_HTTP_REQUEST_SESSION *pRequest)
 {
@@ -235,6 +248,8 @@ SECStatus nsNSSHttpRequestSession::createFcn(SEC_HTTP_SERVER_SESSION session,
   rs->mURL.Append(':');
   rs->mURL.AppendInt(hss->mPort);
   rs->mURL.Append(path_and_query_string);
+
+  rs->mIsolationKey.Assign(isolationKey);
 
   rs->mRequestMethod = http_request_method;
 

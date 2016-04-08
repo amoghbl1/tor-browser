@@ -115,6 +115,7 @@ typedef SECStatus (*SEC_HttpRequest_CreateFcn)(
    const char *http_protocol_variant, /* usually "http" */
    const char *path_and_query_string,
    const char *http_request_method, 
+   const char *isolation_key,
    const PRIntervalTime timeout, 
    SEC_HTTP_REQUEST_SESSION *pRequest);
 

@@ -59,6 +59,7 @@ public:
   // If it is in the cache, returns by reference the error code of the cached
   // status and the time through which the status is considered trustworthy.
   bool Get(const mozilla::pkix::CertID& aCertID,
+           const char* aIsolationKey,
            /*out*/ mozilla::pkix::Result& aResult,
            /*out*/ mozilla::pkix::Time& aValidThrough);
 
@@ -72,6 +73,7 @@ public:
   // status with a less recent thisUpdate unless the less recent status
   // indicates the certificate is revoked.
   mozilla::pkix::Result Put(const mozilla::pkix::CertID& aCertID,
+                            const char* aIsolationKey,
                             mozilla::pkix::Result aResult,
                             mozilla::pkix::Time aThisUpdate,
                             mozilla::pkix::Time aValidThrough);
@@ -91,7 +93,8 @@ private:
       , mValidThrough(aValidThrough)
     {
     }
-    mozilla::pkix::Result Init(const mozilla::pkix::CertID& aCertID);
+    mozilla::pkix::Result Init(const mozilla::pkix::CertID& aCertID,
+                               const char* aIsolationKey);
 
     mozilla::pkix::Result mResult;
     mozilla::pkix::Time mThisUpdate;
@@ -102,7 +105,9 @@ private:
     SHA384Buffer mIDHash;
   };
 
-  bool FindInternal(const mozilla::pkix::CertID& aCertID, /*out*/ size_t& index,
+  bool FindInternal(const mozilla::pkix::CertID& aCertID,
+                    const char* aIsolationKey,
+                    /*out*/ size_t& index,
                     const MutexAutoLock& aProofOfLock);
   void MakeMostRecentlyUsed(size_t aIndex, const MutexAutoLock& aProofOfLock);
 

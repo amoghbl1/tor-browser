@@ -105,7 +105,9 @@ nsUsageArrayHelper::check(uint32_t previousCheckResult,
 
   SECStatus rv = certVerifier->VerifyCert(mCert, aCertUsage, time,
                                           nullptr /*XXX:wincx*/,
-                                          nullptr /*hostname*/, flags);
+                                          nullptr /*hostname*/,
+					  nullptr /*isolationKey*/,
+					  flags);
 
   if (rv == SECSuccess) {
     typestr.Append(suffix);

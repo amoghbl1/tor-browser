@@ -52,6 +52,7 @@ NSSCertDBTrustDomain::NSSCertDBTrustDomain(SECTrustType certDBTrustType,
                                            ValidityCheckingMode validityCheckingMode,
                                            SignatureDigestOption signatureDigestOption,
                                            CertVerifier::SHA1Mode sha1Mode,
+                                           const char* isolationKey,
                               /*optional*/ PinningTelemetryInfo* pinningTelemetryInfo,
                               /*optional*/ const char* hostname,
                               /*optional*/ ScopedCERTCertList* builtChain)
@@ -66,6 +67,7 @@ NSSCertDBTrustDomain::NSSCertDBTrustDomain(SECTrustType certDBTrustType,
   , mValidityCheckingMode(validityCheckingMode)
   , mSignatureDigestOption(signatureDigestOption)
   , mSHA1Mode(sha1Mode)
+  , mIsolationKey(isolationKey)
   , mPinningTelemetryInfo(pinningTelemetryInfo)
   , mHostname(hostname)
   , mBuiltChain(builtChain)
@@ -411,6 +413,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
   Result cachedResponseResult = Success;
   Time cachedResponseValidThrough(Time::uninitialized);
   bool cachedResponsePresent = mOCSPCache.Get(certID,
+                                              mIsolationKey.get(),
                                               cachedResponseResult,
                                               cachedResponseValidThrough);
   if (cachedResponsePresent) {
@@ -552,7 +555,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
     };
     // Owned by arena
     const SECItem* responseSECItem =
-      DoOCSPRequest(arena.get(), url, &ocspRequestItem,
+      DoOCSPRequest(arena.get(), url, mIsolationKey.get(), &ocspRequestItem,
                     OCSPFetchingTypeToTimeoutTime(mOCSPFetching),
                     mOCSPGetConfig == CertVerifier::ocspGetEnabled);
     if (!responseSECItem) {
@@ -574,7 +577,7 @@ NSSCertDBTrustDomain::CheckRevocation(EndEntityOrCA endEntityOrCA,
       if (timeout.AddSeconds(ServerFailureDelaySeconds) != Success) {
         return Result::FATAL_ERROR_LIBRARY_FAILURE; // integer overflow
       }
-      rv = mOCSPCache.Put(certID, error, time, timeout);
+      rv = mOCSPCache.Put(certID, mIsolationKey.get(), error, time, timeout);
       if (rv != Success) {
         return rv;
       }
@@ -679,7 +682,7 @@ NSSCertDBTrustDomain::VerifyAndMaybeCacheEncodedOCSPResponse(
       rv == Result::ERROR_OCSP_UNKNOWN_CERT) {
     MOZ_LOG(gCertVerifierLog, LogLevel::Debug,
            ("NSSCertDBTrustDomain: caching OCSP response"));
-    Result putRV = mOCSPCache.Put(certID, rv, thisUpdate, validThrough);
+    Result putRV = mOCSPCache.Put(certID, mIsolationKey.get(), rv, thisUpdate, validThrough);
     if (putRV != Success) {
       return putRV;
     }

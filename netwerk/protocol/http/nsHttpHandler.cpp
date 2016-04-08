@@ -2080,6 +2080,7 @@ nsHttpHandler::Observe(nsISupports *subject,
         }
     } else if (!strcmp(topic, "net:failed-to-process-uri-content")) {
         nsCOMPtr<nsIURI> uri = do_QueryInterface(subject);
+        // Ignore possibility of an isolation key:
         if (uri && mConnMgr) {
             mConnMgr->ReportFailedToProcess(uri);
         }
@@ -2204,8 +2205,9 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
     nsAutoCString username;
     aURI->GetUsername(username);
 
+    // TODO: Fix isolation for speculative connect.
     nsHttpConnectionInfo *ci =
-        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr, usingSSL);
+        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr, EmptyCString(), usingSSL);
     ci->SetAnonymous(anonymous);
 
     return SpeculativeConnect(ci, aCallbacks);
