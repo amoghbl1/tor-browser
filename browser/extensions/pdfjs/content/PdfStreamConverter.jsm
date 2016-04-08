@@ -262,7 +262,12 @@ ChromeActions.prototype = {
                          getService(Ci.nsIWindowWatcher).activeWindow;
 
     var docIsPrivate = this.isInPrivateBrowsing();
-    var netChannel = createNewChannel(blobUri, frontWindow.document, null);
+    var netChannel;
+    try {
+      netChannel = createNewChannel(blobUri, frontWindow.document, null);
+    } catch (e) {
+      netChannel = createNewChannel(originalUri, frontWindow.document, null);
+    }
     if ('nsIPrivateBrowsingChannel' in Ci &&
         netChannel instanceof Ci.nsIPrivateBrowsingChannel) {
       netChannel.setPrivate(docIsPrivate);

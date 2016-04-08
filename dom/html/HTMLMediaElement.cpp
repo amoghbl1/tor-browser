@@ -89,6 +89,7 @@
 #include "ImageContainer.h"
 #include "nsRange.h"
 #include <algorithm>
+#include "ThirdPartyUtil.h"
 #include <cmath>
 
 static mozilla::LazyLogModule gMediaElementLog("nsMediaElement");
@@ -1254,7 +1255,11 @@ nsresult HTMLMediaElement::LoadResource()
 
   if (IsMediaStreamURI(mLoadingSrc)) {
     RefPtr<DOMMediaStream> stream;
-    nsresult rv = NS_GetStreamForMediaStreamURI(mLoadingSrc, getter_AddRefs(stream));
+    nsCString isolationKey;
+    nsresult rv = ThirdPartyUtil::GetFirstPartyHost(GetOwnerDocument(), isolationKey);
+    if (NS_SUCCEEDED(rv)) {
+      rv = NS_GetStreamForMediaStreamURI(mLoadingSrc, isolationKey, getter_AddRefs(stream));
+    }
     if (NS_FAILED(rv)) {
       nsAutoString spec;
       GetCurrentSrc(spec);
@@ -2594,13 +2599,17 @@ HTMLMediaElement::AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
       nsCOMPtr<nsIURI> uri;
       NewURIFromString(srcStr, getter_AddRefs(uri));
       if (uri && IsMediaSourceURI(uri)) {
-        nsresult rv =
-          NS_GetSourceForMediaSourceURI(uri, getter_AddRefs(mSrcMediaSource));
-        if (NS_FAILED(rv)) {
-          nsAutoString spec;
-          GetCurrentSrc(spec);
-          const char16_t* params[] = { spec.get() };
-          ReportLoadError("MediaLoadInvalidURI", params, ArrayLength(params));
+        nsCString isolationKey;
+        nsresult rv = ThirdPartyUtil::GetFirstPartyHost(GetOwnerDocument(), isolationKey);
+        if (NS_SUCCEEDED(rv)) {
+          nsresult rv2 =
+            NS_GetSourceForMediaSourceURI(uri, isolationKey, getter_AddRefs(mSrcMediaSource));
+          if (NS_FAILED(rv2)) {
+            nsAutoString spec;
+            GetCurrentSrc(spec);
+            const char16_t* params[] = { spec.get() };
+            ReportLoadError("MediaLoadInvalidURI", params, ArrayLength(params));
+          }
         }
       }
     }

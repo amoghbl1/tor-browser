@@ -38,6 +38,7 @@
 #include "Fetch.h"
 #include "InternalRequest.h"
 #include "InternalResponse.h"
+#include "mozilla/dom/ThirdPartyUtil.h"
 
 namespace mozilla {
 namespace dom {
@@ -47,9 +48,10 @@ NS_IMPL_ISUPPORTS(FetchDriver,
                   nsIThreadRetargetableStreamListener)
 
 FetchDriver::FetchDriver(InternalRequest* aRequest, nsIPrincipal* aPrincipal,
-                         nsILoadGroup* aLoadGroup)
+                         const nsACString& aIsolationKey, nsILoadGroup* aLoadGroup)
   : mPrincipal(aPrincipal)
   , mLoadGroup(aLoadGroup)
+  , mIsolationKey(aIsolationKey)
   , mRequest(aRequest)
   , mResponseAvailableCalled(false)
   , mFetchCalled(false)

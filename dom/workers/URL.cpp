@@ -24,6 +24,7 @@
 
 #include "WorkerPrivate.h"
 #include "WorkerRunnable.h"
+#include "ThirdPartyUtil.h"
 #include "WorkerScope.h"
 
 BEGIN_WORKERS_NAMESPACE
@@ -124,11 +125,11 @@ public:
     MOZ_ASSERT(!isMutable);
 
     nsCOMPtr<nsIPrincipal> principal = mWorkerPrivate->GetPrincipal();
-
+    nsCString firstPartyHost = mWorkerPrivate->IsolationKey();
     nsAutoCString url;
     nsresult rv = nsHostObjectProtocolHandler::AddDataEntry(
         NS_LITERAL_CSTRING(BLOBURI_SCHEME),
-        mBlobImpl, principal, url);
+        mBlobImpl, principal, firstPartyHost, url);
 
     if (NS_FAILED(rv)) {
       NS_WARNING("Failed to add data entry for the blob!");
@@ -183,12 +184,12 @@ public:
       nsHostObjectProtocolHandler::GetDataEntryPrincipal(url);
 
     nsCOMPtr<nsIPrincipal> principal = mWorkerPrivate->GetPrincipal();
-
+    nsCString isolationKey = mWorkerPrivate->IsolationKey();
     bool subsumes;
     if (urlPrincipal &&
         NS_SUCCEEDED(principal->Subsumes(urlPrincipal, &subsumes)) &&
         subsumes) {
-      nsHostObjectProtocolHandler::RemoveDataEntry(url);
+      nsHostObjectProtocolHandler::RemoveDataEntry(url, isolationKey);
     }
 
     if (!mWorkerPrivate->IsSharedWorker() &&
