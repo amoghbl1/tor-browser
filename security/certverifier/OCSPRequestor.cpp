@@ -72,6 +72,7 @@ AppendEscapedBase64Item(const SECItem* encodedRequest, nsACString& path)
 
 SECItem*
 DoOCSPRequest(PLArenaPool* arena, const char* url,
+              const char* isolationKey,
               const SECItem* encodedRequest, PRIntervalTime timeout,
               bool useGET)
 {
@@ -177,6 +178,7 @@ DoOCSPRequest(PLArenaPool* arena, const char* url,
   SEC_HTTP_REQUEST_SESSION requestSessionPtr;
   if (nsNSSHttpInterface::createFcn(serverSession.get(), "http",
                                     path.get(), method.get(),
+                                    isolationKey,
                                     timeout, &requestSessionPtr)
         != SECSuccess) {
     PR_SetError(SEC_ERROR_NO_MEMORY, 0);

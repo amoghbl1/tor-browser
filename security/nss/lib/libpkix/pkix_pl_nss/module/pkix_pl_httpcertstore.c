@@ -541,7 +541,7 @@ pkix_pl_HttpCertStore_CreateRequestSession(
         }
         
         rv = (*hcv1->createFcn)(context->serverSession, "http",
-                         context->path, "GET",
+                         context->path, "GET", NULL,
                          PR_SecondsToInterval(
                              ((PKIX_PL_NssContext*)plContext)->timeoutSeconds),
                          &(context->requestSession));

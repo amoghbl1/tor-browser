@@ -1210,9 +1210,11 @@ nsHttpConnectionMgr::ReportFailedToProcess(nsIURI *uri)
         return;
 
     // report the event for all the permutations of anonymous and
-    // private versions of this host
+    // private versions of this host. We are ignoring the possibilities
+    // of proxies and isolation keys.
     RefPtr<nsHttpConnectionInfo> ci =
-        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr, usingSSL);
+      new nsHttpConnectionInfo(host, port, EmptyCString(), username,
+                               nullptr, EmptyCString(), usingSSL);
     ci->SetAnonymous(false);
     ci->SetPrivate(false);
     PipelineFeedbackInfo(ci, RedCorruptedContent, nullptr, 0);
@@ -3240,6 +3242,8 @@ nsHalfOpenSocket::SetupStreams(nsISocketTransport **transport,
     }
 
     socketTransport->SetConnectionFlags(tmpFlags);
+
+    socketTransport->SetIsolationKey(nsCString(mEnt->mConnInfo->IsolationKey()));
 
     socketTransport->SetQoSBits(gHttpHandler->GetQoSBits());
 

@@ -11,6 +11,7 @@
 #include "nsICertBlocklist.h"
 #include "pkix/pkixtypes.h"
 #include "secmodt.h"
+#include "nsString.h"
 
 namespace mozilla { namespace psm {
 
@@ -71,6 +72,7 @@ public:
                        ValidityCheckingMode validityCheckingMode,
                        SignatureDigestOption signatureDigestOption,
                        CertVerifier::SHA1Mode sha1Mode,
+                       const char* isolationKey,
           /*optional*/ PinningTelemetryInfo* pinningTelemetryInfo = nullptr,
           /*optional*/ const char* hostname = nullptr,
       /*optional out*/ ScopedCERTCertList* builtChain = nullptr);
@@ -158,6 +160,7 @@ private:
   ValidityCheckingMode mValidityCheckingMode;
   SignatureDigestOption mSignatureDigestOption;
   CertVerifier::SHA1Mode mSHA1Mode;
+  nsAutoCString mIsolationKey;
   PinningTelemetryInfo* mPinningTelemetryInfo;
   const char* mHostname; // non-owning - only used for pinning checks
   ScopedCERTCertList* mBuiltChain; // non-owning

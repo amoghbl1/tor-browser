@@ -831,6 +831,7 @@ nsNSSCertificate::GetChain(nsIArray** _rvChain)
   if (certVerifier->VerifyCert(mCert.get(), certificateUsageSSLServer, now,
                                nullptr, /*XXX fixme*/
                                nullptr, /* hostname */
+                               nullptr, /* isolationKey */
                                CertVerifier::FLAG_LOCAL_ONLY,
                                nullptr, /* stapledOCSPResponse */
                                &nssChain) != SECSuccess) {
@@ -858,6 +859,7 @@ nsNSSCertificate::GetChain(nsIArray** _rvChain)
     if (certVerifier->VerifyCert(mCert.get(), usage, now,
                                  nullptr, /*XXX fixme*/
                                  nullptr, /*hostname*/
+                                 nullptr, /*isolationKey*/
                                  CertVerifier::FLAG_LOCAL_ONLY,
                                  nullptr, /* stapledOCSPResponse */
                                  &nssChain) != SECSuccess) {
@@ -1397,6 +1399,7 @@ nsNSSCertificate::hasValidEVOidTag(SECOidTag& resultOidTag, bool& validEV)
     certificateUsageSSLServer, mozilla::pkix::Now(),
     nullptr /* XXX pinarg */,
     nullptr /* hostname */,
+    nullptr /* isolationKey */,
     flags, nullptr /* stapledOCSPResponse */ , nullptr, &resultOidTag);
 
   if (rv != SECSuccess) {
