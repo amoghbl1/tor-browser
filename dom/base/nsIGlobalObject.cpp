@@ -8,6 +8,7 @@
 #include "nsContentUtils.h"
 #include "nsThreadUtils.h"
 #include "nsHostObjectProtocolHandler.h"
+#include "ThirdPartyUtil.h"
 
 nsIGlobalObject::~nsIGlobalObject()
 {
@@ -42,7 +43,8 @@ namespace {
 class UnlinkHostObjectURIsRunnable final : public nsRunnable
 {
 public:
-  explicit UnlinkHostObjectURIsRunnable(nsTArray<nsCString>& aURIs)
+  explicit UnlinkHostObjectURIsRunnable(nsTArray<nsCString>& aURIs, const nsCString& aIsolationKey)
+    : mIsolationKey(aIsolationKey)
   {
     mURIs.SwapElements(aURIs);
   }
@@ -52,7 +54,7 @@ public:
     MOZ_ASSERT(NS_IsMainThread());
 
     for (uint32_t index = 0; index < mURIs.Length(); ++index) {
-      nsHostObjectProtocolHandler::RemoveDataEntry(mURIs[index]);
+      nsHostObjectProtocolHandler::RemoveDataEntry(mURIs[index], mIsolationKey);
     }
 
     return NS_OK;
@@ -62,6 +64,7 @@ private:
   ~UnlinkHostObjectURIsRunnable() {}
 
   nsTArray<nsCString> mURIs;
+  nsCString mIsolationKey;
 };
 
 } // namespace
@@ -73,9 +76,12 @@ nsIGlobalObject::UnlinkHostObjectURIs()
     return;
   }
 
+  nsCString isolationKey;
+  ThirdPartyUtil::GetFirstPartyHost(this, isolationKey);
+
   if (NS_IsMainThread()) {
     for (uint32_t index = 0; index < mHostObjectURIs.Length(); ++index) {
-      nsHostObjectProtocolHandler::RemoveDataEntry(mHostObjectURIs[index]);
+      nsHostObjectProtocolHandler::RemoveDataEntry(mHostObjectURIs[index], isolationKey);
     }
 
     mHostObjectURIs.Clear();
@@ -85,7 +91,7 @@ nsIGlobalObject::UnlinkHostObjectURIs()
   // nsHostObjectProtocolHandler is main-thread only.
 
   RefPtr<UnlinkHostObjectURIsRunnable> runnable =
-    new UnlinkHostObjectURIsRunnable(mHostObjectURIs);
+    new UnlinkHostObjectURIsRunnable(mHostObjectURIs, isolationKey);
   MOZ_ASSERT(mHostObjectURIs.IsEmpty());
 
   nsresult rv = NS_DispatchToMainThread(runnable);

@@ -67,7 +67,9 @@ public:
   NS_DECL_NSIINTERFACEREQUESTOR
   NS_DECL_NSITHREADRETARGETABLESTREAMLISTENER
 
-  explicit FetchDriver(InternalRequest* aRequest, nsIPrincipal* aPrincipal,
+  explicit FetchDriver(InternalRequest* aRequest,
+                       nsIPrincipal* aPrincipal,
+                       const nsACString& aIsolationKey,
                        nsILoadGroup* aLoadGroup);
   NS_IMETHOD Fetch(FetchDriverObserver* aObserver);
 
@@ -77,6 +79,7 @@ public:
 private:
   nsCOMPtr<nsIPrincipal> mPrincipal;
   nsCOMPtr<nsILoadGroup> mLoadGroup;
+  nsAutoCString mIsolationKey;
   RefPtr<InternalRequest> mRequest;
   RefPtr<InternalResponse> mResponse;
   nsCOMPtr<nsIOutputStream> mPipeOutputStream;

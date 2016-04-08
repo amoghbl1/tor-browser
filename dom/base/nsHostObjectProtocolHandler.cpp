@@ -14,10 +14,12 @@
 #include "nsClassHashtable.h"
 #include "nsError.h"
 #include "nsHostObjectURI.h"
+#include "nsIDOMDocument.h"
 #include "nsIMemoryReporter.h"
 #include "nsIPrincipal.h"
 #include "nsIUUIDGenerator.h"
 #include "nsNetUtil.h"
+#include "ThirdPartyUtil.h"
 
 using mozilla::dom::BlobImpl;
 using mozilla::ErrorResult;
@@ -31,6 +33,7 @@ struct DataInfo
   nsCOMPtr<nsISupports> mObject;
   nsCOMPtr<nsIPrincipal> mPrincipal;
   nsCString mStack;
+  nsCString mFirstPartyHost;
 };
 
 static nsClassHashtable<nsCStringHashKey, DataInfo>* gDataTable;
@@ -316,6 +319,7 @@ nsresult
 nsHostObjectProtocolHandler::AddDataEntry(const nsACString& aScheme,
                                           nsISupports* aObject,
                                           nsIPrincipal* aPrincipal,
+                                          const nsACString& aIsolationKey,
                                           nsACString& aUri)
 {
   Init();
@@ -331,28 +335,65 @@ nsHostObjectProtocolHandler::AddDataEntry(const nsACString& aScheme,
 
   info->mObject = aObject;
   info->mPrincipal = aPrincipal;
+  // Record the first party host that originated this object.
+  info->mFirstPartyHost = aIsolationKey;
   mozilla::BlobURLsReporter::GetJSStackForBlob(info);
 
   gDataTable->Put(aUri, info);
   return NS_OK;
 }
 
+static DataInfo*
+GetDataInfo(const nsACString& aUri)
+{
+  if (!gDataTable) {
+    return nullptr;
+  }
+
+  DataInfo* res;
+
+  // Let's remove any fragment and query from this URI.
+  int32_t hasFragmentPos = aUri.FindChar('#');
+  int32_t hasQueryPos = aUri.FindChar('?');
+
+  int32_t pos = -1;
+  if (hasFragmentPos >= 0 && hasQueryPos >= 0) {
+    pos = std::min(hasFragmentPos, hasQueryPos);
+  } else if (hasFragmentPos >= 0) {
+    pos = hasFragmentPos;
+  } else {
+    pos = hasQueryPos;
+  }
+
+  if (pos < 0) {
+    gDataTable->Get(aUri, &res);
+  } else {
+    gDataTable->Get(StringHead(aUri, pos), &res);
+  }
+
+  return res;
+}
+
 void
-nsHostObjectProtocolHandler::RemoveDataEntry(const nsACString& aUri)
+nsHostObjectProtocolHandler::RemoveDataEntry(const nsACString& aUri,
+                                             const nsACString& aIsolationKey)
 {
   if (gDataTable) {
-    nsCString uriIgnoringRef;
-    int32_t hashPos = aUri.FindChar('#');
-    if (hashPos < 0) {
-      uriIgnoringRef = aUri;
-    }
-    else {
-      uriIgnoringRef = StringHead(aUri, hashPos);
-    }
-    gDataTable->Remove(uriIgnoringRef);
-    if (gDataTable->Count() == 0) {
-      delete gDataTable;
-      gDataTable = nullptr;
+    DataInfo* info = GetDataInfo(aUri);
+    if (info && info->mFirstPartyHost == aIsolationKey) {
+      nsCString uriIgnoringRef;
+      int32_t hashPos = aUri.FindChar('#');
+      if (hashPos < 0) {
+        uriIgnoringRef = aUri;
+      }
+      else {
+        uriIgnoringRef = StringHead(aUri, hashPos);
+      }
+      gDataTable->Remove(uriIgnoringRef);
+      if (gDataTable->Count() == 0) {
+        delete gDataTable;
+        gDataTable = nullptr;
+      }
     }
   }
 }
@@ -393,37 +434,6 @@ nsHostObjectProtocolHandler::GenerateURIString(const nsACString &aScheme,
   return NS_OK;
 }
 
-static DataInfo*
-GetDataInfo(const nsACString& aUri)
-{
-  if (!gDataTable) {
-    return nullptr;
-  }
-
-  DataInfo* res;
-
-  // Let's remove any fragment and query from this URI.
-  int32_t hasFragmentPos = aUri.FindChar('#');
-  int32_t hasQueryPos = aUri.FindChar('?');
-
-  int32_t pos = -1;
-  if (hasFragmentPos >= 0 && hasQueryPos >= 0) {
-    pos = std::min(hasFragmentPos, hasQueryPos);
-  } else if (hasFragmentPos >= 0) {
-    pos = hasFragmentPos;
-  } else {
-    pos = hasQueryPos;
-  }
-
-  if (pos < 0) {
-    gDataTable->Get(aUri, &res);
-  } else {
-    gDataTable->Get(StringHead(aUri, pos), &res);
-  }
-
-  return res;
-}
-
 nsIPrincipal*
 nsHostObjectProtocolHandler::GetDataEntryPrincipal(const nsACString& aUri)
 {
@@ -459,18 +469,21 @@ nsHostObjectProtocolHandler::Traverse(const nsACString& aUri,
 }
 
 static nsISupports*
-GetDataObjectForSpec(const nsACString& aSpec)
+GetDataObjectForSpec(const nsACString& aSpec, const nsACString& aIsolationKey)
 {
   DataInfo* info = GetDataInfo(aSpec);
-  return info ? info->mObject : nullptr;
+  // Deny access to this object if the current first-party host
+  // doesn't match the originating first-party host.
+  return (info && info->mFirstPartyHost == aIsolationKey)
+         ? info->mObject : nullptr;
 }
 
 static nsISupports*
-GetDataObject(nsIURI* aURI)
+GetDataObject(nsIURI* aURI, const nsACString& aIsolationKey)
 {
   nsCString spec;
   aURI->GetSpec(spec);
-  return GetDataObjectForSpec(spec);
+  return GetDataObjectForSpec(spec, aIsolationKey);
 }
 
 // -----------------------------------------------------------------------
@@ -526,9 +539,19 @@ nsHostObjectProtocolHandler::NewChannel2(nsIURI* uri,
   nsCString spec;
   uri->GetSpec(spec);
 
-  DataInfo* info = GetDataInfo(spec);
+  nsCString firstPartyHost;
+  if (aLoadInfo) {
+    nsCOMPtr<nsIDOMDocument> loadingDOMDocument;
+    aLoadInfo->GetLoadingDocument(getter_AddRefs(loadingDOMDocument));
+    nsCOMPtr<nsIDocument> loadingDocument = do_QueryInterface(loadingDOMDocument);
+    nsresult rv = ThirdPartyUtil::GetFirstPartyHost(loadingDocument, firstPartyHost);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
 
-  if (!info) {
+  DataInfo* info = GetDataInfo(spec);
+  // Deny access to this URI if the current first party host
+  // doesn't match the first party host when it was created.
+  if (!info || (info->mFirstPartyHost != firstPartyHost)) {
     return NS_ERROR_DOM_BAD_URI;
   }
 
@@ -634,13 +657,13 @@ nsFontTableProtocolHandler::GetScheme(nsACString &result)
 }
 
 nsresult
-NS_GetBlobForBlobURI(nsIURI* aURI, BlobImpl** aBlob)
+NS_GetBlobForBlobURI(nsIURI* aURI, const nsACString& aIsolationKey, BlobImpl** aBlob)
 {
   NS_ASSERTION(IsBlobURI(aURI), "Only call this with blob URIs");
 
   *aBlob = nullptr;
 
-  nsCOMPtr<BlobImpl> blob = do_QueryInterface(GetDataObject(aURI));
+  nsCOMPtr<BlobImpl> blob = do_QueryInterface(GetDataObject(aURI, aIsolationKey));
   if (!blob) {
     return NS_ERROR_DOM_BAD_URI;
   }
@@ -650,11 +673,11 @@ NS_GetBlobForBlobURI(nsIURI* aURI, BlobImpl** aBlob)
 }
 
 nsresult
-NS_GetBlobForBlobURISpec(const nsACString& aSpec, BlobImpl** aBlob)
+NS_GetBlobForBlobURISpec(const nsACString& aSpec, const nsACString& aIsolationKey, BlobImpl** aBlob)
 {
   *aBlob = nullptr;
 
-  nsCOMPtr<BlobImpl> blob = do_QueryInterface(GetDataObjectForSpec(aSpec));
+  nsCOMPtr<BlobImpl> blob = do_QueryInterface(GetDataObjectForSpec(aSpec, aIsolationKey));
   if (!blob) {
     return NS_ERROR_DOM_BAD_URI;
   }
@@ -664,11 +687,11 @@ NS_GetBlobForBlobURISpec(const nsACString& aSpec, BlobImpl** aBlob)
 }
 
 nsresult
-NS_GetStreamForBlobURI(nsIURI* aURI, nsIInputStream** aStream)
+NS_GetStreamForBlobURI(nsIURI* aURI, const nsACString& aIsolationKey, nsIInputStream** aStream)
 {
   RefPtr<BlobImpl> blobImpl;
   ErrorResult rv;
-  rv = NS_GetBlobForBlobURI(aURI, getter_AddRefs(blobImpl));
+  rv = NS_GetBlobForBlobURI(aURI, aIsolationKey, getter_AddRefs(blobImpl));
   if (NS_WARN_IF(rv.Failed())) {
     return rv.StealNSResult();
   }
@@ -682,11 +705,13 @@ NS_GetStreamForBlobURI(nsIURI* aURI, nsIInputStream** aStream)
 }
 
 nsresult
-NS_GetStreamForMediaStreamURI(nsIURI* aURI, mozilla::DOMMediaStream** aStream)
+NS_GetStreamForMediaStreamURI(nsIURI* aURI,
+                              const nsACString& aIsolationKey,
+                              mozilla::DOMMediaStream** aStream)
 {
   NS_ASSERTION(IsMediaStreamURI(aURI), "Only call this with mediastream URIs");
 
-  nsISupports* dataObject = GetDataObject(aURI);
+  nsISupports* dataObject = GetDataObject(aURI, aIsolationKey);
   if (!dataObject) {
     return NS_ERROR_DOM_BAD_URI;
   }
@@ -729,13 +754,15 @@ nsFontTableProtocolHandler::NewURI(const nsACString& aSpec,
 }
 
 nsresult
-NS_GetSourceForMediaSourceURI(nsIURI* aURI, mozilla::dom::MediaSource** aSource)
+NS_GetSourceForMediaSourceURI(nsIURI* aURI,
+                              const nsACString& aIsolationKey,
+                              mozilla::dom::MediaSource** aSource)
 {
   NS_ASSERTION(IsMediaSourceURI(aURI), "Only call this with mediasource URIs");
 
   *aSource = nullptr;
 
-  nsCOMPtr<mozilla::dom::MediaSource> source = do_QueryInterface(GetDataObject(aURI));
+  nsCOMPtr<mozilla::dom::MediaSource> source = do_QueryInterface(GetDataObject(aURI, aIsolationKey));
   if (!source) {
     return NS_ERROR_DOM_BAD_URI;
   }

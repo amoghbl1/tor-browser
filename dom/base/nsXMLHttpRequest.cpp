@@ -1697,8 +1697,13 @@ nsXMLHttpRequest::Open(const nsACString& inMethod, const nsACString& url,
 
   // If we have the document, use it. Unfortunately, for dedicated workers
   // 'doc' ends up being the parent document, which is not the document
-  // that we want to use. So make sure to avoid using 'doc' in that situation.
-  if (doc && doc->NodePrincipal() == mPrincipal) {
+  // that we want to use because it has the wrong Content Security Policy.
+  // So make sure to avoid using 'doc' in that situation.
+  // However, for blob urls, we don't care about CSP but we do need to
+  // pass on the parent document to get the correct first party.
+  bool isBlob = false;
+  if (doc && (doc->NodePrincipal() == mPrincipal ||
+              (NS_SUCCEEDED(uri->SchemeIs("blob", &isBlob)) && isBlob))) {
     rv = NS_NewChannel(getter_AddRefs(mChannel),
                        uri,
                        doc,
