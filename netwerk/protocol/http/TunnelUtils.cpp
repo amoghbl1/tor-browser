@@ -77,7 +77,7 @@ TLSFilterTransaction::TLSFilterTransaction(nsAHttpTransaction *aWrapped,
 
   if (provider && mFD) {
     mFD->secret = reinterpret_cast<PRFilePrivate *>(this);
-    provider->AddToSocket(PR_AF_INET, aTLSHost, aTLSPort, nullptr,
+    provider->AddToSocket(PR_AF_INET, aTLSHost, aTLSPort, nullptr, nullptr,
                           0, mFD, getter_AddRefs(mSecInfo));
   }
 
@@ -1593,6 +1593,8 @@ FWD_TS_PTR(GetConnectionFlags, uint32_t);
 FWD_TS(SetConnectionFlags, uint32_t);
 FWD_TS_PTR(GetRecvBufferSize, uint32_t);
 FWD_TS(SetRecvBufferSize, uint32_t);
+FWD_TS(SetIsolationKey, const nsACString&);
+FWD_TS(GetIsolationKey, nsACString&);
 
 NS_IMETHODIMP
 SocketTransportShim::GetHost(nsACString & aHost)

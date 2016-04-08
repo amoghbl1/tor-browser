@@ -62,6 +62,9 @@ public:
   nsresult GetPort(int32_t *aPort);
   nsresult SetPort(int32_t aPort);
 
+  const char* GetIsolationKeyRaw() const { return mIsolationKey.get(); }
+  nsresult SetIsolationKey(const char *aIsolationKey);
+
   PRErrorCode GetErrorCode() const;
   
   void GetErrorLogMessage(PRErrorCode errorCode,
@@ -100,6 +103,7 @@ private:
 
   int32_t mPort;
   nsXPIDLCString mHostName;
+  nsXPIDLCString mIsolationKey;
 
   /* SSL Status */
   RefPtr<nsSSLStatus> mSSLStatus;
