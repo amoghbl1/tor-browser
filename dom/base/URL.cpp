@@ -18,6 +18,7 @@
 #include "nsNetCID.h"
 #include "nsNetUtil.h"
 #include "nsIURL.h"
+#include "ThirdPartyUtil.h"
 #include "nsContentUtils.h"
 
 namespace mozilla {
@@ -133,18 +134,21 @@ URL::CreateObjectURL(const GlobalObject& aGlobal, MediaSource& aSource,
 {
   nsCOMPtr<nsIPrincipal> principal = nsContentUtils::ObjectPrincipal(aGlobal.Get());
 
+  nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aGlobal.GetAsSupports());
+  nsCString isolationKey;
+  ThirdPartyUtil::GetFirstPartyHost(global, isolationKey);
   nsCString url;
   nsresult rv = nsHostObjectProtocolHandler::
     AddDataEntry(NS_LITERAL_CSTRING(MEDIASOURCEURI_SCHEME),
-                 &aSource, principal, url);
+                 &aSource, principal, isolationKey, url);
   if (NS_FAILED(rv)) {
     aError.Throw(rv);
     return;
   }
 
   nsCOMPtr<nsIRunnable> revocation = NS_NewRunnableFunction(
-    [url] {
-      nsHostObjectProtocolHandler::RemoveDataEntry(url);
+    [url, isolationKey] {
+      nsHostObjectProtocolHandler::RemoveDataEntry(url, isolationKey);
     });
 
   nsContentUtils::RunInStableState(revocation.forget());
@@ -165,15 +169,16 @@ URL::CreateObjectURLInternal(const GlobalObject& aGlobal, nsISupports* aObject,
   }
 
   nsCOMPtr<nsIPrincipal> principal = nsContentUtils::ObjectPrincipal(aGlobal.Get());
+  nsCString isolationKey;
+  ThirdPartyUtil::GetFirstPartyHost(global, isolationKey);
 
   nsAutoCString url;
   nsresult rv = nsHostObjectProtocolHandler::AddDataEntry(aScheme, aObject,
-                                                          principal, url);
+                                                          principal, isolationKey, url);
   if (NS_FAILED(rv)) {
-    aRv.Throw(rv);
+    aRv.Throw(NS_ERROR_FAILURE);
     return;
   }
-
   global->RegisterHostObjectURI(url);
   CopyASCIItoUTF16(url, aResult);
 }
@@ -196,9 +201,10 @@ URL::RevokeObjectURL(const GlobalObject& aGlobal, const nsAString& aURL,
     nsHostObjectProtocolHandler::GetDataEntryPrincipal(asciiurl);
 
   if (urlPrincipal && principal->Subsumes(urlPrincipal)) {
-    nsCOMPtr<nsIGlobalObject> global = do_QueryInterface(aGlobal.GetAsSupports());
     global->UnregisterHostObjectURI(asciiurl);
-    nsHostObjectProtocolHandler::RemoveDataEntry(asciiurl);
+    nsCString isolationKey;
+    ThirdPartyUtil::GetFirstPartyHost(global, isolationKey);
+    nsHostObjectProtocolHandler::RemoveDataEntry(asciiurl, isolationKey);
   }
 }
 

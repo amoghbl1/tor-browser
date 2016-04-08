@@ -44,6 +44,7 @@
 #include "WorkerScope.h"
 #include "Workers.h"
 #include "FetchUtil.h"
+#include "ThirdPartyUtil.h"
 
 namespace mozilla {
 namespace dom {
@@ -136,7 +137,8 @@ public:
     MOZ_ASSERT(principal);
     nsCOMPtr<nsILoadGroup> loadGroup = proxy->GetWorkerPrivate()->GetLoadGroup();
     MOZ_ASSERT(loadGroup);
-    RefPtr<FetchDriver> fetch = new FetchDriver(mRequest, principal, loadGroup);
+    nsCString isolationKey = proxy->GetWorkerPrivate()->IsolationKey();
+    RefPtr<FetchDriver> fetch = new FetchDriver(mRequest, principal, isolationKey, loadGroup);
     nsresult rv = fetch->Fetch(mResolver);
     // Right now we only support async fetch, which should never directly fail.
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -170,6 +172,7 @@ FetchRequest(nsIGlobalObject* aGlobal, const RequestOrUSVString& aInput,
   RefPtr<InternalRequest> r = request->GetInternalRequest();
 
   if (NS_IsMainThread()) {
+    nsCString firstPartyHost;
     nsCOMPtr<nsPIDOMWindow> window = do_QueryInterface(aGlobal);
     nsCOMPtr<nsIDocument> doc;
     nsCOMPtr<nsILoadGroup> loadGroup;
@@ -182,6 +185,11 @@ FetchRequest(nsIGlobalObject* aGlobal, const RequestOrUSVString& aInput,
       }
       principal = doc->NodePrincipal();
       loadGroup = doc->GetDocumentLoadGroup();
+      nsresult rv = ThirdPartyUtil::GetFirstPartyHost(doc, firstPartyHost);
+      if (NS_WARN_IF(NS_FAILED(rv))) {
+        aRv.Throw(rv);
+        return nullptr;
+      }
     } else {
       principal = aGlobal->PrincipalOrNull();
       if (NS_WARN_IF(!principal)) {
@@ -198,7 +206,7 @@ FetchRequest(nsIGlobalObject* aGlobal, const RequestOrUSVString& aInput,
     Telemetry::Accumulate(Telemetry::FETCH_IS_MAINTHREAD, 1);
 
     RefPtr<MainThreadFetchResolver> resolver = new MainThreadFetchResolver(p);
-    RefPtr<FetchDriver> fetch = new FetchDriver(r, principal, loadGroup);
+    RefPtr<FetchDriver> fetch = new FetchDriver(r, principal, firstPartyHost, loadGroup);
     fetch->SetDocument(doc);
     aRv = fetch->Fetch(resolver);
     if (NS_WARN_IF(aRv.Failed())) {

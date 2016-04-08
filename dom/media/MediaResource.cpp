@@ -33,6 +33,7 @@
 #include <algorithm>
 #include "nsProxyRelease.h"
 #include "nsIContentPolicy.h"
+#include "mozilla/dom/ThirdPartyUtil.h"
 
 using mozilla::media::TimeUnit;
 
@@ -1308,7 +1309,10 @@ nsresult FileMediaResource::Open(nsIStreamListener** aStreamListener)
       rv = NS_NewLocalFileInputStream(
         getter_AddRefs(mInput), file, -1, -1, nsIFileInputStream::SHARE_DELETE);
     } else if (IsBlobURI(mURI)) {
-      rv = NS_GetStreamForBlobURI(mURI, getter_AddRefs(mInput));
+      nsCString isolationKey;
+      rv = ThirdPartyUtil::GetFirstPartyHost(mChannel, isolationKey);
+      NS_ENSURE_SUCCESS(rv, rv);
+      rv = NS_GetStreamForBlobURI(mURI, isolationKey, getter_AddRefs(mInput));
     }
   } else {
 

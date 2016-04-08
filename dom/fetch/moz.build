@@ -35,6 +35,7 @@ IPDL_SOURCES += [
 ]
 
 LOCAL_INCLUDES += [
+    '../base',
     '../workers',
     # For nsJARChannel.h
     '/modules/libjar',

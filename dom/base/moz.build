@@ -209,6 +209,7 @@ EXPORTS.mozilla.dom += [
     'StyleSheetList.h',
     'SubtleCrypto.h',
     'Text.h',
+    'ThirdPartyUtil.h',
     'TreeWalker.h',
     'URL.h',
     'URLSearchParams.h',

@@ -54,8 +54,9 @@ public:
   static nsresult AddDataEntry(const nsACString& aScheme,
                                nsISupports* aObject,
                                nsIPrincipal* aPrincipal,
+                               const nsACString& aIsolationKey,
                                nsACString& aUri);
-  static void RemoveDataEntry(const nsACString& aUri);
+  static void RemoveDataEntry(const nsACString& aUri, const nsACString& aIsolationKey);
   static nsIPrincipal* GetDataEntryPrincipal(const nsACString& aUri);
   static void Traverse(const nsACString& aUri, nsCycleCollectionTraversalCallback& aCallback);
 
@@ -122,19 +123,24 @@ inline bool IsFontTableURI(nsIURI* aUri)
 }
 
 extern nsresult
-NS_GetBlobForBlobURI(nsIURI* aURI, mozilla::dom::BlobImpl** aBlob);
+NS_GetBlobForBlobURI(nsIURI* aURI, const nsACString& aIsolationKey,
+                     mozilla::dom::BlobImpl** aBlob);
 
 extern nsresult
-NS_GetBlobForBlobURISpec(const nsACString& aSpec, mozilla::dom::BlobImpl** aBlob);
+NS_GetBlobForBlobURISpec(const nsACString& aSpec, const nsACString& aIsolationKey,
+                         mozilla::dom::BlobImpl** aBlob);
 
 extern nsresult
-NS_GetStreamForBlobURI(nsIURI* aURI, nsIInputStream** aStream);
+NS_GetStreamForBlobURI(nsIURI* aURI, const nsACString& aIsolationKey,
+                       nsIInputStream** aStream);
 
 extern nsresult
-NS_GetStreamForMediaStreamURI(nsIURI* aURI, mozilla::DOMMediaStream** aStream);
+NS_GetStreamForMediaStreamURI(nsIURI* aURI, const nsACString& aIsolationKey,
+                              mozilla::DOMMediaStream** aStream);
 
 extern nsresult
-NS_GetSourceForMediaSourceURI(nsIURI* aURI, mozilla::dom::MediaSource** aSource);
+NS_GetSourceForMediaSourceURI(nsIURI* aURI, const nsACString& isolationKey,
+                              mozilla::dom::MediaSource** aSource);
 
 #define NS_BLOBPROTOCOLHANDLER_CID \
 { 0xb43964aa, 0xa078, 0x44b2, \
