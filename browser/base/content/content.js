@@ -972,6 +972,7 @@ var PageInfoListener = {
     catch (exception) { }
 
     windowInfo.hostName = hostName;
+    windowInfo.firstParty = window.top.location.href;
     return windowInfo;
   },
 

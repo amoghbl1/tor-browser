@@ -47,9 +47,9 @@ BlobSerial(ImageURL* aURI, const nsCString& isolationKey)
   return Nothing();
 }
 
-ImageCacheKey::ImageCacheKey(nsIURI* aURI, nsIDOMDocument* aDocument)
+ImageCacheKey::ImageCacheKey(nsIURI* aURI, nsINode* aNode)
   : mURI(new ImageURL(aURI))
-  , mControlledDocument(GetControlledDocumentToken(aDocument))
+  , mControlledDocument(aNode && aNode->OwnerDoc() ? GetControlledDocumentToken(aNode->OwnerDoc()) : nullptr)
   , mIsChrome(URISchemeIs(mURI, "chrome"))
 {
   MOZ_ASSERT(NS_IsMainThread());
@@ -64,9 +64,9 @@ ImageCacheKey::ImageCacheKey(nsIURI* aURI, nsIDOMDocument* aDocument)
   mHash = ComputeHash(mURI, mBlobSerial, mControlledDocument, mIsolationKey);
 }
 
-ImageCacheKey::ImageCacheKey(ImageURL* aURI, nsIDOMDocument* aDocument)
+ImageCacheKey::ImageCacheKey(ImageURL* aURI, nsINode* aNode)
   : mURI(aURI)
-  , mControlledDocument(GetControlledDocumentToken(aDocument))
+  , mControlledDocument(aNode && aNode->OwnerDoc() ? GetControlledDocumentToken(aNode->OwnerDoc()) : nullptr)
   , mIsChrome(URISchemeIs(mURI, "chrome"))
 {
   MOZ_ASSERT(aURI);
@@ -155,7 +155,7 @@ ImageCacheKey::ComputeHash(ImageURL* aURI,
 }
 
 /* static */ void*
-ImageCacheKey::GetControlledDocumentToken(nsIDOMDocument* aDocument)
+ImageCacheKey::GetControlledDocumentToken(nsIDocument* aDocument)
 {
   // For non-controlled documents, we just return null.  For controlled
   // documents, we cast the pointer into a void* to avoid dereferencing
@@ -163,11 +163,10 @@ ImageCacheKey::GetControlledDocumentToken(nsIDOMDocument* aDocument)
   void* pointer = nullptr;
   using dom::workers::ServiceWorkerManager;
   RefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-  nsCOMPtr<nsIDocument> doc = do_QueryInterface(aDocument);
-  if (doc && swm) {
+  if (aDocument && swm) {
     ErrorResult rv;
-    if (swm->IsControlled(doc, rv)) {
-      pointer = doc;
+    if (swm->IsControlled(aDocument, rv)) {
+      pointer = aDocument;
     }
   }
   return pointer;
