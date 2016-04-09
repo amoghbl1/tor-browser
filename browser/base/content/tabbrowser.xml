@@ -871,7 +871,12 @@
             }
 
             let sizedIconUrl = browser.mIconURL || "";
-            if (sizedIconUrl != aTab.getAttribute("image")) {
+            let firstPartyURI = browser.currentURI.spec;
+            if (sizedIconUrl !== aTab.getAttribute("image") || firstPartyURI !== aTab.getAttribute("firstparty")) {
+              if (firstPartyURI)
+                aTab.setAttribute("firstparty", firstPartyURI);
+              else
+                aTab.removeAttribute("firstparty");
               if (sizedIconUrl)
                 aTab.setAttribute("image", sizedIconUrl);
               else
@@ -5908,7 +5913,7 @@
                      class="tab-throbber"
                      role="presentation"
                      layer="true" />
-          <xul:image xbl:inherits="src=image,fadein,pinned,selected,visuallyselected,busy,crashed"
+          <xul:image xbl:inherits="src=image,fadein,pinned,selected,visuallyselected,busy,crashed,firstparty"
                      anonid="tab-icon-image"
                      class="tab-icon-image"
                      validate="never"
@@ -6253,6 +6258,7 @@
             aMenuitem.setAttribute("busy", aTab.getAttribute("busy"));
             aMenuitem.removeAttribute("image");
           } else {
+            aMenuitem.setAttribute("firstparty", aTab.getAttribute("firstparty"));
             aMenuitem.setAttribute("image", aTab.getAttribute("image"));
             aMenuitem.removeAttribute("busy");
           }
