@@ -214,7 +214,7 @@
     <content>
       <xul:hbox class="menu-iconic-left" align="center" pack="center"
                 xbl:inherits="selected,_moz-menuactive,disabled,checked">
-        <xul:image class="menu-iconic-icon" xbl:inherits="src=image,validate,src"/>
+        <xul:image class="menu-iconic-icon" xbl:inherits="src=image,validate,src,firstparty"/>
       </xul:hbox>
       <xul:label class="menu-iconic-text" flex="1" xbl:inherits="value=label,accesskey,crop" crop="right"/>
       <children/>
@@ -228,7 +228,7 @@
     <content>
       <xul:hbox class="menu-iconic-left" align="center" pack="center"
                 xbl:inherits="selected,disabled,checked">
-        <xul:image class="menu-iconic-icon" xbl:inherits="src=image,validate,src"/>
+        <xul:image class="menu-iconic-icon" xbl:inherits="src=image,validate,src,firstparty"/>
       </xul:hbox>
       <xul:label class="menu-iconic-text" flex="1" xbl:inherits="value=label,accesskey,crop" crop="right"/>
     </content>
@@ -238,7 +238,7 @@
     <content>
       <xul:hbox class="menu-iconic-left" align="center" pack="center"
                 xbl:inherits="selected,disabled,checked">
-        <xul:image class="menu-iconic-icon" xbl:inherits="src=image,validate,src"/>
+        <xul:image class="menu-iconic-icon" xbl:inherits="src=image,validate,src,firstparty"/>
       </xul:hbox>
       <xul:label class="menu-iconic-text" flex="1" xbl:inherits="value=label,crop" crop="right"/>
     </content>
@@ -248,7 +248,7 @@
     <content>
       <xul:hbox class="menu-iconic-left" align="center" pack="center"
                 xbl:inherits="selected,disabled,checked">
-        <xul:image class="menu-iconic-icon" xbl:inherits="src=image,validate,src"/>
+        <xul:image class="menu-iconic-icon" xbl:inherits="src=image,validate,src,firstparty"/>
       </xul:hbox>
       <xul:label class="menu-iconic-text" xbl:inherits="value=label,accesskey,crop" crop="right" flex="1"/>
       <xul:label class="menu-iconic-text menu-description" xbl:inherits="value=description" crop="right" flex="10000"/>
@@ -259,7 +259,7 @@
            extends="chrome://global/content/bindings/menu.xml#menu-base">
     <content>
       <xul:hbox class="menu-iconic-left" align="center" pack="center">
-        <xul:image class="menu-iconic-icon" xbl:inherits="src=image"/>
+        <xul:image class="menu-iconic-icon" xbl:inherits="src=image,firstparty"/>
       </xul:hbox>
       <xul:label class="menu-iconic-text" flex="1" xbl:inherits="value=label,accesskey,crop" crop="right"/>
       <xul:hbox class="menu-accel-container" anonid="accel">

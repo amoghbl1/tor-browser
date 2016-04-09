@@ -152,6 +152,7 @@ pageInfoTreeView.prototype = {
 // mmm, yummy. global variables.
 var gDocInfo = null;
 var gImageElement = null;
+var gFirstParty = null;
 
 // column number to help using the data array
 const COL_IMAGE_ADDRESS = 0;
@@ -377,6 +378,8 @@ function loadPageInfo(frameOuterWindowID, imageElement)
     gDocInfo = docInfo;
 
     gImageElement = pageInfoData.imageInfo;
+
+    gFirstParty = windowInfo.firstParty;
 
     var titleFormat = windowInfo.isTopWindow ? "pageInfo.page.title"
                                              : "pageInfo.frame.title";
@@ -880,6 +883,8 @@ function makePreview(row)
 
     var newImage = new Image;
     newImage.id = "thepreviewimage";
+    // Ensure "Media" items are fetched over the first-party domain.
+    newImage.setAttribute("firstparty", gFirstParty);
     var physWidth = 0, physHeight = 0;
     var width = 0, height = 0;
 
@@ -927,6 +932,7 @@ function makePreview(row)
     else if (item.HTMLVideoElement && isProtocolAllowed) {
       newImage = document.createElementNS("http://www.w3.org/1999/xhtml", "video");
       newImage.id = "thepreviewimage";
+      newImage.setAttribute("firstparty", gFirstParty);
       newImage.src = url;
       newImage.controls = true;
       width = physWidth = item.videoWidth;
@@ -938,6 +944,7 @@ function makePreview(row)
     else if (item.HTMLAudioElement && isProtocolAllowed) {
       newImage = new Audio;
       newImage.id = "thepreviewimage";
+      newImage.setAttribute("firstparty", gFirstParty);
       newImage.src = url;
       newImage.controls = true;
       isAudio = true;

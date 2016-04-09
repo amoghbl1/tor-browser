@@ -12,8 +12,9 @@
 
 #include "mozilla/Maybe.h"
 
-class nsIDOMDocument;
+class nsIDocument;
 class nsIURI;
+class nsINode;
 
 namespace mozilla {
 namespace image {
@@ -31,8 +32,8 @@ class ImageURL;
 class ImageCacheKey final
 {
 public:
-  ImageCacheKey(nsIURI* aURI, nsIDOMDocument* aDocument);
-  ImageCacheKey(ImageURL* aURI, nsIDOMDocument* aDocument);
+  ImageCacheKey(nsIURI* aURI, nsINode* aNode);
+  ImageCacheKey(ImageURL* aURI, nsINode* aNode);
 
   ImageCacheKey(const ImageCacheKey& aOther);
   ImageCacheKey(ImageCacheKey&& aOther);
@@ -57,7 +58,7 @@ private:
                               const Maybe<uint64_t>& aBlobSerial,
                               void* aControlledDocument,
                               const nsACString& isolationKey);
-  static void* GetControlledDocumentToken(nsIDOMDocument* aDocument);
+  static void* GetControlledDocumentToken(nsIDocument* aDocument);
 
   RefPtr<ImageURL> mURI;
   Maybe<uint64_t> mBlobSerial;
