@@ -27,9 +27,10 @@
 // The tickler only applies to wifi on mobile right now. Hopefully it
 // can also be restricted to particular handset models in the future.
 
-#if defined(ANDROID) && !defined(MOZ_B2G)
-#define MOZ_USE_WIFI_TICKLER
-#endif
+// Avoid the tickler in all cases, e.g., in Orfox.
+//#if defined(ANDROID) && !defined(MOZ_B2G)
+//#define MOZ_USE_WIFI_TICKLER
+//#endif
 
 #include "mozilla/Attributes.h"
 #include "nsISupports.h"
