@@ -11,6 +11,7 @@
 #include "nsLookAndFeel.h"
 #include "nsCRT.h"
 #include "nsFont.h"
+#include "nsThemeConstants.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/gfx/2D.h"
@@ -912,6 +913,46 @@ LookAndFeel::GetColor(ColorID aID, bool aUseStandinsForNativeColors,
 {
   return nsLookAndFeel::GetInstance()->GetColorImpl(aID,
                                        aUseStandinsForNativeColors, *aResult);
+}
+
+// static
+nsresult
+LookAndFeel::GetColorForNativeAppearance(uint8_t aWidgetType, bool aIsDisabled,
+                                         nscolor* aResult)
+{
+  NS_ENSURE_ARG_POINTER(aResult);
+
+  ColorID colorID = eColorID_LAST_COLOR;
+  switch (aWidgetType) {
+    case NS_THEME_TEXTFIELD:
+    case NS_THEME_TEXTFIELD_MULTILINE:
+    case NS_THEME_LISTBOX:
+    case NS_THEME_MENULIST:
+    case NS_THEME_MENULIST_TEXTFIELD:
+    case NS_THEME_TREEVIEW:
+      colorID = (aIsDisabled) ? eColorID_graytext : eColorID__moz_fieldtext;
+      break;
+
+    case NS_THEME_TOOLTIP:
+      colorID = eColorID_infotext;
+      break;
+
+    case NS_THEME_BUTTON:
+    case NS_THEME_GROUPBOX:
+    case NS_THEME_PROGRESSBAR:
+    case NS_THEME_PROGRESSBAR_VERTICAL:
+    case NS_THEME_TABPANEL:
+    case NS_THEME_STATUSBAR:
+    case NS_THEME_RESIZERPANEL:
+      colorID = (aIsDisabled) ? eColorID_graytext : eColorID_buttontext;
+      break;
+  }
+
+  if (LookAndFeel::eColorID_LAST_COLOR == colorID)
+    return NS_ERROR_FAILURE;
+
+  *aResult = NS_RGB(0, 0, 0);
+  return nsLookAndFeel::GetInstance()->NativeGetColor(colorID, *aResult);
 }
 
 // static
