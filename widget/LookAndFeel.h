@@ -535,6 +535,9 @@ public:
   static nsresult GetColor(ColorID aID, bool aUseStandinsForNativeColors,
                            nscolor* aResult);
 
+  static nsresult GetColorForNativeAppearance(uint8_t aWidgetType,
+                                          bool aIsDisabled, nscolor* aResult);
+
   /**
    * GetInt() and GetFloat() return a int or float value for aID.  The result
    * might be distance, time, some flags or a int value which has particular
