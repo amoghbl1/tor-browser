@@ -289,8 +289,6 @@
 @BINPATH@/components/PermissionSettings.manifest
 @BINPATH@/components/PermissionPromptService.js
 @BINPATH@/components/PermissionPromptService.manifest
-@BINPATH@/components/nsDNSServiceDiscovery.manifest
-@BINPATH@/components/nsDNSServiceDiscovery.js
 @BINPATH@/components/toolkitsearch.manifest
 @BINPATH@/components/nsSearchService.js
 @BINPATH@/components/nsSidebar.js
@@ -406,10 +404,6 @@
 @BINPATH@/components/PresentationNetworkHelper.manifest
 @BINPATH@/components/PresentationDataChannelSessionTransport.js
 @BINPATH@/components/PresentationDataChannelSessionTransport.manifest
-@BINPATH@/components/LegacyProviders.manifest
-@BINPATH@/components/LegacyPresentationControlService.js
-@BINPATH@/components/AndroidCastDeviceProvider.manifest
-@BINPATH@/components/AndroidCastDeviceProvider.js
 
 @BINPATH@/components/TVSimulatorService.js
 @BINPATH@/components/TVSimulatorService.manifest
