@@ -12,8 +12,6 @@ EXTRA_COMPONENTS += [
 UNIFIED_SOURCES += [
     'DeviceProviderHelpers.cpp',
     'DisplayDeviceProvider.cpp',
-    'MulticastDNSDeviceProvider.cpp',
-    'PresentationDeviceProviderModule.cpp',
 ]
 
 EXTRA_JS_MODULES.presentation += [
@@ -21,20 +19,6 @@ EXTRA_JS_MODULES.presentation += [
     'ReceiverStateMachine.jsm',
     'StateMachineHelper.jsm',
 ]
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
-    EXTRA_COMPONENTS += [
-        # For android presentation device
-        'AndroidCastDeviceProvider.js',
-        'AndroidCastDeviceProvider.manifest',
-        # for TV 2.5 device backward capability
-        'LegacyPresentationControlService.js',
-        'LegacyProviders.manifest',
-    ]
-
-    UNIFIED_SOURCES += [
-        'LegacyMDNSDeviceProvider.cpp',
-    ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
 FINAL_LIBRARY = 'xul'
