@@ -338,19 +338,15 @@ nsresult nsProfileLock::LockWithSymlink(nsIFile *aLockFile, bool aHaveFcntlLock)
     if (!mReplacedLockTime)
         aLockFile->GetLastModifiedTimeOfLink(&mReplacedLockTime);
 
+    // For Tor Browser, avoid a DNS lookup here so the Tor network is not
+    // bypassed. Instead, always use 127.0.0.1 for the IP address portion
+    // of the lock signature, which may cause the browser to refuse to
+    // start in the rare event that all of the following conditions are met:
+    //   1. The browser profile is on a network file system.
+    //   2. The file system does not support fcntl() locking.
+    //   3. Tor Browser is run from two different computers at the same time.
     struct in_addr inaddr;
     inaddr.s_addr = htonl(INADDR_LOOPBACK);
-
-    char hostname[256];
-    PRStatus status = PR_GetSystemInfo(PR_SI_HOSTNAME, hostname, sizeof hostname);
-    if (status == PR_SUCCESS)
-    {
-        char netdbbuf[PR_NETDB_BUF_SIZE];
-        PRHostEnt hostent;
-        status = PR_GetHostByName(hostname, netdbbuf, sizeof netdbbuf, &hostent);
-        if (status == PR_SUCCESS)
-            memcpy(&inaddr, hostent.h_addr, sizeof inaddr);
-    }
 
     char *signature =
         PR_smprintf("%s:%s%lu", inet_ntoa(inaddr), aHaveFcntlLock ? "+" : "",
