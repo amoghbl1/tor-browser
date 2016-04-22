@@ -9706,6 +9706,10 @@ nsDocument::MaybePreLoadImage(nsIURI* uri, const nsAString &aCrossOriginAttr,
 void
 nsDocument::MaybePreconnect(nsIURI* aOrigURI, mozilla::CORSMode aCORSMode)
 {
+  // Tor Browser: Here we disable <link rel="preconnect">
+  // See #16998.
+  // TODO: Isolate preconnect by first party.
+/*
   nsCOMPtr<nsIURI> uri;
   if (NS_FAILED(aOrigURI->Clone(getter_AddRefs(uri)))) {
       return;
@@ -9740,6 +9744,7 @@ nsDocument::MaybePreconnect(nsIURI* aOrigURI, mozilla::CORSMode aCORSMode)
   } else {
     speculator->SpeculativeConnect(uri, nullptr);
   }
+*/
 }
 
 void
