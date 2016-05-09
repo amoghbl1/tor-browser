@@ -12821,8 +12821,8 @@ void
 nsGlobalWindow::EnableOrientationChangeListener()
 {
   MOZ_ASSERT(IsInnerWindow());
-
-  if (!mOrientationChangeObserver) {
+  if (!nsContentUtils::ShouldResistFingerprinting(mDocShell)
+      && !mOrientationChangeObserver) {
     mOrientationChangeObserver =
       new WindowOrientationObserver(this);
   }
@@ -13672,7 +13672,8 @@ nsGlobalWindow::IsModalContentWindow(JSContext* aCx, JSObject* aGlobal)
 int16_t
 nsGlobalWindow::Orientation() const
 {
-  return WindowOrientationObserver::OrientationAngle();
+  return nsContentUtils::ShouldResistFingerprinting(mDocShell) ?
+           0 : WindowOrientationObserver::OrientationAngle();
 }
 #endif
 

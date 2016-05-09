@@ -15,6 +15,7 @@
 #include "mozilla/Preferences.h"
 
 #include "mozilla/dom/Promise.h"
+#include "nsContentUtils.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -403,18 +404,23 @@ ScreenOrientation::UnlockDeviceOrientation()
 OrientationType
 ScreenOrientation::DeviceType() const
 {
-  return mType;
+  return ShouldResistFingerprinting() ? OrientationType::Landscape_primary
+                                      : mType;
 }
 
 uint16_t
 ScreenOrientation::DeviceAngle() const
 {
-  return mAngle;
+  return ShouldResistFingerprinting() ? 0 : mAngle;
 }
 
 OrientationType
 ScreenOrientation::GetType(ErrorResult& aRv) const
 {
+  if (ShouldResistFingerprinting()) {
+    return OrientationType::Landscape_primary;
+  }
+
   nsIDocument* doc = GetResponsibleDocument();
   if (!doc) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
@@ -427,6 +433,10 @@ ScreenOrientation::GetType(ErrorResult& aRv) const
 uint16_t
 ScreenOrientation::GetAngle(ErrorResult& aRv) const
 {
+  if (ShouldResistFingerprinting()) {
+    return 0;
+  }
+
   nsIDocument* doc = GetResponsibleDocument();
   if (!doc) {
     aRv.Throw(NS_ERROR_UNEXPECTED);
@@ -489,6 +499,10 @@ ScreenOrientation::GetResponsibleDocument() const
 void
 ScreenOrientation::Notify(const hal::ScreenConfiguration& aConfiguration)
 {
+  if (ShouldResistFingerprinting()) {
+    return;
+  }
+
   nsIDocument* doc = GetResponsibleDocument();
   if (!doc) {
     return;
@@ -562,6 +576,17 @@ JSObject*
 ScreenOrientation::WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto)
 {
   return ScreenOrientationBinding::Wrap(aCx, this, aGivenProto);
+}
+
+bool
+ScreenOrientation::ShouldResistFingerprinting() const
+{
+  bool resist = false;
+  nsCOMPtr<nsPIDOMWindow> owner = GetOwner();
+  if (owner) {
+    resist = nsContentUtils::ShouldResistFingerprinting(owner->GetDocShell());
+  }
+  return resist;
 }
 
 NS_IMPL_ISUPPORTS(ScreenOrientation::VisibleEventListener, nsIDOMEventListener)
