@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8" />
+  <title>Bug 18995 test</title>
+ </head>
+ <body>
+  <div id="result"></div>
+  <script type="application/javascript">
+    let resultDiv = document.getElementById("result");
+    // Wait for a signal from chrome to start.
+    resultDiv.addEventListener("ready", function () {
+      let resultEvent = new Event("result");
+      // Test caches.open(...)
+      caches.open("test1").then(function (value) {
+        // We are not supposed to succeed, but if we do,
+        // post the result to resultDiv.
+        resultDiv.innerHTML = value.toString();
+        // Notify chrome that the result is available.
+        resultDiv.dispatchEvent(resultEvent);
+      }, function (reason) {
+        // We should arrive here to fail. Post the result
+        // to resultDiv.
+        resultDiv.innerHTML = reason.toString();
+        // Notify chrome that the result is available.
+        resultDiv.dispatchEvent(resultEvent);
+      });
+    });
+  </script>
+ </body>
+</html>
