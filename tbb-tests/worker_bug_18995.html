@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8" />
+  <title>Bug 18995 test</title>
+ </head>
+ <body>
+  <div id="result"></div>
+  <script type="application/javascript">
+    let resultDiv = document.getElementById("result");
+    // Wait for a signal from chrome to start.
+    resultDiv.addEventListener("ready", function() {
+      // Run the test worker.
+      let worker = new Worker("worker_bug_18995.js");
+      // Wait for a message from the worker, which should contain
+      // the result or the error from the caches.open(...) call.
+      worker.addEventListener("message", function (msg) {
+        // Put the result in our resultDiv.
+        resultDiv.innerHTML = msg.data;
+        // Notify chrome that the result is ready.
+        resultDiv.dispatchEvent(new Event("result"));
+      });
+    });
+  </script>
+ </body>
+</html>
