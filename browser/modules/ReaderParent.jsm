@@ -79,8 +79,11 @@ var ReaderParent = {
         break;
 
       case "Reader:PocketEnabledGet": {
-        let pocketPlacement = CustomizableUI.getPlacementOfWidget("pocket-button");
-        let isPocketEnabled = pocketPlacement && pocketPlacement.area;
+        // Only when the pocket button is present on the navigation bar or
+        // the hamburger menu, should Pocket be considered "active".
+        let doc = message.target.ownerDocument;
+        let isPocketEnabled = (doc !== null) &&
+                              (doc.getElementById("pocket-button") !== null);
         message.target.messageManager.sendAsyncMessage("Reader:PocketEnabledData", { enabled: !!isPocketEnabled});
         break;
       }
