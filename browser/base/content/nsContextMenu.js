@@ -225,7 +225,9 @@ nsContextMenu.prototype = {
                                         this.isContentSelected || this.onImage ||
                                         this.onCanvas || this.onVideo || this.onAudio);
     let targetURI = (this.onSaveableLink || this.onPlainTextLink) ? this.linkURI : this.browser.currentURI;
-    let canPocket = CustomizableUI.getPlacementOfWidget("pocket-button") &&
+    // Pocket is only "active" if the pocket button is present on the
+    // navigation bar or hamburger menu.
+    let canPocket = (document.getElementById("pocket-button") !== null) &&
                     window.pktApi && window.pktApi.isUserLoggedIn();
     canPocket = canPocket && (targetURI.schemeIs("http") || targetURI.schemeIs("https") ||
                               (targetURI.schemeIs("about") && ReaderMode.getOriginalUrl(targetURI.spec)));

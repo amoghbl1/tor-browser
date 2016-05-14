@@ -1553,7 +1553,14 @@ var BookmarkingUI = {
   },
 
   updatePocketItemVisibility: function BUI_updatePocketItemVisibility(prefix) {
-    let hidden = !CustomizableUI.getPlacementOfWidget("pocket-button");
+    // When the pocket button has been placed on the navigation bar or
+    // on the hamburger menu, then Pocket can be considered "active" and
+    // we should show the pocket menu item in various places.
+    // If, on the other hand, the pocket button is not present because
+    // the user has moved it out of the nav bar, or the browser started
+    // up with "browser.pocket.enabled" set to false, then we
+    // should not show the pocket menu items.
+    let hidden = document.getElementById("pocket-button") == null;
     document.getElementById(prefix + "pocket").hidden = hidden;
     document.getElementById(prefix + "pocketSeparator").hidden = hidden;
   },
