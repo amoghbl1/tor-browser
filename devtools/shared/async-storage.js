@@ -42,9 +42,36 @@
 const {Cc, Ci, Cu, Cr} = require("chrome");
 const {indexedDB} = require("sdk/indexed-db");
 const Promise = require("promise");
+const prefs = require("sdk/preferences/service");
+
+// Substitute memory-only "database" when "dom.indexedDB.enabled" is false.
+// Match the API and behavior of the indexedDB-based version.
+const memoryDB = function () {
+  let dbMap = new Map();
+  return {
+    getItem : k => {
+      let value = dbMap.get(k);
+      // Match the behavior of indexedDB-based implementation
+      // when an item is not present.
+      if (value === undefined) {
+        value = null;
+      }
+      return Promise.resolve(value);
+    },
+    setItem : (k, v) => Promise.resolve(dbMap.set(k, v)),
+    removeItem : k => Promise.resolve(dbMap.delete(k)),
+    clear : () => Promise.resolve(dbMap.clear()),
+    length : () => Promise.resolve(dbMap.size),
+    key : n => Promise.resolve(Array.from(dbMap.keys())[n])
+  };
+};
 
 module.exports = (function() {
   "use strict";
+
+  if (!prefs.get('dom.indexedDB.enabled', true)) {
+    return memoryDB();
+  }
 
   var DBNAME = "devtools-async-storage";
   var DBVERSION = 1;
