@@ -43,6 +43,32 @@
 "use strict";
 
 const Promise = require("promise");
+const prefs = require("sdk/preferences/service");
+
+// Substitute memory-only "database" when "dom.indexedDB.enabled" is false.
+// Match the API and behavior of the indexedDB-based version.
+const memoryDB = function () {
+  let dbMap = new Map();
+  if (prefs.get('dom.indexedDB.enabled', true)) {
+    return {}; // We won't use a memory db.
+  }
+  return {
+    getItem : k => {
+      let value = dbMap.get(k);
+      // Match the behavior of indexedDB-based implementation
+      // when an item is not present.
+      if (value === undefined) {
+        value = null;
+      }
+      return Promise.resolve(value);
+    },
+    setItem : (k, v) => Promise.resolve(dbMap.set(k, v)),
+    removeItem : k => Promise.resolve(dbMap.delete(k)),
+    clear : () => Promise.resolve(dbMap.clear()),
+    length : () => Promise.resolve(dbMap.size),
+    key : n => Promise.resolve(Array.from(dbMap.keys())[n])
+  };
+}();
 
 const DBNAME = "devtools-async-storage";
 const DBVERSION = 1;
@@ -180,9 +206,9 @@ function key(n) {
   });
 }
 
-exports.getItem = getItem;
-exports.setItem = setItem;
-exports.removeItem = removeItem;
-exports.clear = clear;
-exports.length = length;
-exports.key = key;
+exports.getItem = memoryDB.getItem || getItem;
+exports.setItem = memoryDB.setItem || setItem;
+exports.removeItem = memoryDB.removeItem || removeItem;
+exports.clear = memoryDB.clear || clear;
+exports.length = memoryDB.length || length;
+exports.key = memoryDB.key || key;
