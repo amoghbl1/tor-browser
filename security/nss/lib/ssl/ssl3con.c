@@ -6029,6 +6029,7 @@ done:
     return unwrappedWrappingKey;
 }
 
+#ifdef NSS_ALLOW_SSLKEYLOGFILE
 /* hexEncode hex encodes |length| bytes from |in| and writes it as |length*2|
  * bytes to |out|. */
 static void
@@ -6042,6 +6043,7 @@ hexEncode(char *out, const unsigned char *in, unsigned int length)
 	*(out++) = hextable[in[i] & 15];
     }
 }
+#endif
 
 /* Called from ssl3_SendClientKeyExchange(). */
 /* Presently, this always uses PKCS11.  There is no bypass for this. */
@@ -6081,6 +6083,7 @@ sendRSAClientKeyExchange(sslSocket * ss, SECKEYPublicKey * svrPubKey)
 	goto loser;
     }
 
+#ifdef NSS_ALLOW_SSLKEYLOGFILE
     if (ssl_keylog_iob) {
 	SECStatus extractRV = PK11_ExtractKeyValue(pms);
 	if (extractRV == SECSuccess) {
@@ -6112,6 +6115,7 @@ sendRSAClientKeyExchange(sslSocket * ss, SECKEYPublicKey * svrPubKey)
 	    }
 	}
     }
+#endif
 
     rv = ssl3_AppendHandshakeHeader(ss, client_key_exchange, 
 				    isTLS ? enc_pms.len + 2 : enc_pms.len);
@@ -10990,6 +10994,7 @@ ssl3_SendNextProto(sslSocket *ss)
 static void
 ssl3_RecordKeyLog(sslSocket *ss)
 {
+#ifdef NSS_ALLOW_SSLKEYLOGFILE
     SECStatus rv;
     SECItem *keyData;
     char buf[14 /* "CLIENT_RANDOM " */ +
@@ -11040,6 +11045,7 @@ ssl3_RecordKeyLog(sslSocket *ss)
         return;
     fflush(ssl_keylog_iob);
     return;
+#endif
 }
 
 /* called from ssl3_SendClientSecondRound
