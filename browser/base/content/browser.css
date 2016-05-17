@@ -18,6 +18,7 @@
 %endif
 }
 
+%ifdef MOZ_LOOP
 /* These values are chosen to keep the Loop detached chat window from
  * getting too small.  When it's too small, three bad things happen:
  *
@@ -41,6 +42,7 @@
   min-width: 260px;
   min-height: 315px;
 }
+%endif
 
 #main-window[customize-entered] {
   min-width: -moz-fit-content;
@@ -914,6 +916,7 @@ chatbox[customSize] {
   min-width: 350px;
 }
 
+%ifdef MOZ_LOOP
 chatbox[customSize="loopChatEnabled"] {
   /* 430px as defined per UX */
   height: 430px;
@@ -938,6 +941,7 @@ chatbox[customSize="loopChatDisabledMessageAppended"] {
   /* 445px + 30px top bar height. */
   min-height: calc(400px + 30px);
 }
+%endif
 
 chatbox[minimized="true"] {
   width: 160px;
