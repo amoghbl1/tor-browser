@@ -3737,6 +3737,7 @@ MOZ_URL_CLASSIFIER=
 MOZ_XUL=1
 MOZ_ZIPWRITER=1
 NS_PRINTING=1
+MOZ_LOOP=1
 if test "$MOZ_IOS"; then
    NS_PRINTING=
 fi
@@ -8455,6 +8456,19 @@ if test "$NECKO_COOKIES"; then
     AC_DEFINE(NECKO_COOKIES)
     _NON_GLOBAL_ACDEFINES="$_NON_GLOBAL_ACDEFINES NECKO_COOKIES"
 fi
+
+dnl ========================================================
+dnl disable loop extension
+dnl ========================================================
+MOZ_ARG_DISABLE_BOOL(loop,
+[  --disable-loop
+                          Disable loop extension],
+    MOZ_LOOP=,
+    MOZ_LOOP=1 )
+if test "$MOZ_LOOP"; then
+    AC_DEFINE(MOZ_LOOP)
+fi
+AC_SUBST(MOZ_LOOP)
 
 dnl
 dnl Always build Marionette if not Android or B2G
