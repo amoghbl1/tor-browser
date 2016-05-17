@@ -290,6 +290,7 @@
            noautofocus="true"
            position="topcenter topright"/>
 
+#ifdef MOZ_LOOP
     <panel id="loop-notification-panel"
            class="loop-panel social-panel"
            type="arrow"
@@ -301,6 +302,7 @@
            type="arrow"
            orient="horizontal"
            hidden="true"/>
+#endif
 
     <menupopup id="toolbar-context-menu"
                onpopupshowing="onViewToolbarsPopupShowing(event, document.getElementById('viewToolbarsMenuSeparator'));">
