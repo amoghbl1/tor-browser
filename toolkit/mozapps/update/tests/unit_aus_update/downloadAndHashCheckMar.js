@@ -20,13 +20,7 @@ function run_test() {
   start_httpserver();
   setUpdateURL(gURLData + gHTTPHandlerPath);
   standardInit();
-  // Only perform the non hash check tests when mar signing is enabled since the
-  // update service doesn't perform hash checks when mar signing is enabled.
-  if (MOZ_VERIFY_MAR_SIGNATURE) {
-    do_execute_soon(run_test_pt11);
-  } else {
-    do_execute_soon(run_test_pt1);
-  }
+  do_execute_soon(run_test_pt1);
 }
 
 // The HttpServer must be stopped before calling do_test_finished
