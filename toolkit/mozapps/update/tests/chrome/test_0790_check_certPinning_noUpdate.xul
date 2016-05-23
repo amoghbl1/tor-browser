@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<!--
+/* Any copyright is dedicated to the Public Domain.
+ * http://creativecommons.org/publicdomain/zero/1.0/
+ */
+-->
+
+<?xml-stylesheet href="chrome://global/skin" type="text/css"?>
+<?xml-stylesheet href="chrome://mochikit/content/tests/SimpleTest/test.css" type="text/css"?>
+
+<window title="Test update check with invalid certificate attribute name with no update"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        onload="runTestDefault();">
+<script type="application/javascript"
+        src="chrome://mochikit/content/tests/SimpleTest/SimpleTest.js"/>
+<script type="application/javascript"
+        src="utils.js"/>
+
+<script type="application/javascript">
+<![CDATA[
+
+const TESTS = [ {
+  pageid: PAGEID_CHECKING
+}, {
+  pageid: PAGEID_ERRORS,
+  extraCheckFunction: checkErrorCode,
+  buttonClick: "finish"
+} ];
+
+function runTest() {
+  debugDump("entering");
+
+  // Set the update URL.
+  // https://badchain.include-subdomains.pinning.example.com is preconfigured
+  // by the test framework for use in key pinning tests.
+  // See build/pgo/server-locations.txt
+  let url = "https://badchain.include-subdomains.pinning.example.com"
+            + URL_PATH_UPDATE_XML + "?noUpdates=1";
+  gAppUpdateURLDefault = gDefaultPrefBranch.getCharPref(PREF_APP_UPDATE_URL);
+  debugDump("setting default pref " + PREF_APP_UPDATE_URL + " to " + url);
+  gDefaultPrefBranch.setCharPref(PREF_APP_UPDATE_URL, url);
+
+  gUP.checkForUpdates();
+}
+
+function checkErrorCode() {
+  // From security/manager/ssl/tests/unit/head_psm.js:
+  const MOZILLA_PKIX_ERROR_BASE = Ci.nsINSSErrorsService.MOZILLA_PKIX_ERROR_BASE;
+  const MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE = MOZILLA_PKIX_ERROR_BASE + 0;
+
+  // Convert the NSS error into an XPCOM error code.
+  let nssErrorsService = Cc["@mozilla.org/nss_errors_service;1"]
+                           .getService(Ci.nsINSSErrorsService);
+  let expectedErrorCode = nssErrorsService.getXPCOMFromNSSError(
+                                       MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE);
+
+  // Convert the actual update check errorCode to an unsigned integer so
+  // that we can compare it to the expectedErrorCode.
+  let errorCode = gWin.gUpdates.update.errorCode >>> 0;
+
+  // Finally, check it.
+  is(errorCode, expectedErrorCode,
+    "Checking update.errorCode == MOZILLA_PKIX_ERROR_KEY_PINNING_FAILURE");
+}
+]]>
+</script>
+
+<body xmlns="http://www.w3.org/1999/xhtml">
+  <p id="display"></p>
+  <div id="content" style="display: none"></div>
+  <pre id="test"></pre>
+</body>
+</window>
