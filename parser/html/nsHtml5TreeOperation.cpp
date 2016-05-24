@@ -471,11 +471,16 @@ nsHtml5TreeOperation::SetFormElement(nsIContent* aNode, nsIContent* aParent)
 nsresult
 nsHtml5TreeOperation::AppendIsindexPrompt(nsIContent* parent, nsHtml5DocumentBuilder* aBuilder)
 {
+  /*
   nsXPIDLString prompt;
   nsresult rv =
       nsContentUtils::GetLocalizedString(nsContentUtils::eFORMS_PROPERTIES,
                                          "IsIndexPromptWithSpace", prompt);
+  */
+  nsString prompt(NS_LITERAL_STRING(
+    "This is a searchable index. Enter search keywords:\u0020"));
   uint32_t len = prompt.Length();
+  /*
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -483,6 +488,7 @@ nsHtml5TreeOperation::AppendIsindexPrompt(nsIContent* parent, nsHtml5DocumentBui
     // Don't bother appending a zero-length text node.
     return NS_OK;
   }
+  */
   return AppendText(prompt.BeginReading(), len, parent, aBuilder);
 }
 
