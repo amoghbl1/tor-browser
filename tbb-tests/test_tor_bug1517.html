@@ -1,0 +1,81 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+Tor bug
+https://trac.torproject.org/projects/tor/ticket/1517
+-->
+<head>
+  <meta charset="utf-8">
+  <title>Test for Tor Bug 1517</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="/tests/SimpleTest/SpawnTask.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://trac.torproject.org/projects/tor/ticket/1517">Tor Bug 1517</a>
+
+<!-- Canvas, Video, Audio elements for testing 'currentTime' -->
+<canvas id="test-canvas" width="100" height="100"></canvas>
+<video id="test-video"
+       src="http://example.com/tests/tbb-tests/noaudio.webm"></video>
+<audio id="test-audio"
+       src="http://example.com/tests/tbb-tests/audio.ogg"></audio>
+
+<!-- The main testing script -->
+<script type="application/javascript;version=1.7">
+  SimpleTest.requestFlakyTimeout("testing JS time-based fingerprinting");
+
+  // __later(delay)__.
+  // Return a promise that resolves after the requested delay in ms.
+  let later = function (delay) {
+    return new Promise((resolve, reject) => {
+      window.setTimeout(resolve, delay);
+    });
+  };
+
+  // The main testing task
+  add_task(function* () {
+    // Prepare for test of AudioContext.currentTime
+    let audioContext = new AudioContext();
+    // Prepare for test of CanvasStream.currentTime
+    let canvas = document.getElementById("test-canvas");
+    let context = canvas.getContext('2d');
+    context.fillText("test", 20, 20);
+    let canvasStream = canvas.captureStream(25);
+    // Prepare for test of HTMLVideoElement.currentTime
+    let video = document.getElementById("test-video");
+    video.currentTime = 1.25;
+    // Prepare for test of HTMLAudioElement.currenTime
+    let audio = document.getElementById("test-audio");
+    audio.currentTime = 1.35;
+    // Allow ~150 ms to elapse, so we can get non-zero
+    // time values for all elements.
+    yield later(150);
+    // Known ways to generate time stamps, in milliseconds
+    let timeStampCodes = [
+      'performance.now()',
+      'new Date().getTime()',
+      'new Event("").timeStamp',
+      'audioContext.currentTime * 1000',
+      'canvasStream.currentTime * 1000',
+      'video.currentTime * 1000',
+      'audio.currentTime * 1000',
+      'new File([], "").lastModified',
+      'new File([], "").lastModifiedDate.getTime()',
+    ];
+    // Loop through each timeStampCode, evaluate it,
+    // and check if it is rounded to the nearest 100 ms.
+    for (let timeStampCode of timeStampCodes) {
+      let timeStamp = eval(timeStampCode);
+      let roundedTimeStamp = 100*Math.round(timeStamp/100);
+      ok(timeStamp === roundedTimeStamp,
+         "'" + timeStampCode +
+         "' should be rounded to nearest 100 ms; saw " +
+         timeStamp);
+    }
+  });
+</script>
+
+
+</body>
+</html>
