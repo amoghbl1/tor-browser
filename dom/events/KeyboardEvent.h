@@ -42,11 +42,6 @@ public:
     return KeyboardEventBinding::Wrap(aCx, this, aGivenProto);
   }
 
-  uint64_t TimeStamp() const
-  {
-    return (mEvent->time / 250)*250;
-  }
-
   bool AltKey();
   bool CtrlKey();
   bool ShiftKey();
