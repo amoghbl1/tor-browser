@@ -6223,7 +6223,9 @@ JS_PUBLIC_API(bool)
 JS::CaptureCurrentStack(JSContext* cx, JS::MutableHandleObject stackp, unsigned maxFrameCount)
 {
     JSCompartment* compartment = cx->compartment();
-    MOZ_ASSERT(compartment);
+    if (!compartment)
+      return false;
+
     Rooted<SavedFrame*> frame(cx);
     if (!compartment->savedStacks().saveCurrentStack(cx, &frame, maxFrameCount))
         return false;
