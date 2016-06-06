@@ -246,6 +246,8 @@
 
 #include "nsISpeculativeConnect.h"
 
+#include "ThirdPartyUtil.h"
+
 #ifdef MOZ_MEDIA_NAVIGATOR
 #include "mozilla/MediaManager.h"
 #endif // MOZ_MEDIA_NAVIGATOR
@@ -9735,10 +9737,12 @@ nsDocument::MaybePreconnect(nsIURI* aOrigURI, mozilla::CORSMode aCORSMode)
     return;
   }
 
+  nsCString firstPartyHost;
+  ThirdPartyUtil::GetFirstPartyHost(this, firstPartyHost);
   if (aCORSMode == CORS_ANONYMOUS) {
-    speculator->SpeculativeAnonymousConnect(uri, nullptr);
+    speculator->SpeculativeAnonymousConnectIsolated(uri, firstPartyHost, nullptr);
   } else {
-    speculator->SpeculativeConnect(uri, nullptr);
+    speculator->SpeculativeConnectIsolated(uri, firstPartyHost, nullptr);
   }
 }
 

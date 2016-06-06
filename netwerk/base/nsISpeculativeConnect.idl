@@ -8,7 +8,7 @@
 interface nsIURI;
 interface nsIInterfaceRequestor;
 
-[scriptable, uuid(d74a17ac-5b8a-4824-a309-b1f04a3c4aed)]
+[scriptable, uuid(60cf321d-9f09-403a-b8b6-db221e6ca3a1)]
 interface nsISpeculativeConnect : nsISupports
 {
     /**
@@ -21,6 +21,7 @@ interface nsISpeculativeConnect : nsISupports
      * to actually open the new channel. 
      *
      * @param aURI the URI of the hinted transaction
+     * @param aIsolationKey the isolation key for the connection
      * @param aCallbacks any security callbacks for use with SSL for interfaces
      *        such as nsIBadCertListener. May be null.
      *
@@ -30,6 +31,14 @@ interface nsISpeculativeConnect : nsISupports
 
     void speculativeAnonymousConnect(in nsIURI aURI,
                                      in nsIInterfaceRequestor aCallbacks);
+
+    void speculativeConnectIsolated(in nsIURI aURI,
+                                    in AUTF8String aIsolationKey,
+                                    in nsIInterfaceRequestor aCallbacks);
+
+    void speculativeAnonymousConnectIsolated(in nsIURI aURI,
+                                             in AUTF8String aIsolationKey,
+                                             in nsIInterfaceRequestor aCallbacks);
 };
 
 /**
