@@ -2679,6 +2679,13 @@ var gMenuButtonUpdateBadge = {
       this.reset();
       return;
     }
+
+    if (status == "downloading") {
+      // A partial update failed and a complete update is being attempted.
+      // Ignore (it does not make sense to show the update badge yet).
+      return;
+    }
+
     if (status == "failed") {
       // Background update has failed, let's show the UI responsible for
       // prompting the user to update manually.
