@@ -1,0 +1,28 @@
+#!/bin/bash
+
+function mochitest() {
+    ./mach mochitest --log-tbpl tbb-tests.log.tmp "$@"
+    cat tbb-tests.log.tmp >> tbb-tests.log
+    rm -f tbb-tests.log.tmp
+}
+
+rm -f tbb-tests.log
+
+mochitest --setpref security.nocertdb=false docshell/test/test_tor_bug16620.html \
+          tbb-tests
+mochitest dom/base/test/test_tor_bug17207.html \
+          dom/base/test/test_tor_bug15502.html \
+          dom/base/test/test_tor_bug15564.html \
+          dom/base/test/test_tor_bug15703.html \
+          dom/events/test/test_tor_bug15646.html
+mochitest dom/tests/browser/browser_tor_bug17009.js \
+          netwerk/test/browser/browser_cacheFirstParty.js
+
+# Disabled tests:
+# - #19575: Test for privacy.thirdparty.isolate fails with a timeout
+#    dom/tests/mochitest/localstorage/test_localStorageByFirstParty.html
+
+echo *************************
+echo *************************
+echo "Summary of failed tests:"
+grep --color=never TEST-UNEXPECTED-FAIL tbb-tests.log
