@@ -740,6 +740,17 @@ nsViewSourceChannel::SetTopLevelContentWindowId(uint64_t aWindowId)
 }
 
 NS_IMETHODIMP
+nsViewSourceChannel::IsPendingUnforced(bool *result)
+{
+  if (mHttpChannel) {
+    return mHttpChannel->IsPendingUnforced(result);
+  }
+
+  NS_ENSURE_TRUE(mChannel, NS_ERROR_FAILURE);
+  return mChannel->IsPending(result);
+}
+
+NS_IMETHODIMP
 nsViewSourceChannel::GetRequestMethod(nsACString & aRequestMethod)
 {
     return !mHttpChannel ? NS_ERROR_NULL_POINTER :

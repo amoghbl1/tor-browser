@@ -14,7 +14,7 @@ interface nsIHttpHeaderVisitor;
  * the inspection of the resulting HTTP response status and headers when they
  * become available.
  */
-[builtinclass, scriptable, uuid(c5a4a073-4539-49c7-a3f2-cec3f0619c6c)]
+[builtinclass, scriptable, uuid(e0d8071b-5389-48c2-92c7-6708c968044d)]
 interface nsIHttpChannel : nsIChannel
 {
     /**************************************************************************
@@ -469,4 +469,11 @@ interface nsIHttpChannel : nsIChannel
      * this channels is being load in.
      */
     attribute uint64_t topLevelContentWindowId;
+
+    /**
+     * Returns true if a request is pending due to "natural" causes and
+     * not just because ForcePending() has been called. See isPending()
+     * in nsIRequest.idl for more details about pending requests.
+     */
+    boolean isPendingUnforced();
 };

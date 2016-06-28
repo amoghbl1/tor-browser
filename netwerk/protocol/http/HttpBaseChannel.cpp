@@ -1232,6 +1232,13 @@ NS_IMETHODIMP HttpBaseChannel::SetTopLevelContentWindowId(uint64_t aWindowId)
   return NS_OK;
 }
 
+NS_IMETHODIMP HttpBaseChannel::IsPendingUnforced(bool *aIsPendingUnforced)
+{
+  NS_ENSURE_ARG_POINTER(aIsPendingUnforced);
+  *aIsPendingUnforced = mIsPending;
+  return NS_OK;
+}
+
 NS_IMETHODIMP
 HttpBaseChannel::GetTransferSize(uint64_t *aTransferSize)
 {
