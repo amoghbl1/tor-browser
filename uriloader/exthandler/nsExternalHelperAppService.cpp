@@ -41,6 +41,7 @@
 #include "nsThreadUtils.h"
 #include "nsAutoPtr.h"
 #include "nsIMutableArray.h"
+#include "nsISupportsPrimitives.h" // for nsISupportsPRBool
 
 // used to access our datastore of user-configured helper applications
 #include "nsIHandlerService.h"
@@ -105,6 +106,7 @@
 
 #include "mozilla/Preferences.h"
 #include "mozilla/ipc/URIUtils.h"
+#include "mozilla/Unused.h"
 
 using namespace mozilla;
 using namespace mozilla::ipc;
@@ -431,6 +433,22 @@ static nsresult GetDownloadDirectory(nsIFile **_directory,
 
   NS_ASSERTION(dir, "Somehow we didn't get a download directory!");
   dir.forget(_directory);
+  return NS_OK;
+}
+
+static nsresult shouldCancel(bool *aShouldCancel)
+{
+  NS_ENSURE_ARG_POINTER(aShouldCancel);
+
+  nsCOMPtr<nsISupportsPRBool> cancelObj =
+                            do_CreateInstance(NS_SUPPORTS_PRBOOL_CONTRACTID);
+  cancelObj->SetData(false);
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  if (!obs)
+    return NS_ERROR_FAILURE;
+
+  obs->NotifyObservers(cancelObj, "external-app-requested", nullptr);
+  cancelObj->GetData(aShouldCancel);
   return NS_OK;
 }
 
@@ -1008,6 +1026,14 @@ nsExternalHelperAppService::LoadURI(nsIURI *aURI,
 
   if (!allowLoad) {
     return NS_OK; // explicitly denied
+  }
+
+  // Give other modules, including extensions, a chance to cancel.
+  bool doCancel = false;
+  rv = shouldCancel(&doCancel);
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (doCancel) {
+    return NS_OK;
   }
 
   nsCOMPtr<nsIHandlerInfo> handler;
@@ -1641,6 +1667,37 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest *request, nsISuppo
   // for OnStartRequest.
   if (XRE_IsContentProcess()) {
     return NS_OK;
+  }
+
+  // Give other modules, including extensions, a chance to cancel.
+  // To avoid a problem where OnDataAvailable fires but is not handled
+  // correctly while a modal dialog displayed by Torbutton is open, we
+  // suspend and then we either cancel or resume active requests.
+  // See bugs 21766 and 21886.
+  bool isPending = false;
+  nsCOMPtr<nsIHttpChannel> httpChan = do_QueryInterface(request);
+  if (httpChan) {
+    rv = httpChan->IsPendingUnforced(&isPending);
+  } else {
+    rv = request->IsPending(&isPending);
+  }
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  if (isPending) {
+    Unused << request->Suspend(); // Best effort: ignore failures.
+  }
+
+  bool doCancel = false;
+  rv = shouldCancel(&doCancel);
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (doCancel) {
+    mCanceled = true;
+    request->Cancel(NS_BINDING_ABORTED);
+    return NS_OK;
+  }
+
+  if (isPending) {
+    Unused << request->Resume();  // Best effort: ignore failures.
   }
 
   rv = SetUpTempFile(aChannel);
