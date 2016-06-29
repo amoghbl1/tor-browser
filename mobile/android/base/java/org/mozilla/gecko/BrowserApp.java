@@ -948,7 +948,11 @@ public class BrowserApp extends GeckoApp
             });
             builder.show();
         } else {
-            registerReceiver(torStatusReceiver, new IntentFilter(OrbotHelper.ACTION_STATUS));
+            try {
+                registerReceiver(torStatusReceiver, new IntentFilter(OrbotHelper.ACTION_STATUS));
+            } catch (Exception e) {
+                Log.d(LOGTAG, "torStatusReceiver already registered: " + e.toString());
+            }
             OrbotHelper.requestStartTor(this);
         }
     }
@@ -963,8 +967,12 @@ public class BrowserApp extends GeckoApp
         handlerThread.start();
         Looper looper = handlerThread.getLooper();
         Handler handler = new Handler(looper);
-        registerReceiver(torStatusReceiver, new IntentFilter(OrbotHelper.ACTION_STATUS),
-                null, handler);
+        try {
+            registerReceiver(torStatusReceiver, new IntentFilter(OrbotHelper.ACTION_STATUS),
+                    null, handler);
+        } catch (Exception e) {
+            Log.d(LOGTAG, "torStatusReceiver already registered: " + e.toString());
+        }
 
         checkStartOrbot();
 
@@ -1000,7 +1008,11 @@ public class BrowserApp extends GeckoApp
         // Register for Prompt:ShowTop so we can foreground this activity even if it's hidden.
         EventDispatcher.getInstance().registerGeckoThreadListener((GeckoEventListener) this,
             "Prompt:ShowTop");
-        unregisterReceiver(torStatusReceiver);
+        try {
+            unregisterReceiver(torStatusReceiver);
+        } catch (Exception e) {
+            Log.d(LOGTAG, "torStatusReceiver already unregistered: " + e.toString());
+        }
 
         mScreenshotObserver.stop();
     }

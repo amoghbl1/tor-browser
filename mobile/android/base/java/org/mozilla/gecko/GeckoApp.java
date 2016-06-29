@@ -512,7 +512,6 @@ public abstract class GeckoApp
         GeckoAppShell.sendEventToGeckoSync(
                 GeckoEvent.createBroadcastEvent("Browser:Quit", res.toString()));
         doShutdown();
-        return true;
     }
 
     @Override
