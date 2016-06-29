@@ -2712,7 +2712,10 @@ static bool gDoProfileReset = false;
 // 6) display the profile-manager UI
 static nsresult
 SelectProfile(nsIProfileLock* *aResult, nsIToolkitProfileService* aProfileSvc,
-              nsIFile *aAppDir, nsINativeAppSupport* aNative,
+#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
+              nsIFile *aAppDir,
+#endif
+              nsINativeAppSupport* aNative,
               bool* aStartOffline, nsACString* aProfileName)
 {
   StartupTimeline::Record(StartupTimeline::SELECT_PROFILE);
@@ -4303,10 +4306,19 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
   }
 #endif
 
+#if (defined(MOZ_UPDATER) && !defined(MOZ_WIDGET_ANDROID)) || defined(TOR_BROWSER_DATA_OUTSIDE_APP_DIR)
+  nsCOMPtr<nsIFile> exeFile, exeDir;
+  bool persistent;
+  rv = mDirProvider.GetFile(XRE_EXECUTABLE_FILE, &persistent,
+                            getter_AddRefs(exeFile));
+  NS_ENSURE_SUCCESS(rv, 1);
+  rv = exeFile->GetParent(getter_AddRefs(exeDir));
+  NS_ENSURE_SUCCESS(rv, 1);
+#endif
+
 #if defined(MOZ_UPDATER) && !defined(MOZ_WIDGET_ANDROID)
   // Check for and process any available updates
   nsCOMPtr<nsIFile> updRoot;
-  bool persistent;
   rv = mDirProvider.GetFile(XRE_UPDATE_ROOT_DIR, &persistent,
                             getter_AddRefs(updRoot));
   // XRE_UPDATE_ROOT_DIR may fail. Fallback to appDir if failed
@@ -4341,12 +4353,6 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
   if (CheckArg("test-process-updates")) {
     SaveToEnv("MOZ_TEST_PROCESS_UPDATES=1");
   }
-  nsCOMPtr<nsIFile> exeFile, exeDir;
-  rv = mDirProvider.GetFile(XRE_EXECUTABLE_FILE, &persistent,
-                            getter_AddRefs(exeFile));
-  NS_ENSURE_SUCCESS(rv, 1);
-  rv = exeFile->GetParent(getter_AddRefs(exeDir));
-  NS_ENSURE_SUCCESS(rv, 1);
 #ifdef TOR_BROWSER_UPDATE
   nsAutoCString compatVersion(TOR_BROWSER_VERSION);
 #endif
@@ -4395,7 +4401,10 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
     return 1;
   }
 
-  rv = SelectProfile(getter_AddRefs(mProfileLock), mProfileSvc, exeDir,
+  rv = SelectProfile(getter_AddRefs(mProfileLock), mProfileSvc,
+#ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
+                     exeDir,
+#endif
                      mNativeApp, &mStartOffline, &mProfileName);
   if (rv == NS_ERROR_LAUNCHED_CHILD_PROCESS ||
       rv == NS_ERROR_ABORT) {
