@@ -15,8 +15,6 @@
 #endif
               android:targetSdkVersion="22"/>
 
-#include ../services/manifests/HealthReportAndroidManifest_permissions.xml.in
-
 #ifdef MOZ_ANDROID_SEARCH_ACTIVITY
 #include ../search/manifests/SearchAndroidManifest_permissions.xml.in
 #endif
