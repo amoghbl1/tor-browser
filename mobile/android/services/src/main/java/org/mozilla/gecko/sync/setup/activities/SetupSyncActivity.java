@@ -108,8 +108,9 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       @Override
       public void run() {
         ActivityUtils.prepareLogging();
-        Account[] accts = mAccountManager.getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC);
-        finishResume(accts);
+        // Account[] accts = mAccountManager.getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC);
+        // finishResume(accts);
+        finishResume(null);
       }
     });
   }
@@ -348,12 +349,13 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
    */
   public void onPaired() {
     // Extract Sync account data.
-    Account[] accts = mAccountManager.getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC);
-    if (accts.length == 0) {
+    // Account[] accts = mAccountManager.getAccountsByType(SyncConstants.ACCOUNTTYPE_SYNC);
+    // if (accts.length == 0) {
       // Error, no account present.
-      Logger.error(LOG_TAG, "No accounts present.");
-      displayAbort(Constants.JPAKE_ERROR_INVALID);
-      return;
+    Logger.error(LOG_TAG, "No accounts present.");
+    displayAbort(Constants.JPAKE_ERROR_INVALID);
+    return;
+    /*
     }
 
     // TODO: Single account supported. Create account selection if spec changes.
@@ -370,6 +372,7 @@ public class SetupSyncActivity extends AccountAuthenticatorActivity {
       Logger.error(LOG_TAG, "No active J-PAKE pairing.", e);
       displayAbort(Constants.JPAKE_ERROR_INVALID);
     }
+    */
   }
 
   /**

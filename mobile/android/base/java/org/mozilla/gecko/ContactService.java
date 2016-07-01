@@ -1525,21 +1525,8 @@ public class ContactService implements GeckoEventListener {
     }
 
     private void getDeviceAccount(final Runnable handleMessage) {
-        Account[] accounts = AccountManager.get(mActivity).getAccounts();
-
-        if (accounts.length == 0) {
-            Log.w(LOGTAG, "No accounts available");
-            gotDeviceAccount(handleMessage);
-        } else if (accounts.length > 1) {
-            // Show the accounts chooser dialog if more than one dialog exists
-            showAccountsDialog(accounts, handleMessage);
-        } else {
-            // If only one account exists, use it
-            mAccountName = accounts[0].name;
-            mAccountType = accounts[0].type;
-            gotDeviceAccount(handleMessage);
-        }
-
+        Log.w(LOGTAG, "No accounts available");
+        gotDeviceAccount(handleMessage);
         mGotDeviceAccount = true;
     }
 

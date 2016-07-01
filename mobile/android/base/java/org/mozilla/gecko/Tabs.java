@@ -139,7 +139,7 @@ public class Tabs implements GeckoEventListener {
         }
 
         mAppContext = appContext;
-        mAccountManager = AccountManager.get(appContext);
+        // mAccountManager = AccountManager.get(appContext);
 
         mAccountListener = new OnAccountsUpdateListener() {
             @Override
@@ -149,7 +149,7 @@ public class Tabs implements GeckoEventListener {
         };
 
         // The listener will run on the background thread (see 2nd argument).
-        mAccountManager.addOnAccountsUpdatedListener(mAccountListener, ThreadUtils.getBackgroundHandler(), false);
+        // mAccountManager.addOnAccountsUpdatedListener(mAccountListener, ThreadUtils.getBackgroundHandler(), false);
 
         if (mBookmarksContentObserver != null) {
             // It's safe to use the db here since we aren't doing any I/O.

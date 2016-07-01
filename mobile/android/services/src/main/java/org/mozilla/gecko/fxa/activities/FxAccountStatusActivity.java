@@ -154,7 +154,7 @@ public class FxAccountStatusActivity extends LocaleAwareFragmentActivity {
       .setPositiveButton(android.R.string.ok, new Dialog.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
-          AccountManager.get(activity).removeAccount(account, callback, null);
+          // AccountManager.get(activity).removeAccount(account, callback, null);
         }
       })
       .setNegativeButton(android.R.string.cancel, new Dialog.OnClickListener() {

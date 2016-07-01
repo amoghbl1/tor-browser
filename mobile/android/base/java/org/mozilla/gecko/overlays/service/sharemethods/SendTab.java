@@ -144,6 +144,7 @@ public class SendTab extends ShareMethod {
 
         // Determine if the user has a new or old style sync account and load the available sync
         // clients for it.
+        /*
         final AccountManager accountManager = AccountManager.get(context);
         final Account[] fxAccounts = accountManager.getAccountsByType(FxAccountConstants.ACCOUNT_TYPE);
 
@@ -178,6 +179,7 @@ public class SendTab extends ShareMethod {
             registerDisplayURICommand();
             return;
         }
+        */
 
         // Have registered UIs offer to set up a Firefox Account.
         setOverrideIntentAction(FxAccountConstants.ACTION_FXA_GET_STARTED);
