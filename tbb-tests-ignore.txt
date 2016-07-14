@@ -1,0 +1,4 @@
+# This file contains the list of tests ignored by the run-tbb-tests script
+
+#19575: Test for privacy.thirdparty.isolate fails with a timeout
+dom/tests/mochitest/localstorage/test_localStorageByFirstParty.html
