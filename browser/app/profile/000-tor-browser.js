@@ -221,6 +221,9 @@ pref("dom.mozTCPSocket.enabled", false);
 // Security slider
 pref("svg.in-content.enabled", true);
 pref("mathml.disabled", false);
+// Until we address at least the linkability concerns in #19417 let's disable
+// asmjs.
+pref("javascript.options.asmjs", false);
 
 // Network and performance
 pref("network.http.pipelining", true);
