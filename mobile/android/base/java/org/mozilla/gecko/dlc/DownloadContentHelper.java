@@ -11,6 +11,7 @@ import org.mozilla.gecko.dlc.catalog.DownloadContent;
 import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.util.IOUtils;
+import org.mozilla.gecko.util.ProxySettings;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -85,6 +86,7 @@ import java.util.zip.GZIPInputStream;
                     AppConstants.USER_AGENT_FENNEC_TABLET :
                     AppConstants.USER_AGENT_FENNEC_MOBILE)
             .setRetryHandler(new DefaultHttpRequestRetryHandler())
+            .setProxy(ProxySettings.getProxyHost())
             .build();
     }
 
