@@ -81,6 +81,13 @@ TorBrowser_GetUserDataDir(nsIFile *aExeFile, nsIFile** aFile)
   }
 #endif
 
+#elif defined(ANDROID)
+  // Orfox stores data in the app home directory.
+  const char* homeDir = getenv("HOME");
+  if (!homeDir || !*homeDir)
+    return NS_ERROR_FAILURE;
+  nsresult rv = NS_NewNativeLocalFile(nsDependentCString(homeDir), true,
+                                      getter_AddRefs(tbDataDir));
 #else
   // User data is embedded within the application directory (i.e.,
   // TOR_BROWSER_DATA_OUTSIDE_APP_DIR is not defined).
