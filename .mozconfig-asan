@@ -5,6 +5,13 @@ export CXXFLAGS="-fsanitize=address -Dxmalloc=myxmalloc -fwrapv"
 # We need to add -ldl explicitely due to bug 1213698
 export LDFLAGS="-fsanitize=address -ldl"
 
+# Define HOST_CFLAGS, etc. to avoid compiling programs such as mbsdiff
+# (which is part of mar-tools and is not distributed to end-users) with
+# ASan. See bug 17858.
+export HOST_CFLAGS="-fwrapv"
+export HOST_CXXFLAGS="-fwrapv"
+export HOST_LDFLAGS="-ldl"
+
 mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/obj-@CONFIG_GUESS@
 mk_add_options MOZ_APP_DISPLAYNAME="Tor Browser"
 mk_add_options MOZILLA_OFFICIAL=1
