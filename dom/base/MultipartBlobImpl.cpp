@@ -275,8 +275,8 @@ MultipartBlobImpl::SetLengthAndModifiedDate(ErrorResult& aRv)
     mLastModificationDate =
       lastModifiedSet ? lastModified * PR_USEC_PER_MSEC
                       // Round to nearest 100 ms
-                      : floor(JS_Now() / 100000) * 100000;
-  }
+                      : (JS_Now() / 100000) * 100000; }
+                      //: floor(JS_Now() / 100000) * 100000; }
 }
 
 void
