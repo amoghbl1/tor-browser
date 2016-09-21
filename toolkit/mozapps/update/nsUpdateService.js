@@ -1946,6 +1946,10 @@ UpdateService.prototype = {
    * notify the user of install success.
    */
   _postUpdateProcessing: function AUS__postUpdateProcessing() {
+#if defined(TOR_BROWSER_UPDATE) && !defined(XP_MACOSX)
+    this._removeOrphanedTorBrowserFiles();
+#endif
+
     if (!this.canCheckForUpdates) {
       LOG("UpdateService:_postUpdateProcessing - unable to check for " +
           "updates... returning early");
@@ -2112,6 +2116,42 @@ UpdateService.prototype = {
     // a staged update.
     cleanUpMozUpdaterDirs();
   },
+
+#if defined(TOR_BROWSER_UPDATE) && !defined(XP_MACOSX)
+  /**
+   * When updating from an earlier version to Tor Browser 6.0 or later, old
+   * update info files are left behind on Linux and Windows. Remove them.
+   */
+  _removeOrphanedTorBrowserFiles: function AUS__removeOrphanedTorBrowserFiles() {
+    try {
+      let oldUpdateInfoDir = getAppBaseDir();  // aka the Browser directory.
+
+#ifdef XP_WIN
+      // On Windows, the updater files were stored under
+      // Browser/TorBrowser/Data/Browser/Caches/firefox/
+      oldUpdateInfoDir.appendRelativePath(
+                                "TorBrowser\\Data\\Browser\\Caches\\firefox");
+#endif
+
+      // Remove the updates directory.
+      let updatesDir = oldUpdateInfoDir.clone();
+      updatesDir.append("updates");
+      if (updatesDir.exists() && updatesDir.isDirectory()) {
+        updatesDir.remove(true);
+      }
+
+      // Remove files: active-update.xml and updates.xml
+      let filesToRemove = [ "active-update.xml", "updates.xml" ];
+      filesToRemove.forEach(function(aFileName) {
+        let f = oldUpdateInfoDir.clone();
+        f.append(aFileName);
+        if (f.exists()) {
+          f.remove(false);
+        }
+      });
+    } catch (e) {}
+  },
+#endif
 
   /**
    * Register an observer when the network comes online, so we can short-circuit

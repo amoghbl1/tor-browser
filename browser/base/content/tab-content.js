@@ -5,6 +5,11 @@
 
 /* This content script contains code that requires a tab browser. */
 
+#ifdef TOR_BROWSER_VERSION
+# Add double-quotes back on (stripped by JarMaker.py).
+#expand const TOR_BROWSER_VERSION = "__TOR_BROWSER_VERSION__";
+#endif
+
 var {classes: Cc, interfaces: Ci, utils: Cu, results: Cr} = Components;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -391,6 +396,14 @@ let AboutTBUpdateListener = {
     let doc = content.document;
     doc.getElementById("infolink").setAttribute("href", this.getPostUpdateURL());
     doc.getElementById("changelog").textContent = this.getChangeLogText();
+
+    const kBrandBundle = "chrome://branding/locale/brand.properties";
+    let brandBundle = Cc["@mozilla.org/intl/stringbundle;1"]
+                        .getService(Ci.nsIStringBundleService)
+                        .createBundle(kBrandBundle);
+    let productName = brandBundle.GetStringFromName("brandFullName");
+    doc.getElementById("torbrowser-version").textContent = productName + "\n"
+                                                           + TOR_BROWSER_VERSION;
   },
 
   // Extract the post update URL from this page's query string.

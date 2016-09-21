@@ -2,6 +2,7 @@ disconnect
 youtube
 twitter
 wikipedia
+ddg-onion
 startpage
 yahoo
 google

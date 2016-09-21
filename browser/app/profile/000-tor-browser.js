@@ -223,6 +223,9 @@ pref("dom.mozTCPSocket.enabled", false);
 // Security slider
 pref("svg.in-content.enabled", true);
 pref("mathml.disabled", false);
+// Until we address at least the linkability concerns in #19417 let's disable
+// asmjs.
+pref("javascript.options.asmjs", false);
 
 // Network and performance
 pref("network.http.pipelining", true);
@@ -239,6 +242,10 @@ pref("network.http.pipelining.read-timeout", 60000);
 pref("network.http.pipelining.max-optimistic-requests", 3);
 pref("security.ssl.disable_session_identifiers", true);
 pref("network.manage-offline-status", false);
+
+// Disable Xrender as it causes serious performance regressions on some machines
+// and is disabled in Firefox >= 47 anyway.
+pref("gfx.xrender.enabled",false);
 
 // As a "defense in depth" measure, configure an empty push server URL (the
 // DOM Push features are disabled by default via other prefs).
@@ -261,7 +268,7 @@ pref("browser.uiCustomization.state", "{\"placements\":{\"PanelUI-contents\":[\"
 
 // Putting the search engine prefs into this file to fix #11236.
 // Default search engine
-pref("browser.search.defaultenginename", "Disconnect");
+pref("browser.search.defaultenginename", "DuckDuckGo");
 // Make sure we use the same search engine regardless of locale
 pref("browser.search.geoSpecificDefaults", false);
 
@@ -269,7 +276,7 @@ pref("browser.search.geoSpecificDefaults", false);
 // Somewhat surprisingly we get some random behavior if we specify more than
 // two search engines as below. See
 // https://bugzilla.mozilla.org/show_bug.cgi?id=1126722 for details.
-pref("browser.search.order.extra.1", "Disconnect");
+pref("browser.search.order.extra.1", "DuckDuckGo");
 pref("browser.search.order.extra.2", "YouTube");
 
 // Hacks/workarounds: Direct2D seems to crash w/ lots of video cards w/ MinGW?

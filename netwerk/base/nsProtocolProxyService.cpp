@@ -398,6 +398,16 @@ proxy_GetBoolPref(nsIPrefBranch *aPrefBranch,
         aResult = temp;
 }
 
+static inline bool
+IsHostDomainSocket(const nsACString& aHost)
+{
+#ifdef XP_UNIX
+    return Substring(aHost, 0, 5) == "file:";
+#else
+    return false;
+#endif // XP_UNIX
+}
+
 //----------------------------------------------------------------------------
 
 static const int32_t PROXYCONFIG_DIRECT4X = 3;
@@ -623,7 +633,7 @@ nsProtocolProxyService::PrefsChanged(nsIPrefBranch *prefBranch,
         proxy_GetIntPref(prefBranch, PROXY_PREF("ftp_port"), mFTPProxyPort);
 
     if (!pref || !strcmp(pref, PROXY_PREF("socks")))
-        proxy_GetStringPref(prefBranch, PROXY_PREF("socks"), mSOCKSProxyHost);
+        proxy_GetStringPref(prefBranch, PROXY_PREF("socks"), mSOCKSProxyTarget);
 
     if (!pref || !strcmp(pref, PROXY_PREF("socks_port")))
         proxy_GetIntPref(prefBranch, PROXY_PREF("socks_port"), mSOCKSProxyPort);
@@ -1871,8 +1881,9 @@ nsProtocolProxyService::Resolve_Internal(nsIChannel *channel,
     uint32_t proxyFlags = 0;
 
     if ((flags & RESOLVE_PREFER_SOCKS_PROXY) &&
-        !mSOCKSProxyHost.IsEmpty() && mSOCKSProxyPort > 0) {
-      host = &mSOCKSProxyHost;
+        !mSOCKSProxyTarget.IsEmpty() &&
+        (IsHostDomainSocket(mSOCKSProxyTarget) || mSOCKSProxyPort > 0)) {
+      host = &mSOCKSProxyTarget;
       if (mSOCKSProxyVersion == 4)
           type = kProxyType_SOCKS4;
       else
@@ -1908,8 +1919,9 @@ nsProtocolProxyService::Resolve_Internal(nsIChannel *channel,
         type = kProxyType_HTTP;
         port = mFTPProxyPort;
     }
-    else if (!mSOCKSProxyHost.IsEmpty() && mSOCKSProxyPort > 0) {
-        host = &mSOCKSProxyHost;
+    else if (!mSOCKSProxyTarget.IsEmpty() &&
+        (IsHostDomainSocket(mSOCKSProxyTarget) || mSOCKSProxyPort > 0)) {
+        host = &mSOCKSProxyTarget;
         if (mSOCKSProxyVersion == 4)
             type = kProxyType_SOCKS4;
         else

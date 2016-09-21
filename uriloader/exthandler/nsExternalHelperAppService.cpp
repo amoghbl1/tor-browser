@@ -41,6 +41,7 @@
 #include "nsThreadUtils.h"
 #include "nsAutoPtr.h"
 #include "nsIMutableArray.h"
+#include "nsISupportsPrimitives.h" // for nsISupportsPRBool
 
 // used to access our datastore of user-configured helper applications
 #include "nsIHandlerService.h"
@@ -480,6 +481,22 @@ static nsresult GetDownloadDirectory(nsIFile **_directory,
   return NS_OK;
 }
 
+static nsresult shouldCancel(bool *aShouldCancel)
+{
+  NS_ENSURE_ARG_POINTER(aShouldCancel);
+
+  nsCOMPtr<nsISupportsPRBool> cancelObj =
+                            do_CreateInstance(NS_SUPPORTS_PRBOOL_CONTRACTID);
+  cancelObj->SetData(false);
+  nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
+  if (!obs)
+    return NS_ERROR_FAILURE;
+
+  obs->NotifyObservers(cancelObj, "external-app-requested", nullptr);
+  cancelObj->GetData(aShouldCancel);
+  return NS_OK;
+}
+
 /**
  * Structure for storing extension->type mappings.
  * @see defaultMimeEntries
@@ -762,6 +779,14 @@ NS_IMETHODIMP nsExternalHelperAppService::DoContent(const nsACString& aMimeConte
                                          aForceSave, aWindowContext, aStreamListener);
   }
 
+  // Give other modules, including extensions, a chance to cancel.
+  bool doCancel = false;
+  nsresult rv = shouldCancel(&doCancel);
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (doCancel) {
+    return NS_ERROR_FAILURE;
+  }
+
   nsAutoString fileName;
   nsAutoCString fileExtension;
   uint32_t reason = nsIHelperAppLauncherDialog::REASON_CANTHANDLE;
@@ -798,7 +823,6 @@ NS_IMETHODIMP nsExternalHelperAppService::DoContent(const nsACString& aMimeConte
         nsAutoCString query;
 
         // We only care about the query for HTTP and HTTPS URLs
-        nsresult rv;
         bool isHTTP, isHTTPS;
         rv = uri->SchemeIs("http", &isHTTP);
         if (NS_FAILED(rv)) {
@@ -1056,6 +1080,14 @@ nsExternalHelperAppService::LoadURI(nsIURI *aURI,
 
   if (!allowLoad) {
     return NS_OK; // explicitly denied
+  }
+
+  // Give other modules, including extensions, a chance to cancel.
+  bool doCancel = false;
+  rv = shouldCancel(&doCancel);
+  NS_ENSURE_SUCCESS(rv, rv);
+  if (doCancel) {
+    return NS_OK;
   }
 
   nsCOMPtr<nsIHandlerInfo> handler;

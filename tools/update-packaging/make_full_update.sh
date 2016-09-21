@@ -72,7 +72,8 @@ list_files files
 list_symlinks symlinks symlink_targets
 
 # TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
-# we should remove the following lines:
+# we should remove the following lines (which remove entire directories
+# which, if present, contain old, unpacked copies of HTTPS Everywhere):
 # Make sure we delete the pre 5.1.0 HTTPS Everywhere as well in case it
 # exists. The extension ID got changed with the version bump to 5.1.0.
 ext_path='TorBrowser/Data/Browser/profile.default/extensions'

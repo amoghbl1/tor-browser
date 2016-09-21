@@ -60,6 +60,8 @@ https://trac.torproject.org/projects/tor/ticket/1517
       'canvasStream.currentTime * 1000',
       'video.currentTime * 1000',
       'audio.currentTime * 1000',
+      'new File([], "").lastModified',
+      'new File([], "").lastModifiedDate.getTime()',
     ];
     // Loop through each timeStampCode, evaluate it,
     // and check if it is rounded to the nearest 100 ms.

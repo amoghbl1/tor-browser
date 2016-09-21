@@ -51,6 +51,7 @@
 #include "ClosingService.h"
 #include "ReferrerPolicy.h"
 #include "nsContentSecurityManager.h"
+#include "ThirdPartyUtil.h"
 
 #ifdef MOZ_WIDGET_GONK
 #include "nsINetworkManager.h"
@@ -1822,10 +1823,14 @@ IOServiceProxyCallback::OnProxyAvailable(nsICancelable *request, nsIChannel *cha
 
     nsLoadFlags loadFlags = 0;
     channel->GetLoadFlags(&loadFlags);
+
+    nsCString firstPartyHost;
+    ThirdPartyUtil::GetFirstPartyHost(channel, firstPartyHost);
+
     if (loadFlags & nsIRequest::LOAD_ANONYMOUS) {
-        speculativeHandler->SpeculativeAnonymousConnect(uri, mCallbacks);
+        speculativeHandler->SpeculativeAnonymousConnectIsolated(uri, firstPartyHost, mCallbacks);
     } else {
-        speculativeHandler->SpeculativeConnect(uri, mCallbacks);
+        speculativeHandler->SpeculativeConnectIsolated(uri, firstPartyHost, mCallbacks);
     }
 
     return NS_OK;
@@ -1833,6 +1838,7 @@ IOServiceProxyCallback::OnProxyAvailable(nsICancelable *request, nsIChannel *cha
 
 nsresult
 nsIOService::SpeculativeConnectInternal(nsIURI *aURI,
+                                        const nsACString& aIsolationKey,
                                         nsIInterfaceRequestor *aCallbacks,
                                         bool aAnonymous)
 {
@@ -1867,6 +1873,17 @@ nsIOService::SpeculativeConnectInternal(nsIURI *aURI,
                             getter_AddRefs(channel));
     NS_ENSURE_SUCCESS(rv, rv);
 
+    // If we have an isolation key, use it as the document URI for this channel.
+    if (!aIsolationKey.IsEmpty()) {
+        nsCOMPtr<nsIHttpChannelInternal> channelInternal(do_QueryInterface(channel));
+        if (channelInternal) {
+            nsCString documentURISpec("https://");
+            documentURISpec.Append(aIsolationKey);
+            nsCOMPtr<nsIURI> documentURI;
+            /* nsresult rv = */ NS_NewURI(getter_AddRefs(documentURI), documentURISpec);
+            channelInternal->SetDocumentURI(documentURI);
+        }
+    }
     if (aAnonymous) {
         nsLoadFlags loadFlags = 0;
         channel->GetLoadFlags(&loadFlags);
@@ -1885,17 +1902,33 @@ nsIOService::SpeculativeConnectInternal(nsIURI *aURI,
 }
 
 NS_IMETHODIMP
+nsIOService::SpeculativeConnectIsolated(nsIURI *aURI,
+                                        const nsACString& aIsolationKey,
+                                        nsIInterfaceRequestor *aCallbacks)
+{
+    return SpeculativeConnectInternal(aURI, aIsolationKey, aCallbacks, false);
+}
+
+NS_IMETHODIMP
 nsIOService::SpeculativeConnect(nsIURI *aURI,
                                 nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, false);
+    return SpeculativeConnectInternal(aURI, EmptyCString(), aCallbacks, false);
+}
+
+NS_IMETHODIMP
+nsIOService::SpeculativeAnonymousConnectIsolated(nsIURI *aURI,
+                                                 const nsACString& aIsolationKey,
+                                                 nsIInterfaceRequestor *aCallbacks)
+{
+    return SpeculativeConnectInternal(aURI, aIsolationKey, aCallbacks, true);
 }
 
 NS_IMETHODIMP
 nsIOService::SpeculativeAnonymousConnect(nsIURI *aURI,
                                          nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, true);
+    return SpeculativeConnectInternal(aURI, EmptyCString(), aCallbacks, true);
 }
 
 void

@@ -273,7 +273,9 @@ MultipartBlobImpl::SetLengthAndModifiedDate(ErrorResult& aRv)
     //   x.getTime() < f.dateModified.getTime()
     // could fail.
     mLastModificationDate =
-      lastModifiedSet ? lastModified * PR_USEC_PER_MSEC : JS_Now();
+      lastModifiedSet ? lastModified * PR_USEC_PER_MSEC
+                      // Round to nearest 100 ms
+                      : floor(JS_Now() / 100000) * 100000;
   }
 }
 
