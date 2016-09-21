@@ -682,7 +682,6 @@ static const char* kPinset_nightx_Data[] = {
 static const StaticFingerprints kPinset_nightx = {
   sizeof(kPinset_nightx_Data) / sizeof(const char*),
   kPinset_nightx_Data
->>>>>>> 21dd2cc7f182511228dd15ae67255c40674a7c1b
 };
 
 /* Domainlist */
