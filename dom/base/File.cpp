@@ -751,7 +751,8 @@ BlobImplBase::GetLastModified(ErrorResult& aRv)
   NS_ASSERTION(mIsFile, "Should only be called on files");
   if (IsDateUnknown()) {
     // Round to nearest 100 ms.
-    mLastModificationDate = floor(PR_Now() / 100000) * 100000;
+    //mLastModificationDate = floor(PR_Now() / 100000) * 100000;
+    mLastModificationDate = PR_Now();// / 100000) * 100000;
   }
 
   return mLastModificationDate / PR_USEC_PER_MSEC;
