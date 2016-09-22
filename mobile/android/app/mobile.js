@@ -295,12 +295,12 @@ pref("browser.search.suggest.prompted", false);
 pref("browser.search.noCurrentEngine", true);
 
 // Control media casting & mirroring features
-pref("browser.casting.enabled", true);
+pref("browser.casting.enabled", false);
 #ifdef RELEASE_BUILD
 // Chromecast mirroring is broken (bug 1131084)
 pref("browser.mirroring.enabled", false);
 #else
-pref("browser.mirroring.enabled", true);
+pref("browser.mirroring.enabled", false);
 #endif
 
 // Enable sparse localization by setting a few package locale overrides
