@@ -16,6 +16,9 @@
   <preference id="privacy.trackingprotection.pbmode.enabled"
               name="privacy.trackingprotection.pbmode.enabled"
               type="bool"/>
+  <preference id="privacy.resistFingerprinting"
+              name="privacy.resistFingerprinting"
+              type="bool"/>
 
   <!-- XXX button prefs -->
   <preference id="pref.privacy.disable_button.cookie_exceptions"
@@ -137,6 +140,14 @@
     <description>&doNotTrack.pre.label;<label
     class="text-link" id="doNotTrackSettings"
     >&doNotTrack.settings.label;</label>&doNotTrack.post.label;</description>
+  </vbox>
+  <vbox id="resistFingerprinting">
+    <hbox align="center">
+      <checkbox id="resistFingerprintingCB"
+                preference="privacy.resistFingerprinting"
+                accesskey="&resistFingerprinting.accesskey;"
+                label="&resistFingerprinting.label;" />
+    </hbox>
   </vbox>
 </groupbox>
 
