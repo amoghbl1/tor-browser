@@ -19,6 +19,9 @@
   <preference id="privacy.trackingprotection.pbmode.enabled"
               name="privacy.trackingprotection.pbmode.enabled"
               type="bool"/>
+  <preference id="privacy.resistFingerprinting"
+              name="privacy.resistFingerprinting"
+              type="bool"/>
 
   <!-- XXX button prefs -->
   <preference id="pref.privacy.disable_button.cookie_exceptions"
@@ -125,6 +128,14 @@
       <button id="changeBlockList"
               label="&changeBlockList.label;" accesskey="&changeBlockList.accesskey;"
               preference="pref.privacy.disable_button.change_blocklist"/>
+    </hbox>
+  </vbox>
+  <vbox id="resistFingerprinting">
+    <hbox align="center">
+      <checkbox id="resistFingerprintingCB"
+                preference="privacy.resistFingerprinting"
+                accesskey="&resistFingerprinting.accesskey;"
+                label="&resistFingerprinting.label;" />
     </hbox>
   </vbox>
 </groupbox>
