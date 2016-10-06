@@ -16,6 +16,9 @@
   <preference id="privacy.trackingprotection.pbmode.enabled"
               name="privacy.trackingprotection.pbmode.enabled"
               type="bool"/>
+  <preference id="privacy.firstparty.isolate"
+              name="privacy.firstparty.isolate"
+              type="bool"/>
   <preference id="privacy.resistFingerprinting"
               name="privacy.resistFingerprinting"
               type="bool"/>
@@ -140,6 +143,14 @@
     <description>&doNotTrack.pre.label;<label
     class="text-link" id="doNotTrackSettings"
     >&doNotTrack.settings.label;</label>&doNotTrack.post.label;</description>
+  </vbox>
+  <vbox id="firstpartyIsolate">
+    <hbox align="center">
+      <checkbox id="firstpartyIsolateCB"
+                preference="privacy.firstparty.isolate"
+                accesskey="R"
+                label="Restrict third party cookies and other tracking data" />
+    </hbox>
   </vbox>
   <vbox id="resistFingerprinting">
     <hbox align="center">
