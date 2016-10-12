@@ -88,6 +88,7 @@ protected:
    NS_IMETHOD EnsurePrimaryContentTreeOwner();
    NS_IMETHOD EnsurePrompter();
    NS_IMETHOD EnsureAuthPrompter();
+   NS_IMETHOD ResizeToRoundedDimensions();
 
    void OnChromeLoaded();
    void StaggerPosition(int32_t &aRequestedX, int32_t &aRequestedY,
@@ -120,6 +121,7 @@ protected:
    void       SetContentScrollbarVisibility(bool aVisible);
    bool       GetContentScrollbarVisibility();
    void       PersistentAttributesDirty(uint32_t aDirtyFlags);
+   bool       GetAvailScreenSize(int32_t* availWidth, int32_t* availHeight);
 
    nsChromeTreeOwner*      mChromeTreeOwner;
    nsContentTreeOwner*     mContentTreeOwner;
