@@ -27,7 +27,11 @@ let connect = function (sourceObject, destinationObject) {
   });
 };
 
+<<<<<<< HEAD
+Task.spawn(function* () {
+=======
 spawnTask(function* () {
+>>>>>>> c18118104f9da3391729bcd9edd6627f530bbe3b
   sendMessage(window.opener, "ready");
   let firstParentMessage = yield receiveMessage(window.opener);
   iframe.src = firstParentMessage;

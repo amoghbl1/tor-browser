@@ -1,0 +1,41 @@
+<!DOCTYPE HTML>
+<html>
+<!--
+https://bugs.torproject.org/13019
+-->
+<head>
+  <meta charset="utf-8">
+  <title>Test for Tor Bug #13019: Prevent fingerprinting of JS-exposed locale</title>
+  <script type="application/javascript" src="/tests/SimpleTest/SimpleTest.js"></script>
+  <script type="application/javascript" src="/tests/SimpleTest/EventUtils.js"></script>
+  <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css"/>
+</head>
+<body>
+<a target="_blank" href="https://bugs.torproject.org">Bug 13019</a>
+<p id="display"></p>
+<pre id="test"></pre>
+<script type="application/javascript;version=1.8">
+let prefName = "javascript.use_us_english_locale",
+    originalPrefValue = null,
+    date = new Date();
+// Read the current pref value.
+try {
+  originalPrefValue = SpecialPowers.getBoolPref(prefName);
+} catch (e) { }
+// Enable pref "javascript.use_us_english_locale".
+SpecialPowers.setBoolPref(prefName, true);
+// Test that we are getting en-US locale everywhere it is exposed in JavaScript
+is(Intl.Collator().resolvedOptions().locale, "en-US", "content JS locale from Intl.Collator");
+is(Intl.DateTimeFormat().resolvedOptions().locale, "en-US", "content JS locale Intl.DateTimeFormat");
+is(Intl.NumberFormat().resolvedOptions().locale, "en-US", "content JS locale from Intl.NumberFormat");
+is(date.toLocaleString(), date.toLocaleString("en-US"), "Date formatted by JS locale");
+// Return pref to its original value, if it had one.
+if (originalPrefValue === null) {
+  SpecialPowers.clearUserPref(prefName);
+} else {
+  SpecialPowers.setBoolPref(prefName, originalPrefValue);
+}
+
+</script>
+</body>
+</html>

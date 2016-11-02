@@ -1327,7 +1327,7 @@ nsHttpConnectionMgr::PipelineFeedbackInfo(nsHttpConnectionInfo *ci,
 }
 
 void
-nsHttpConnectionMgr::ReportFailedToProcess(nsIURI *uri)
+nsHttpConnectionMgr::ReportFailedToProcess(nsIURI *uri, const nsACString& isolationDomain)
 {
     MOZ_ASSERT(uri);
 

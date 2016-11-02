@@ -902,6 +902,13 @@ URL::CreateObjectURL(const GlobalObject& aGlobal, File& aBlob,
   JSContext* cx = aGlobal.Context();
   WorkerPrivate* workerPrivate = GetWorkerPrivateFromContext(cx);
 
+  if (!workerPrivate->IsChromeWorker()) {
+    workerPrivate->ReportError(cx, "Worker attempted to use createObjectURL; denied.", nullptr);
+    NS_NAMED_LITERAL_STRING(argStr, "URL.createObjectURL");
+    aRv.ThrowTypeError(MSG_METHOD_THIS_UNWRAPPING_DENIED, &argStr);
+    return;
+  }
+
   nsRefPtr<FileImpl> blobImpl = aBlob.Impl();
   MOZ_ASSERT(blobImpl);
 

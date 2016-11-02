@@ -4,6 +4,14 @@
 
 // Please maintain unit tests at ./tbb-tests/browser_tor_TB4.js
 
+// Disable browser automatic updates and associated homepage notifications
+pref("app.update.auto", false);
+pref("browser.search.update", false);
+pref("browser.rights.3.shown", true);
+pref("browser.startup.homepage_override.mstone", "ignore");
+pref("startup.homepage_welcome_url", "");
+pref("startup.homepage_override_url", "");
+
 // Disable initial homepage notifications
 pref("browser.search.update", false);
 pref("browser.rights.3.shown", true);

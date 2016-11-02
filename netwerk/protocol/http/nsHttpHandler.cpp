@@ -1952,7 +1952,7 @@ nsHttpHandler::Observe(nsISupports *subject,
         nsCOMPtr<nsIURI> uri = do_QueryInterface(subject);
         // Ignore possibility of an isolation key:
         if (uri && mConnMgr) {
-            mConnMgr->ReportFailedToProcess(uri);
+            mConnMgr->ReportFailedToProcess(uri, EmptyCString());
         }
     } else if (!strcmp(topic, "last-pb-context-exited")) {
         mPrivateAuthCache.ClearAll();
