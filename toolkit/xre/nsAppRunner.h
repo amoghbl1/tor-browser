@@ -104,6 +104,9 @@ OverrideDefaultLocaleIfNeeded();
 void
 MozExpectedExit();
 
+void
+UseUTCTimeZoneIfNeeded();
+
 #ifdef XP_WIN
 void
 UseParentConsole();
