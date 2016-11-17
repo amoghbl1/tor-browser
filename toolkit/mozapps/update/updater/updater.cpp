@@ -825,6 +825,13 @@ static int ensure_copy_recursive(const NS_tchar *path, const NS_tchar *dest,
   }
 #endif
 
+#ifdef XP_UNIX
+  // Ignore Unix domain sockets. See #20691.
+  if (S_ISSOCK(sInfo.st_mode)) {
+    return 0;
+  }
+#endif
+
   if (!S_ISDIR(sInfo.st_mode)) {
     return ensure_copy(path, dest);
   }
