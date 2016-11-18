@@ -156,8 +156,8 @@
     <hbox align="center">
       <checkbox id="resistFingerprintingCB"
                 preference="privacy.resistFingerprinting"
-                accesskey="&resistFingerprinting.accesskey;"
-                label="&resistFingerprinting.label;" />
+                accesskey="F"
+                label="Change details that distinguish you from other Tor Browser users" />
     </hbox>
   </vbox>
 </groupbox>
