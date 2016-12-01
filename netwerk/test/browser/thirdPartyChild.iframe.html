@@ -9,6 +9,7 @@
   xhr.open("GET", "http://example.net/browser/netwerk/test/browser/thirdPartyChild.xhr.html", true);
   xhr.send();
   var worker = new Worker("http://example.net/browser/netwerk/test/browser/thirdPartyChild.worker.js");
+  var sharedWorker = new SharedWorker("http://example.net/browser/netwerk/test/browser/thirdPartyChild.sharedworker.js");
 
   fetch("thirdPartyChild.fetch.html", {cache: "force-cache"} );
   fetch(new Request("thirdPartyChild.request.html"), {cache: "force-cache"} );

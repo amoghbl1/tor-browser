@@ -4675,8 +4675,10 @@ nsDocument::SetScriptHandlingObject(nsIScriptGlobalObject* aScriptObject)
   NS_ASSERTION(!mScriptGlobalObject ||
                mScriptGlobalObject == aScriptObject,
                "Wrong script object!");
+#ifdef DEBUG
   nsCOMPtr<nsPIDOMWindow> win = do_QueryInterface(aScriptObject);
   NS_ASSERTION(!win || win->IsInnerWindow(), "Should have inner window here!");
+#endif
   if (aScriptObject) {
     mScopeObject = do_GetWeakReference(aScriptObject);
     mHasHadScriptHandlingObject = true;
@@ -4718,8 +4720,8 @@ nsDocument::GetWindowInternal() const
   if (mRemovedFromDocShell) {
     // The docshell returns the outer window we are done.
     nsCOMPtr<nsIDocShell> kungfuDeathGrip(mDocumentContainer);
-    if (mDocumentContainer) {
-      win = mDocumentContainer->GetWindow();
+    if (kungfuDeathGrip) {
+      win = kungfuDeathGrip->GetWindow();
     }
   } else {
     win = do_QueryInterface(mScriptGlobalObject);

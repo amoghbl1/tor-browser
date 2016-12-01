@@ -86,6 +86,7 @@
 #include "mozilla/EventStates.h"
 #include "mozilla/Telemetry.h"
 #include "mozilla/dom/HTMLObjectElementBinding.h"
+#include "mozilla/unused.h"
 
 #ifdef XP_WIN
 // Thanks so much, Microsoft! :(
@@ -2925,6 +2926,7 @@ nsObjectLoadingContent::SyncStartPluginInstance()
   }
 
   nsCOMPtr<nsIURI> kungFuURIGrip(mURI);
+  Unused << kungFuURIGrip;
   nsCString contentType(mContentType);
   return InstantiatePluginInstance();
 }

@@ -147,7 +147,7 @@ pref("app.update.badge", false);
 pref("app.update.staging.enabled", true);
 
 // Update service URL:
-pref("app.update.url", "https://www.torproject.org/dist/torbrowser/update_2/%CHANNEL%/%BUILD_TARGET%/%VERSION%/%LOCALE%");
+pref("app.update.url", "https://aus1.torproject.org/dist/torbrowser/update_2/%CHANNEL%/%BUILD_TARGET%/%VERSION%/%LOCALE%");
 
 // app.update.url.manual is in branding section
 // app.update.url.details is in branding section

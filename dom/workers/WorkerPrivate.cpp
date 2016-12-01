@@ -2577,7 +2577,7 @@ WorkerPrivateParent<Derived>::Freeze(JSContext* aCx, nsPIDOMWindow* aWindow)
         // outlives this call.
         RefPtr<SharedWorker> kungFuDeathGrip = mSharedWorkers[i];
 
-        mSharedWorkers[i]->Freeze();
+        kungFuDeathGrip->Freeze();
       } else {
         MOZ_ASSERT_IF(mSharedWorkers[i]->GetOwner() && aWindow,
                       !SameCOMIdentity(mSharedWorkers[i]->GetOwner(),
@@ -2642,7 +2642,7 @@ WorkerPrivateParent<Derived>::Thaw(JSContext* aCx, nsPIDOMWindow* aWindow)
         // outlives this call.
         RefPtr<SharedWorker> kungFuDeathGrip = mSharedWorkers[i];
 
-        mSharedWorkers[i]->Thaw();
+        kungFuDeathGrip->Thaw();
         anyRunning = true;
       } else {
         MOZ_ASSERT_IF(mSharedWorkers[i]->GetOwner() && aWindow,
@@ -4395,6 +4395,25 @@ WorkerPrivate::GetLoadInfo(JSContext* aCx, nsPIDOMWindow* aWindow,
                                         ContentPolicyType(aWorkerType),
                                         getter_AddRefs(loadInfo.mChannel));
     NS_ENSURE_SUCCESS(rv, rv);
+
+    // If this is a SharedWorker and we have an isolation key, use it as the
+    // DocumentURI for this channel. Ensures we get the right first-party domain.
+    if ((aWorkerType == WorkerTypeShared || aWorkerType == WorkerTypeService) &&
+        !loadInfo.mIsolationKey.IsEmpty()) {
+      nsCOMPtr<nsIHttpChannelInternal> channelInternal(do_QueryInterface(loadInfo.mChannel));
+      if (channelInternal) {
+        nsCString documentURISpec("https://");
+        documentURISpec.Append(loadInfo.mIsolationKey);
+        nsCOMPtr<nsIURI> documentURI;
+        nsresult rv = NS_NewURI(getter_AddRefs(documentURI), documentURISpec);
+        if (NS_SUCCEEDED(rv)) {
+          channelInternal->SetDocumentURI(documentURI);
+        } else {
+          NS_WARNING("Unable to set the documentURI for SharedWorker's "
+                     "loading channel.");
+        }
+      }
+    }
 
     rv = NS_GetFinalChannelURI(loadInfo.mChannel,
                                getter_AddRefs(loadInfo.mResolvedScriptURI));
