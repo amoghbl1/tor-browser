@@ -1509,6 +1509,10 @@ var BookmarkingUI = {
     options.maxResults = kMaxResults;
     let query = PlacesUtils.history.getNewQuery();
 
+    let sh = Cc["@mozilla.org/network/serialization-helper;1"]
+               .getService(Ci.nsISerializationHelper);
+    let loadingPrincipal = sh.serializeToString(document.nodePrincipal);
+
     let fragment = document.createDocumentFragment();
     let root = PlacesUtils.history.executeQuery(query, options).root;
     root.containerOpen = true;
@@ -1528,6 +1532,7 @@ var BookmarkingUI = {
                                  aExtraCSSClass);
       if (icon) {
         item.setAttribute("image", icon);
+        item.setAttribute("loadingprincipal", loadingPrincipal);
       }
       item._placesNode = node;
       fragment.appendChild(item);
