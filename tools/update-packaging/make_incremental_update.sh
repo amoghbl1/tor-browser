@@ -21,6 +21,7 @@ print_usage() {
   notice "  -h  show this help text"
   notice "  -f  clobber this file in the installation"
   notice "      Must be a path to a file to clobber in the partial update."
+  notice "  -q  be less verbose"
   notice ""
 }
 
@@ -71,6 +72,21 @@ check_for_forced_update() {
       ## "true" *giggle*
       return 0;
     fi
+
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove the following lines:
+    # If the file in the skip list ends with /*, do a prefix match.
+    # This allows TorBrowser/Data/Browser/profile.default/extensions/https-everywhere-eff@eff.org/*
+    # to be used to force all HTTPS Everywhere files to be updated.
+    f_suffix=${f##*/}
+    if [[ $f_suffix = "*" ]]; then
+      f_prefix="${f%\/\*}";
+      if [[ $forced_file_chk == $f_prefix* ]]; then
+        ## 0 means "true"
+        return 0;
+      fi
+    fi
+# END TOR_BROWSER_DATA_OUTSIDE_APP_DIR removal
   done
   ## 'false'... because this is bash. Oh yay!
   return 1;
@@ -81,12 +97,18 @@ if [ $# = 0 ]; then
   exit 1
 fi
 
-requested_forced_updates='Contents/MacOS/firefox'
+# Firefox uses requested_forced_updates='Contents/MacOS/firefox' due to
+# 770996 but in Tor Browser we do not need that fix.
+requested_forced_updates=""
+directories_to_remove=""
+extra_files_to_remove=""
 
-while getopts "hf:" flag
+while getopts "hqf:" flag
 do
    case "$flag" in
       h) print_usage; exit 0
+      ;;
+      q) QUIET=1
       ;;
       f) requested_forced_updates="$requested_forced_updates $OPTARG"
       ;;
@@ -114,6 +136,83 @@ updatemanifestv2="$workdir/updatev2.manifest"
 updatemanifestv3="$workdir/updatev3.manifest"
 archivefiles="updatev2.manifest updatev3.manifest"
 
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove the following lines:
+# If the NoScript or HTTPS Everywhere extensions have changed between
+# releases, add them to the "force updates" list.
+ext_path='TorBrowser/Data/Browser/profile.default/extensions'
+if [ -d "$newdir/$ext_path" ]; then
+  https_everywhere_dir='https-everywhere-eff@eff.org'
+  https_everywhere_xpi='https-everywhere-eff@eff.org.xpi'
+  noscript='{73a6fe31-595d-460b-a920-fcc0f8843232}.xpi'
+
+  # NoScript is a packed extension, so we simply compare the old and the new
+  # .xpi files.
+  noscript_path="$ext_path/$noscript"
+  diff -a "$olddir/$noscript_path" "$newdir/$noscript_path" > /dev/null
+  rc=$?
+  if [ $rc -gt 1 ]; then
+    notice "Unexpected exit $rc from $noscript_path diff command"
+    exit 2
+  elif [ $rc -eq 1 ]; then
+    requested_forced_updates="$requested_forced_updates $noscript_path"
+  fi
+
+  # As of HTTPS Everywhere 5.1.0, the extension ID gained "-eff".
+  # As of HTTPS Everywhere 5.2.2, the extension is packed (i.e., it remains
+  # an .xpi after it is installed in the browser profile).
+  force_https_update=0
+  remove_unpacked_https_e_dirs=0
+  unpacked_https_e_install_rdf="$ext_path/$https_everywhere_dir/install.rdf"
+  packed_https_e_path="$ext_path/$https_everywhere_xpi"
+  if [ -d "$newdir/$ext_path/$https_everywhere_dir" ]; then
+    # The new HTTPS-E extension is unpacked, and presumably the old one is
+    # too. We need to determine if any of the unpacked files have changed.
+    # Since that is messy, we simply compare the old install.rdf file to the
+    # new one.
+    diff "$olddir/$unpacked_https_e_install_rdf"     \
+          "$newdir/$unpacked_https_e_install_rdf" > /dev/null
+    rc=$?
+    if [ $rc -gt 1 -a -e "$olddir/$unpacked_https_e_install_rdf" ]; then
+      notice "Unexpected exit $rc from $unpacked_https_e_install_rdf diff command"
+      exit 2
+    elif [ $rc -ge 1 ]; then
+      force_https_update=1
+      remove_unpacked_https_e_dirs=1
+      # In case we still ship an unpacked HTTPS-E extension but the user has
+      # updated to a packed one, arrange for the packed one to be removed.
+      extra_files_to_remove="$extra_files_to_remove $packed_https_e_path"
+    fi
+  elif [ -d "$olddir/$ext_path/$https_everywhere_dir" ]; then
+    # The old HTTPS-E extension is unpacked but the new one is packed.
+    force_https_update=1
+    remove_unpacked_https_e_dirs=1
+  else
+    # Both the old and new HTTPS-E extensions are packed. In this case we can
+    # simply compare the .xpi files to determine if the extension has changed.
+    diff -a "$olddir/$packed_https_e_path" "$newdir/$packed_https_e_path" > /dev/null
+    rc=$?
+    if [ $rc -gt 1 ]; then
+      notice "Unexpected exit $rc from $packed_https_e_path diff command"
+      exit 2
+    elif [ $rc -eq 1 ]; then
+      force_https_update=1
+    fi
+  fi
+
+  if [ $force_https_update -ne 0 ]; then
+    requested_forced_updates="$requested_forced_updates $ext_path/$https_everywhere_dir/* $packed_https_e_path"
+    if [ "$remove_unpacked_https_e_dirs" -ne 0 ]; then
+      # The old version was unpacked, so remove the entire directory to ensure
+      # that the replace is "clean." Also, make sure we delete the pre 5.1.0
+      # HTTPS Everywhere as well in case it exists (the extension ID got
+      # changed with the version bump to 5.1.0).
+      directories_to_remove="$directories_to_remove $ext_path/https-everywhere@eff.org $ext_path/$https_everywhere_dir"
+    fi
+  fi
+fi
+# END TOR_BROWSER_DATA_OUTSIDE_APP_DIR removal
+
 mkdir -p "$workdir"
 
 # Generate a list of all files in the target directory.
@@ -123,6 +222,7 @@ if test $? -ne 0 ; then
 fi
 
 list_files oldfiles
+list_symlinks oldsymlinks oldsymlink_targets
 list_dirs olddirs
 
 popd
@@ -141,17 +241,34 @@ fi
 
 list_dirs newdirs
 list_files newfiles
+list_symlinks newsymlinks newsymlink_targets
 
 popd
 
 # Add the type of update to the beginning of the update manifests.
 notice ""
 notice "Adding type instruction to update manifests"
-> $updatemanifestv2
-> $updatemanifestv3
+> "$updatemanifestv2"
+> "$updatemanifestv3"
 notice "       type partial"
-echo "type \"partial\"" >> $updatemanifestv2
-echo "type \"partial\"" >> $updatemanifestv3
+echo "type \"partial\"" >> "$updatemanifestv2"
+echo "type \"partial\"" >> "$updatemanifestv3"
+
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove the following lines:
+# If removal of any old, existing directories is desired, emit the appropriate
+# rmrfdir commands.
+notice ""
+notice "Adding directory removal instructions to update manifests"
+for dir_to_remove in $directories_to_remove; do
+  # rmrfdir requires a trailing slash, so add one if missing.
+  if ! [[ "$dir_to_remove" =~ /$ ]]; then
+    dir_to_remove="${dir_to_remove}/"
+  fi
+  echo "rmrfdir \"$dir_to_remove\"" >> "$updatemanifestv2"
+  echo "rmrfdir \"$dir_to_remove\"" >> "$updatemanifestv3"
+done
+# END TOR_BROWSER_DATA_OUTSIDE_APP_DIR removal
 
 notice ""
 notice "Adding file patch and add instructions to update manifests"
@@ -244,6 +361,24 @@ for ((i=0; $i<$num_oldfiles; i=$i+1)); do
   fi
 done
 
+# Remove and re-add symlinks
+notice ""
+notice "Adding symlink remove/add instructions to update manifests"
+num_oldsymlinks=${#oldsymlinks[*]}
+for ((i=0; $i<$num_oldsymlinks; i=$i+1)); do
+  link="${oldsymlinks[$i]}"
+  verbose_notice "        remove: $link"
+  echo "remove \"$link\"" >> "$updatemanifestv2"
+  echo "remove \"$link\"" >> "$updatemanifestv3"
+done
+
+num_newsymlinks=${#newsymlinks[*]}
+for ((i=0; $i<$num_newsymlinks; i=$i+1)); do
+  link="${newsymlinks[$i]}"
+  target="${newsymlink_targets[$i]}"
+  make_addsymlink_instruction "$link" "$target" "$updatemanifestv2" "$updatemanifestv3"
+done
+
 # Newly added files
 notice ""
 notice "Adding file add instructions to update manifests"
@@ -280,14 +415,23 @@ notice "Adding file remove instructions to update manifests"
 for ((i=0; $i<$num_removes; i=$i+1)); do
   f="${remove_array[$i]}"
   notice "     remove \"$f\""
-  echo "remove \"$f\"" >> $updatemanifestv2
-  echo "remove \"$f\"" >> $updatemanifestv3
+  echo "remove \"$f\"" >> "$updatemanifestv2"
+  echo "remove \"$f\"" >> "$updatemanifestv3"
 done
 
 # Add remove instructions for any dead files.
 notice ""
 notice "Adding file and directory remove instructions from file 'removed-files'"
 append_remove_instructions "$newdir" "$updatemanifestv2" "$updatemanifestv3"
+
+# TODO When TOR_BROWSER_DATA_OUTSIDE_APP_DIR is used on all platforms,
+# we should remove the following lines:
+for f in $extra_files_to_remove; do
+  notice "     remove \"$f\""
+  echo "remove \"$f\"" >> "$updatemanifestv2"
+  echo "remove \"$f\"" >> "$updatemanifestv3"
+done
+# END TOR_BROWSER_DATA_OUTSIDE_APP_DIR removal
 
 notice ""
 notice "Adding directory remove instructions for directories that no longer exist"
@@ -298,8 +442,8 @@ for ((i=0; $i<$num_olddirs; i=$i+1)); do
   # If this dir doesn't exist in the new directory remove it.
   if [ ! -d "$newdir/$f" ]; then
     notice "      rmdir $f/"
-    echo "rmdir \"$f/\"" >> $updatemanifestv2
-    echo "rmdir \"$f/\"" >> $updatemanifestv3
+    echo "rmdir \"$f/\"" >> "$updatemanifestv2"
+    echo "rmdir \"$f/\"" >> "$updatemanifestv3"
   fi
 done
 

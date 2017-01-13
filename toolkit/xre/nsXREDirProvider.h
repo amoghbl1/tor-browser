@@ -105,6 +105,7 @@ protected:
 #if defined(XP_UNIX) || defined(XP_MACOSX)
   static nsresult GetSystemExtensionsDirectory(nsIFile** aFile);
 #endif
+  nsresult GetAppRootDir(nsIFile* *aFile);
   static nsresult EnsureDirectoryExists(nsIFile* aDirectory);
 
   // Determine the profile path within the UAppData directory. This is different

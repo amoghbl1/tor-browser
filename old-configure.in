@@ -3905,6 +3905,31 @@ if test -n "$MOZ_UPDATER"; then
 fi
 
 dnl ========================================================
+dnl Tor additions
+dnl ========================================================
+MOZ_ARG_WITH_STRING(tor-browser-version,
+[  --with-tor-browser-version=VERSION
+                          Set Tor Browser version, e.g., 7.0a1],
+    TOR_BROWSER_VERSION="$withval")
+
+MOZ_ARG_ENABLE_BOOL(tor-browser-update,
+[  --enable-tor-browser-update
+                          Enable Tor Browser update],
+    TOR_BROWSER_UPDATE=1,
+    TOR_BROWSER_UPDATE= )
+
+if test -n "$TOR_BROWSER_UPDATE"; then
+    if test -z "$TOR_BROWSER_VERSION"; then
+        AC_MSG_ERROR([--enable-tor-browser-update requires --with-tor-browser-version.])
+    fi
+    AC_DEFINE(TOR_BROWSER_UPDATE)
+fi
+
+AC_DEFINE_UNQUOTED(TOR_BROWSER_VERSION,"$TOR_BROWSER_VERSION")
+AC_SUBST(TOR_BROWSER_VERSION)
+AC_SUBST(TOR_BROWSER_UPDATE)
+
+dnl ========================================================
 dnl parental controls (for Windows Vista)
 dnl ========================================================
 MOZ_ARG_DISABLE_BOOL(parental-controls,
@@ -5750,7 +5775,7 @@ if test "$MOZ_DEBUG"; then
     A11Y_LOG=1
 fi
 case "$MOZ_UPDATE_CHANNEL" in
-aurora|beta|release|esr)
+aurora|alpha|beta|hardened|release|esr)
     ;;
 *)
     A11Y_LOG=1

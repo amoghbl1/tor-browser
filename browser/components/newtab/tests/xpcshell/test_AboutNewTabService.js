@@ -185,7 +185,7 @@ add_task(function* test_updates() {
  * Returns the correct release names
  */
 add_task(function* test_release_names() {
-  let valid_channels = ["esr", "release", "beta", "aurora", "nightly"];
+  let valid_channels = ["esr", "release", "hardened", "beta", "alpha", "aurora", "nightly"];
   let invalid_channels = new Set(["default", "invalid"]);
 
   for (let channel of valid_channels) {

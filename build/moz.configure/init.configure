@@ -633,7 +633,6 @@ add_old_configure_assignment('MOZ_BUILD_APP', build_project)
 # set RELEASE_OR_BETA and NIGHTLY_BUILD variables depending on the cycle we're in
 # The logic works like this:
 # - if we have "a1" in GRE_MILESTONE, we're building Nightly (define NIGHTLY_BUILD)
-# - otherwise, if we have "a" in GRE_MILESTONE, we're building Nightly or Aurora
 # - otherwise, we're building Release/Beta (define RELEASE_OR_BETA)
 @depends(check_build_environment, '--help')
 @imports(_from='__builtin__', _import='open')
@@ -648,7 +647,7 @@ def milestone(build_env, _):
 
     if 'a1' in milestone:
         is_nightly = True
-    elif 'a' not in milestone:
+    else:
         is_release_or_beta = True
 
     return namespace(version=milestone,
