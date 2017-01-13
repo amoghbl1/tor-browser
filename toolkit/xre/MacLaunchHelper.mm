@@ -43,6 +43,7 @@ void LaunchChildMac(int aArgc, char** aArgv, pid_t* aPid)
   }
 }
 
+#ifndef TOR_BROWSER_UPDATE
 BOOL InstallPrivilegedHelper()
 {
   AuthorizationRef authRef = NULL;
@@ -135,3 +136,4 @@ bool LaunchElevatedUpdate(int aArgc, char** aArgv, pid_t* aPid)
   }
   return didSucceed;
 }
+#endif

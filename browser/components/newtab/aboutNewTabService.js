@@ -47,7 +47,7 @@ const PREF_REMOTE_MODE = "browser.newtabpage.remote.mode";
 // The preference that tells which remote version is expected.
 const PREF_REMOTE_VERSION = "browser.newtabpage.remote.version";
 
-const VALID_CHANNELS = new Set(["esr", "release", "beta", "aurora", "nightly"]);
+const VALID_CHANNELS = new Set(["esr", "release", "hardened", "beta", "alpha", "aurora", "nightly"]);
 
 function AboutNewTabService() {
   NewTabPrefsProvider.prefs.on(PREF_REMOTE_ENABLED, this._handleToggleEvent.bind(this));

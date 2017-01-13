@@ -94,7 +94,6 @@ EXTRA_JS_MODULES += [
     'Task.jsm',
     'Timer.jsm',
     'Troubleshoot.jsm',
-    'UpdateUtils.jsm',
     'WebChannel.jsm',
     'WindowDraggingUtils.jsm',
     'ZipUtils.jsm',
@@ -121,6 +120,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('windows', 'gtk2', 'gtk3', 'cocoa'):
 
 EXTRA_PP_JS_MODULES += [
     'AppConstants.jsm',
+    'UpdateUtils.jsm',
 ]
 
 if 'Android' != CONFIG['OS_TARGET']:

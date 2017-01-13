@@ -51,7 +51,9 @@ var PREF_CHECK_COMPATIBILITY;
     channel = Services.prefs.getCharPref("app.update.channel");
   } catch (e) { }
   if (channel != "aurora" &&
+    channel != "alpha" &&
     channel != "beta" &&
+    channel != "hardened" &&
     channel != "release" &&
     channel != "esr") {
     var version = "nightly";

@@ -11,14 +11,14 @@ pref("app.update.interval", 43200); // 12 hours
 // background (in seconds)
 // 0 means "download everything at once"
 pref("app.update.download.backgroundInterval", 0);
-// Give the user x seconds to react before showing the big UI. default=192 hours
-pref("app.update.promptWaitTime", 691200);
+// Give the user x seconds to react before showing the big UI. default=48 hours
+pref("app.update.promptWaitTime", 172800);
 // URL user can browse to manually if for some reason all update installation
 // attempts fail.
-pref("app.update.url.manual", "https://www.mozilla.org/firefox/");
+pref("app.update.url.manual", "https://www.torproject.org/download/download-easy.html");
 // A default value for the "More information about this update" link
 // supplied in the "An update is available" page of the update wizard.
-pref("app.update.url.details", "https://www.mozilla.org/%LOCALE%/firefox/notes");
+pref("app.update.url.details", "https://www.torproject.org/projects/torbrowser.html");
 
 // The number of days a binary is permitted to be old
 // without checking for an update.  This assumes that

@@ -340,7 +340,8 @@ function isNightlyChannel() {
   }
   catch (e) { }
 
-  return channel != "aurora" && channel != "beta" && channel != "release" && channel != "esr";
+  return channel != "aurora" && channel != "alpha" && channel != "beta" &&
+         channel != "hardened" && channel != "release" && channel != "esr";
 }
 
 /**
