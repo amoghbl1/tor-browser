@@ -5,6 +5,7 @@
 #include "LoadContextInfo.h"
 
 #include "mozilla/dom/ToJSValue.h"
+#include "nsDocShell.h"
 #include "nsIChannel.h"
 #include "nsILoadContext.h"
 #include "nsIWebNavigation.h"
@@ -141,13 +142,18 @@ GetLoadContextInfo(nsILoadContext *aLoadContext, bool aIsAnonymous)
                                NeckoOriginAttributes(nsILoadContextInfo::NO_APP_ID, false));
   }
 
-  DebugOnly<bool> pb = aLoadContext->UsePrivateBrowsing();
   DocShellOriginAttributes doa;
   aLoadContext->GetOriginAttributes(doa);
-  MOZ_ASSERT(pb == (doa.mPrivateBrowsingId > 0));
 
   NeckoOriginAttributes noa;
   noa.InheritFromDocShellToNecko(doa);
+
+#ifdef DEBUG
+  nsCOMPtr<nsIDocShellTreeItem> docShell = do_QueryInterface(aLoadContext);
+  if (!docShell || docShell->ItemType() != nsIDocShellTreeItem::typeChrome) {
+    MOZ_ASSERT(aLoadContext->UsePrivateBrowsing() == (doa.mPrivateBrowsingId > 0));
+  }
+#endif
 
   return new LoadContextInfo(aIsAnonymous, noa);
 }
