@@ -132,9 +132,10 @@ archivefiles="updatev2.manifest updatev3.manifest"
 # releases, add them to the "force updates" list.
 ext_path='TorBrowser/Data/Browser/profile.default/extensions'
 if [ -d "$newdir/$ext_path" ]; then
-  https_everywhere_dir='https-everywhere-eff@eff.org'
-  https_everywhere_xpi='https-everywhere-eff@eff.org.xpi'
+  https_everywhere_dir='https-everywhere@eff.org'
+  https_everywhere_xpi='https-everywhere@eff.org.xpi'
   noscript='{73a6fe31-595d-460b-a920-fcc0f8843232}.xpi'
+  tbs='tor-browser-settings@torproject.org.xpi'
 
   # NoScript is a packed extension, so we simply compare the old and the new
   # .xpi files.
@@ -146,6 +147,18 @@ if [ -d "$newdir/$ext_path" ]; then
     exit 2
   elif [ $rc -eq 1 ]; then
     requested_forced_updates="$requested_forced_updates $noscript_path"
+  fi
+
+  # TBS is a packed extension, so we simply compare the old and the new
+  # .xpi files.
+  tbs_path="$ext_path/$tbs"
+  diff -a "$olddir/$tbs_path" "$newdir/$tbs_path" > /dev/null
+  rc=$?
+  if [ $rc -gt 1 ]; then
+    notice "Unexpected exit $rc from $tbs_path diff command"
+    exit 2
+  elif [ $rc -eq 1 ]; then
+    requested_forced_updates="$requested_forced_updates $tbs_path"
   fi
 
   # As of HTTPS Everywhere 5.1.0, the extension ID gained "-eff".
