@@ -278,10 +278,12 @@ system_hunspell = pkg_check_modules('MOZ_HUNSPELL', 'hunspell',
 set_config('MOZ_SYSTEM_HUNSPELL', depends_if(system_hunspell)(lambda _: True))
 
 
-@depends(target)
+@depends(target, c_compiler)
 @imports('os')
-def makensis_progs(target):
+def makensis_progs(target, compiler):
     if target.kernel != 'WINNT':
+        return
+    elif target.kernel == 'WINNT' and compiler.type not in ['msvc', 'clang-cl']:
         return
 
     candidates = [
