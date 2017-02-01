@@ -594,7 +594,10 @@
  * PR_snprintf and friends, which are "printf-like" but which assign
  * different meanings to the various formats.
  */
-#ifdef __GNUC__
+#ifdef __MINGW__
+#define MOZ_FORMAT_PRINTF(stringIndex, firstToCheck)  \
+    __attribute__ ((format (ms_printf, stringIndex, firstToCheck)))
+#elseif __GNUC__
 #define MOZ_FORMAT_PRINTF(stringIndex, firstToCheck)  \
     __attribute__ ((format (printf, stringIndex, firstToCheck)))
 #else
