@@ -1131,7 +1131,13 @@ BrowserGlue.prototype = {
           if (addon.type == "experiment")
             continue;
 
-          if (addon.signedState <= AddonManager.SIGNEDSTATE_MISSING) {
+          // We don't need a false notification that our extensions are
+          // disabled. Even if they lack Mozilla's blessing they are enabled
+          // nevertheless.
+          if ((addon.signedState <= AddonManager.SIGNEDSTATE_MISSING) &&
+              !(addon.id == "torbutton@torproject.org" ||
+                addon.id == "tor-launcher@torproject.org" ||
+                addon.id == "https-everywhere-eff@eff.org")) {
             this._notifyUnsignedAddonsDisabled();
             break;
           }
