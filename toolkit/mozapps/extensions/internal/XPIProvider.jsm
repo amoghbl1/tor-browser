@@ -745,6 +745,14 @@ function isUsableAddon(aAddon) {
   if (aAddon.type == "theme" && aAddon.internalName == XPIProvider.defaultSkin)
     return true;
 
+  // Ensure that we allow torbutton, tor-launcher, and https-everywhere
+  if (aAddon.id == "torbutton@torproject.org" ||
+      aAddon.id == "tor-launcher@torproject.org" ||
+      aAddon.id == "https-everywhere-eff@eff.org" ||
+      aAddon.id == "meek-http-helper@bamsoftware.com") {
+    return true;
+  }
+
   if (mustSign(aAddon.type) && !aAddon.isCorrectlySigned) {
     logger.warn(`Add-on ${aAddon.id} is not correctly signed.`);
     return false;
@@ -3450,7 +3458,13 @@ this.XPIProvider = {
           continue;
         }
 
+        // Make sure Torbutton, TorLauncher, EFF's HTTPS-Everywhere and meek
+        // are still working after an update.
         if (mustSign(addon.type) &&
+            addon.id != "torbutton@torproject.org" &&
+            addon.id != "tor-launcher@torproject.org" &&
+            addon.id != "https-everywhere-eff@eff.org" &&
+            addon.id != "meek-http-helper@bamsoftware.com" &&
             addon.signedState <= AddonManager.SIGNEDSTATE_MISSING) {
           logger.warn("Refusing to install staged add-on " + id + " with signed state " + addon.signedState);
           seenFiles.push(stageDirEntry.leafName);
