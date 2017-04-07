@@ -89,7 +89,7 @@
   ],
   'target_defaults': {
     'defines': [
-      'NSS_ALLOW_SSLKEYLOGFILE=1'
+      'NSS_ALLOW_SSLKEYLOGFILE=0'
     ]
   },
   'variables': {
