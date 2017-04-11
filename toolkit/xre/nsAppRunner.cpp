@@ -5453,15 +5453,12 @@ MultiprocessBlockPolicy() {
 #endif
 
   /**
-   * Avoids enabling e10s for Windows XP users on the release channel.
+   * Avoid enabling e10s for all Windows XP users.
    */
 #if defined(XP_WIN)
   if (!IsVistaOrLater()) {
-    nsAdoptingCString channelName = Preferences::GetDefaultCString("app.update.channel");
-    if (channelName.EqualsLiteral("release") || channelName.EqualsLiteral("esr")) {
-      gMultiprocessBlockPolicy = kE10sDisabledForOperatingSystem;
-      return gMultiprocessBlockPolicy;
-    }
+    gMultiprocessBlockPolicy = kE10sDisabledForOperatingSystem;
+    return gMultiprocessBlockPolicy;
   }
 #endif // XP_WIN
 

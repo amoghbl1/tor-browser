@@ -77,7 +77,10 @@ function defineCohort() {
   }
   cohortDefinedOnThisSession = true;
 
-  let updateChannel = UpdateUtils.getUpdateChannel(false);
+  // For Tor Browser, always use the e10s policies associated with the esr
+  // update channel so that the e10s behavior is the same for all builds.
+  let updateChannel = "esr";
+
   if (!(updateChannel in TEST_THRESHOLD)) {
     setCohort("unsupportedChannel");
     return;
