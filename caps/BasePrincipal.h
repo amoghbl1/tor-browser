@@ -107,8 +107,6 @@ public:
 
   // Inherit OriginAttributes from Necko.
   void InheritFromNecko(const NeckoOriginAttributes& aAttrs);
-
-  void StripUserContextIdAndFirstPartyDomain();
 };
 
 // For OriginAttributes stored on docshells / loadcontexts / browsing contexts.
@@ -310,8 +308,6 @@ public:
   };
 
   virtual PrincipalKind Kind() = 0;
-
-  already_AddRefed<BasePrincipal> CloneStrippingUserContextIdAndFirstPartyDomain();
 
 protected:
   virtual ~BasePrincipal();

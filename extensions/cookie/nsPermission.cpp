@@ -36,7 +36,7 @@ nsPermission::Create(nsIPrincipal* aPrincipal,
 {
   NS_ENSURE_TRUE(aPrincipal, nullptr);
   nsCOMPtr<nsIPrincipal> principal =
-    mozilla::BasePrincipal::Cast(aPrincipal)->CloneStrippingUserContextIdAndFirstPartyDomain();
+    mozilla::BasePrincipal::Cast(aPrincipal);
 
   NS_ENSURE_TRUE(principal, nullptr);
 
@@ -90,7 +90,7 @@ nsPermission::Matches(nsIPrincipal* aPrincipal, bool aExactHost, bool* aMatches)
   *aMatches = false;
 
   nsCOMPtr<nsIPrincipal> principal =
-    mozilla::BasePrincipal::Cast(aPrincipal)->CloneStrippingUserContextIdAndFirstPartyDomain();
+    mozilla::BasePrincipal::Cast(aPrincipal);
 
   if (!principal) {
     *aMatches = false;
