@@ -67,16 +67,19 @@ public:
   // WebIDL
   int32_t Identifier() const { return mIdentifier; }
   EventTarget* GetTarget() const;
-  int32_t ScreenX() const { return mScreenPoint.x; }
-  int32_t ScreenY() const { return mScreenPoint.y; }
+  int32_t ScreenX() const { return ResistFingerprinting() ?
+                                   mClientPoint.x : mScreenPoint.x; }
+  int32_t ScreenY() const { return ResistFingerprinting() ?
+                                   mClientPoint.y : mScreenPoint.y; }
   int32_t ClientX() const { return mClientPoint.x; }
   int32_t ClientY() const { return mClientPoint.y; }
   int32_t PageX() const { return mPagePoint.x; }
   int32_t PageY() const { return mPagePoint.y; }
-  int32_t RadiusX() const { return mRadius.x; }
-  int32_t RadiusY() const { return mRadius.y; }
-  float RotationAngle() const { return mRotationAngle; }
-  float Force() const { return mForce; }
+  int32_t RadiusX() const { return ResistFingerprinting() ? 1 : mRadius.x; }
+  int32_t RadiusY() const { return ResistFingerprinting() ? 1 : mRadius.y; }
+  float RotationAngle() const { return ResistFingerprinting() ?
+                                       0.0 : mRotationAngle; }
+  float Force() const { return ResistFingerprinting() ? 0.0 : mForce; }
 
   nsCOMPtr<EventTarget> mTarget;
   LayoutDeviceIntPoint mRefPoint;
@@ -90,6 +93,7 @@ public:
   float mRotationAngle;
   float mForce;
 protected:
+  bool ResistFingerprinting() const;
   ~Touch();
 
   bool mPointsInitialized;
