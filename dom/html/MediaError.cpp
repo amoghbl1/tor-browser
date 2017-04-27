@@ -7,6 +7,7 @@
 #include "mozilla/dom/MediaError.h"
 #include "nsDOMClassInfoID.h"
 #include "mozilla/dom/MediaErrorBinding.h"
+#include "nsContentUtils.h"
 
 namespace mozilla {
 namespace dom {
@@ -31,7 +32,12 @@ MediaError::MediaError(HTMLMediaElement* aParent, uint16_t aCode,
 void
 MediaError::GetMessage(nsAString& aResult) const
 {
-  CopyUTF8toUTF16(mMessage, aResult);
+  if (nsContentUtils::IsCallerChrome() ||
+      !nsContentUtils::ShouldResistFingerprinting()) {
+    CopyUTF8toUTF16(mMessage, aResult);
+  } else {
+    aResult.Truncate();
+  }
 }
 
 JSObject*
