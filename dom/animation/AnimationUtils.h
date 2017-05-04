@@ -28,7 +28,8 @@ public:
     dom::Nullable<double> result;
 
     if (!aTime.IsNull()) {
-      result.SetValue(aTime.Value().ToMilliseconds());
+      double unrounded = aTime.Value().ToMilliseconds();
+      result.SetValue(floor(unrounded / 100) * 100);
     }
 
     return result;
