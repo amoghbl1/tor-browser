@@ -586,6 +586,8 @@ public:
       return;
     }
 
+    nsContentUtils::ApplyCustomLoadPrincipalToChannel(aElement, channel);
+
     // The listener holds a strong reference to us.  This creates a
     // reference cycle, once we've set mChannel, which is manually broken
     // in the listener's OnStartRequest method after it is finished with

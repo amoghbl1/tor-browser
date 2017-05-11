@@ -3367,6 +3367,15 @@ nsContentUtils::LoadImage(nsIURI* aURI, nsINode* aContext,
   NS_PRECONDITION(aLoadingPrincipal, "Must have a principal");
   NS_PRECONDITION(aRequest, "Null out param");
 
+  // If the image is in a chrome document and the image node has been assigned a
+  // "loadingprincipal" attribute, we should use that principal instead.
+  if (IsSystemPrincipal(aLoadingPrincipal) && aContext->IsContent()) {
+    nsContentPolicyType contentPolicyType;
+    GetContentPolicyTypeForUIImageLoading(aContext->AsContent(),
+                                          &aLoadingPrincipal, contentPolicyType);
+    aContentPolicyType = (int32_t) contentPolicyType;
+  }
+
   imgLoader* imgLoader = GetImgLoaderForDocument(aLoadingDocument);
   if (!imgLoader) {
     // nothing we can do here
@@ -9879,25 +9888,45 @@ nsContentUtils::GetContentPolicyTypeForUIImageLoading(nsIContent* aLoadingNode,
 {
   // Use the serialized loadingPrincipal from the image element. Fall back
   // to mContent's principal (SystemPrincipal) if not available.
-  aContentPolicyType = nsIContentPolicy::TYPE_INTERNAL_IMAGE;
   nsCOMPtr<nsIPrincipal> loadingPrincipal = aLoadingNode->NodePrincipal();
-  nsAutoString imageLoadingPrincipal;
-  aLoadingNode->GetAttr(kNameSpaceID_None, nsGkAtoms::loadingprincipal,
-                        imageLoadingPrincipal);
-  if (!imageLoadingPrincipal.IsEmpty()) {
-    nsCOMPtr<nsISupports> serializedPrincipal;
-    NS_DeserializeObject(NS_ConvertUTF16toUTF8(imageLoadingPrincipal),
-                         getter_AddRefs(serializedPrincipal));
-    loadingPrincipal = do_QueryInterface(serializedPrincipal);
+  if (IsSystemPrincipal(loadingPrincipal)) {
+    aContentPolicyType = nsIContentPolicy::TYPE_INTERNAL_IMAGE;
+    nsAutoString imageLoadingPrincipal;
+    aLoadingNode->GetAttr(kNameSpaceID_None, nsGkAtoms::loadingprincipal,
+                          imageLoadingPrincipal);
+    if (!imageLoadingPrincipal.IsEmpty()) {
+      nsCOMPtr<nsISupports> serializedPrincipal;
+      NS_DeserializeObject(NS_ConvertUTF16toUTF8(imageLoadingPrincipal),
+                           getter_AddRefs(serializedPrincipal));
+      loadingPrincipal = do_QueryInterface(serializedPrincipal);
 
-    if (loadingPrincipal) {
-      // Set the content policy type to TYPE_INTERNAL_IMAGE_FAVICON for
-      // indicating it's a favicon loading.
-      aContentPolicyType = nsIContentPolicy::TYPE_INTERNAL_IMAGE_FAVICON;
-    } else {
-      // Fallback if the deserialization is failed.
-      loadingPrincipal = aLoadingNode->NodePrincipal();
+      if (loadingPrincipal) {
+        // Set the content policy type to TYPE_INTERNAL_IMAGE_FAVICON for
+        // indicating it's a favicon loading.
+        aContentPolicyType = nsIContentPolicy::TYPE_INTERNAL_IMAGE_FAVICON;
+      } else {
+        // Fallback if the deserialization is failed.
+        loadingPrincipal = aLoadingNode->NodePrincipal();
+      }
     }
   }
   loadingPrincipal.forget(aLoadingPrincipal);
+}
+
+/* static */ void
+nsContentUtils::ApplyCustomLoadPrincipalToChannel(Element* aElement, nsIChannel* aChannel)
+{
+    nsCOMPtr<nsIPrincipal> loadingPrincipal = aElement->NodePrincipal();
+    if (loadingPrincipal && nsContentUtils::IsSystemPrincipal(loadingPrincipal)) {
+      nsContentPolicyType dummyContentPolicyType;
+      nsContentUtils::GetContentPolicyTypeForUIImageLoading(
+        aElement, getter_AddRefs(loadingPrincipal), dummyContentPolicyType);
+      NeckoOriginAttributes neckoAttrs;
+      neckoAttrs.InheritFromDocToNecko(
+        BasePrincipal::Cast(loadingPrincipal)->OriginAttributesRef());
+      nsCOMPtr<nsILoadInfo> loadInfo = aChannel->GetLoadInfo();
+      if (loadInfo) {
+        Unused << loadInfo->SetOriginAttributes(neckoAttrs);
+      }
+    }
 }
