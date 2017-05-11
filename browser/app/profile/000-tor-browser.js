@@ -124,6 +124,14 @@ pref("browser.pocket.api", "");
 pref("browser.pocket.site", "");
 pref("network.http.referer.hideOnionSource", true);
 
+// Disable Social API and related stuff (Bug #13612)
+pref("social.directories", "");
+pref("social.remote-install.enabled", false);
+pref("social.share.activationPanelEnabled", false);
+pref("social.shareDirectory", "");
+pref("social.toast-notifications.enabled", false);
+pref("social.whitelist", "");
+
 // Fingerprinting
 pref("webgl.min_capability_mode", true);
 pref("webgl.disable-extensions", true);
