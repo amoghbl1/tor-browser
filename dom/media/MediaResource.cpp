@@ -833,6 +833,8 @@ ChannelMediaResource::RecreateChannel()
                               loadFlags);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  nsContentUtils::ApplyCustomLoadPrincipalToChannel(element, mChannel);
+
   // We have cached the Content-Type, which should not change. Give a hint to
   // the channel to avoid a sniffing failure, which would be expected because we
   // are probably seeking in the middle of the bitstream, and sniffing relies

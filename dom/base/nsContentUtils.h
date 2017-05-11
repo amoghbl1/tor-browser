@@ -2746,6 +2746,13 @@ public:
                                         nsIPrincipal** aLoadingPrincipal,
                                         nsContentPolicyType& aContentPolicyType);
 
+  /**
+   * If aElement has a "loadprincipal" attribute, apply the origin attributes
+   * to the loadInfo belonging to aChannel.
+   */
+  static void
+  ApplyCustomLoadPrincipalToChannel(Element* aElement, nsIChannel* aChannel);
+
 private:
   static bool InitializeEventTable();
 
