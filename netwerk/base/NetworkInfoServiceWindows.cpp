@@ -12,12 +12,18 @@
 
 #include "NetworkInfoServiceImpl.h"
 
+#include "nsContentUtils.h"
+
 namespace mozilla {
 namespace net {
 
 nsresult
 DoListAddresses(AddrMapType& aAddrMap)
 {
+  if (nsContentUtils::ShouldResistFingerprinting()) {
+    return NS_ERROR_FAILURE;
+  }
+
   UniquePtr<MIB_IPADDRTABLE> ipAddrTable;
   DWORD size = sizeof(MIB_IPADDRTABLE);
 
