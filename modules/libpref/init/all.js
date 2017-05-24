@@ -1450,7 +1450,7 @@ pref("network.http.accept.default", "text/html,application/xhtml+xml,application
 pref("network.http.sendRefererHeader",      2);
 // false=real referer, true=spoof referer (use target URI as referer)
 pref("network.http.referer.spoofSource", false);
-// false=allow onion referer, true=hide onion referer (use target URI as referer)
+// false=allow onion referer, true=hide onion referer (use empty referer)
 pref("network.http.referer.hideOnionSource", false);
 // 0=full URI, 1=scheme+host+port+path, 2=scheme+host+port
 pref("network.http.referer.trimmingPolicy", 0);
