@@ -10,7 +10,7 @@
 use std::cmp;
 use std::fmt::{self, Formatter};
 use std::io;
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6, ToSocketAddrs};
+use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4, SocketAddrV6};
 use std::vec;
 use parser::{ParseResult, ParseError};
 use percent_encoding::percent_decode;
@@ -131,26 +131,6 @@ impl<'a> HostAndPort<&'a str> {
         HostAndPort {
             host: self.host.to_owned(),
             port: self.port
-        }
-    }
-}
-
-impl<S: AsRef<str>> ToSocketAddrs for HostAndPort<S> {
-    type Iter = SocketAddrs;
-
-    fn to_socket_addrs(&self) -> io::Result<Self::Iter> {
-        let port = self.port;
-        match self.host {
-            Host::Domain(ref domain) => Ok(SocketAddrs {
-                // FIXME: use std::net::lookup_host when it’s stable.
-                state: SocketAddrsState::Domain(try!((domain.as_ref(), port).to_socket_addrs()))
-            }),
-            Host::Ipv4(address) => Ok(SocketAddrs {
-                state: SocketAddrsState::One(SocketAddr::V4(SocketAddrV4::new(address, port)))
-            }),
-            Host::Ipv6(address) => Ok(SocketAddrs {
-                state: SocketAddrsState::One(SocketAddr::V6(SocketAddrV6::new(address, port, 0, 0)))
-            }),
         }
     }
 }

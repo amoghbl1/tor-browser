@@ -130,7 +130,7 @@ use std::fmt::{self, Write};
 use std::hash;
 use std::io;
 use std::mem;
-use std::net::{ToSocketAddrs, IpAddr};
+use std::net::IpAddr;
 use std::ops::{Range, RangeFrom, RangeTo};
 use std::path::{Path, PathBuf};
 use std::str;
@@ -1188,15 +1188,6 @@ impl Url {
     #[inline]
     fn byte_at(&self, i: u32) -> u8 {
         self.serialization.as_bytes()[i as usize]
-    }
-}
-
-/// Return an error if `Url::host` or `Url::port_or_known_default` return `None`.
-impl ToSocketAddrs for Url {
-    type Iter = SocketAddrs;
-
-    fn to_socket_addrs(&self) -> io::Result<Self::Iter> {
-        try!(self.with_default_port(|_| Err(()))).to_socket_addrs()
     }
 }
 
