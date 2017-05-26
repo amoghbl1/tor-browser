@@ -20,41 +20,10 @@ using namespace mozilla::dom;
 
 static bool
 IsValidHost(const nsACString& host) {
-  // This is ugly, but Preferences.h doesn't have support
-  // for default prefs or locked prefs
-  nsCOMPtr<nsIPrefService> prefService (do_GetService(NS_PREFSERVICE_CONTRACTID));
-  nsCOMPtr<nsIPrefBranch> prefs;
-  if (prefService) {
-    prefService->GetDefaultBranch(nullptr, getter_AddRefs(prefs));
-    bool isEnabled;
-    if (NS_SUCCEEDED(prefs->GetBoolPref("xpinstall.enabled", &isEnabled)) && !isEnabled) {
-      bool isLocked;
-      prefs->PrefIsLocked("xpinstall.enabled", &isLocked);
-      if (isLocked) {
-        return false;
-      }
-    }
-  }
-
-  if (host.Equals("addons.mozilla.org") ||
-      host.Equals("discovery.addons.mozilla.org") ||
-      host.Equals("testpilot.firefox.com")) {
-    return true;
-  }
-
-  // When testing allow access to the developer sites.
-  if (Preferences::GetBool("extensions.webapi.testing", false)) {
-    if (host.LowerCaseEqualsLiteral("addons.allizom.org") ||
-        host.LowerCaseEqualsLiteral("discovery.addons.allizom.org") ||
-        host.LowerCaseEqualsLiteral("addons-dev.allizom.org") ||
-        host.LowerCaseEqualsLiteral("discovery.addons-dev.allizom.org") ||
-        host.LowerCaseEqualsLiteral("testpilot.stage.mozaws.net") ||
-        host.LowerCaseEqualsLiteral("testpilot.dev.mozaws.net") ||
-        host.LowerCaseEqualsLiteral("example.com")) {
-      return true;
-    }
-  }
-
+  // We don't want to allow content to get information about the state of the
+  // extensions a user has installed. This might aid in fingerprinting. And
+  // allowing content at all access to this kind of information seems
+  // potentially risky from a security point as well. Fixes bug 21684.
   return false;
 }
 
