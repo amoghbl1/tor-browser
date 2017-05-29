@@ -469,8 +469,11 @@ var dataProviders = {
 
         // Eagerly free resources.
         let loseExt = gl.getExtension("WEBGL_lose_context");
-        loseExt.loseContext();
-
+        // This extension is not necessarily available. Check for it. Fixes bug
+        // 21972.
+        if (loseExt) {
+          loseExt.loseContext();
+        }
 
         return contextInfo;
     }
