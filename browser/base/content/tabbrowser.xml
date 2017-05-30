@@ -7068,6 +7068,7 @@
             aMenuitem.setAttribute("busy", aTab.getAttribute("busy"));
             aMenuitem.removeAttribute("image");
           } else {
+            aMenuitem.setAttribute("iconLoadingPrincipal", aTab.getAttribute("iconLoadingPrincipal"));
             aMenuitem.setAttribute("image", aTab.getAttribute("image"));
             aMenuitem.removeAttribute("busy");
           }
