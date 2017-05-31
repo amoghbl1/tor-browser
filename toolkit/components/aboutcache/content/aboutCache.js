@@ -40,5 +40,13 @@ function navigate()
   if ($('priv').checked)
     context += 'p,';
 
+  // Checking any of the checkboxes and hitting "Update" after `about:cache` got
+  // loaded should not result in a cryptic error ("Unrecognized storage name
+  // 'null' in about:cache URL"). Rather, the related list of entries in all
+  // caches should be made visible.
+  if (storage == null) {
+    storage=""
+  }
+
   window.location.href = 'about:cache?storage=' + storage + '&context=' + context;
 }
