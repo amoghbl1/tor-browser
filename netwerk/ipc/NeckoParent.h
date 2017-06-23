@@ -167,7 +167,8 @@ protected:
                                           const uint32_t& flags,
                                           const nsCString& aNetworkInterface) override;
   virtual bool DeallocPDNSRequestParent(PDNSRequestParent*) override;
-  virtual bool RecvSpeculativeConnect(const URIParams& aURI, const bool& aAnonymous) override;
+  virtual bool RecvSpeculativeConnect(const URIParams& aURI, const bool& aAnonymous,
+                                      const nsCString& aFirstPartyHost) override;
   virtual bool RecvHTMLDNSPrefetch(const nsString& hostname,
                                    const uint16_t& flags) override;
   virtual bool RecvCancelHTMLDNSPrefetch(const nsString& hostname,

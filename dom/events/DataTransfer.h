@@ -165,7 +165,8 @@ public:
     }
   }
   already_AddRefed<DOMStringList> MozTypesAt(uint32_t aIndex,
-                                             mozilla::ErrorResult& aRv);
+                                             mozilla::ErrorResult& aRv) const;
+
   void MozClearDataAt(const nsAString& aFormat, uint32_t aIndex,
                       mozilla::ErrorResult& aRv);
   void MozSetDataAt(JSContext* aCx, const nsAString& aFormat,

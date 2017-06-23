@@ -4697,7 +4697,7 @@ ContainerState::SetupScrollingMetadata(NewLayerEntry* aEntry)
   for (AnimatedGeometryRoot* agr = aEntry->mAnimatedGeometryRootForScrollMetadata;
        agr != mContainerAnimatedGeometryRoot;
        agr = agr->mParentAGR) {
-    fParent = nsLayoutUtils::GetCrossDocParentFrame(*agr);
+    fParent = agr ? nsLayoutUtils::GetCrossDocParentFrame(*agr) : nullptr;
     if (!fParent) {
       // This means mContainerAnimatedGeometryRoot was not an ancestor
       // of aEntry->mAnimatedGeometryRoot. This is a weird case but it
@@ -5245,7 +5245,6 @@ FrameLayerBuilder::BuildContainerLayerFor(nsDisplayListBuilder* aBuilder,
   uint32_t oldGeneration = mContainerLayerGeneration;
   mContainerLayerGeneration = ++mMaxContainerLayerGeneration;
 
-  RefPtr<RefCountedRegion> paintedLayerInvalidRegion = nullptr;
   if (mRetainingManager) {
     if (aContainerItem) {
       StoreDataForFrame(aContainerItem, containerLayer, LAYER_ACTIVE);

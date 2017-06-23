@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# This script runs all the Mochitest tests that have been added or
+# modified since the last ffxbld commit.
+#
+# It does not currently run XPCShell tests. We should change this if we
+# start using this type or other types of tests.
+#
+# The logs of the tests are stored in the tbb-tests.log file.
+# Ignored tests are listed in the tbb-tests-ignore.txt file.
+#
+# https://trac.torproject.org/projects/tor/ticket/18923
+
+IFS=$'\n'
+
+if [ -n "$USE_TESTS_LIST" ] && [ -f tbb-tests-list.txt ]
+then
+    echo "Using tests list from file tbb-tests-list.txt"
+    tests=($(cat tbb-tests-list.txt))
+else
+    ffxbld_commit=$(git log -500 --format='%an %H' | grep '^ffxbld ' \
+                                        | head -1 | cut -d ' ' -f 2)
+
+    tests=($(git diff --name-status "$ffxbld_commit" HEAD | \
+        grep -e '^[AM].*/test_[^/]\+\.\(html\|xul\)$' \
+             -e '^[AM].*/browser_[^/]\+\.js$' \
+             | sed 's/^[AM]\s\+//'))
+fi
+
+echo 'The following tests will be run:'
+for i in "${!tests[@]}"
+do
+    if [ -z "$USE_TESTS_LIST" ] \
+        && grep -q "^${tests[$i]}$" tbb-tests-ignore.txt
+    then
+        unset "tests[$i]"
+        continue
+    fi
+    echo "- ${tests[$i]}"
+done
+
+if [ -n "$WRITE_TESTS_LIST" ]
+then
+    rm -f tbb-tests-list.txt
+    for i in "${!tests[@]}"
+    do
+        echo "${tests[$i]}" >> tbb-tests-list.txt
+    done
+    exit 0
+fi
+
+rm -f tbb-tests.log
+echo $'\n''Starting tests'
+./mach mochitest --log-tbpl tbb-tests.log --setpref security.nocertdb=false \
+                 "${tests[@]}"
+
+echo "*************************"
+echo "*************************"
+echo "Summary of failed tests:"
+grep --color=never TEST-UNEXPECTED-FAIL tbb-tests.log

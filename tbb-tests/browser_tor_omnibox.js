@@ -8,7 +8,7 @@ function test() {
       engineIDs = browserSearchService.getEngines().map(e => e.identifier);
 
   // Check that we have the correct engines installed, in the right order.
-  is(engineIDs[0], "disconnect", "Default search engine is disconnect");
+  is(engineIDs[0], "ddg", "Default search engine is duckduckgo");
   is(engineIDs[1], "youtube", "Secondary search engine is youtube");
   is(engineIDs[2], "google", "Google is third search engine");
 }

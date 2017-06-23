@@ -133,6 +133,7 @@ private:
                                                      nsIChannel** result);
 
     nsresult SpeculativeConnectInternal(nsIURI *aURI,
+                                        const nsACString& aIsolationKey,
                                         nsIInterfaceRequestor *aCallbacks,
                                         bool aAnonymous);
 

@@ -124,7 +124,7 @@ https://trac.torproject.org/15646
   };
 
   // Run tests asynchronously.
-  spawnTask(function* () {
+  spawn_task(function* () {
     for (let keyData of [allKeyData, allShiftKeyData]) {
       for (let resistFingerprinting of [false, true]) {
         let expectedShiftKey = keyData === allShiftKeyData && resistFingerprinting;

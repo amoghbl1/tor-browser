@@ -1,0 +1,12 @@
+{
+  "Global": {
+    "id": "Orfox",
+    "version": 1.0,
+    "about": "Orfox Distribution"
+  },
+  "Preferences": {
+  },
+  "LocalizablePreferences": {
+    "browser.search.defaultenginename": "DuckDuckGo"
+  }
+}

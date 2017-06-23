@@ -27,6 +27,8 @@ Cu.import("resource://gre/modules/LoadContextInfo.jsm", tempScope);
 let LoadContextInfo = tempScope.LoadContextInfo;
 let thirdPartyUtil = Cc["@mozilla.org/thirdpartyutil;1"]
                        .getService(Ci.mozIThirdPartyUtil);
+let protocolProxyService = Cc["@mozilla.org/network/protocol-proxy-service;1"]
+                             .getService(Ci.nsIProtocolProxyService);
 
 // __listen(target, eventType, timeoutMs, useCapture)__.
 // Calls addEventListener on target, with the given eventType.
@@ -116,12 +118,12 @@ let privacyPref = "privacy.thirdparty.isolate",
                 "request.html", "worker.request.html",
                 "import.js"];
 
-// __checkCachePopulation(pref, numberOfDomains)__.
+// __checkCachePopulation(isolate, numberOfDomains)__.
 // Check if the number of entries found in the cache for each
 // embedded file type matches the number we expect, given the
 // number of domains and the isolation state.
-let checkCachePopulation = function* (pref, numberOfDomains) {
-  let expectedEntryCount = (pref === 2) ? numberOfDomains : 1;
+let checkCachePopulation = function* (isolate, numberOfDomains) {
+  let expectedEntryCount = isolate ? numberOfDomains : 1;
   // Collect cache data.
   let data = yield cacheDataForContext(LoadContextInfo.default, 2000);
   data = data.concat(yield cacheDataForContext(LoadContextInfo.private, 2000));
@@ -148,17 +150,21 @@ let checkCachePopulation = function* (pref, numberOfDomains) {
 };
 
 // __observeChannels(onChannel)__.
-// onChannel is called for every http channel request. Returns a zero-arg stop() function.
+// onChannel is called for every channel request. Returns a zero-arg stop() function.
 let observeChannels = function (onChannel) {
-  let channelObserver = {
-    observe: function(subject, topic, data) {
-      if (topic === "http-on-modify-request") {
-        onChannel(subject.QueryInterface(Components.interfaces.nsIHttpChannel));
-      }
+  // We use a dummy proxy filter to catch all channels, even those that do not
+  // generate an "http-on-modify-request" notification, such as link preconnects.
+  let proxyFilter = {
+    applyFilter : function (aProxyService, aChannel, aProxy) {
+      // We have the channel; provide it to the callback.
+      onChannel(aChannel);
+      // Pass on aProxy unmodified.
+      return aProxy;
     }
   };
-  Services.obs.addObserver(channelObserver, "http-on-modify-request", /* ownsWeak */ false);
-  return function () { Services.obs.removeObserver(channelObserver, "http-on-modify-request"); };
+  protocolProxyService.registerChannelFilter(proxyFilter, 0);
+  // Return the stop() function:
+  return () => protocolProxyService.unregisterChannelFilter(proxyFilter);
 };
 
 // __channelFirstPartyHost(aChannel)__.
@@ -170,28 +176,38 @@ let channelFirstPartyHost = function (aChannel) {
   return thirdPartyUtil.getFirstPartyHostForIsolation(firstPartyURI);
 }
 
+// __startObservingChannels()__.
+// Checks to see if each channel has the correct first party assigned.
+// All "thirdPartyChild" resources are loaded from a third-party
+// "example.net" host, but they should all report either an "example.com"
+// or an "example.org" first-party domain. Returns a stop() function.
+let startObservingChannels = function() {
+  let stopObservingChannels = observeChannels(function (channel) {
+    let originalURISpec = channel.originalURI.spec;
+    if (originalURISpec.contains("example.net")) {
+      let firstPartyHost = channelFirstPartyHost(channel);
+      ok(firstPartyHost === "example.com" || firstPartyHost === "example.org", "first party for " + originalURISpec + " is " + firstPartyHost);
+    }
+  });
+  return stopObservingChannels;
+};
+
 // The main testing function.
 // Launch a Task.jsm coroutine so we can open tabs and wait for each of them to open,
 // one by one.
 add_task(function* () {
-  // Here we check to see if each channel has the correct first party assigned.
-  // All "thirdPartyChild" resources are loaded from a third-party
-  // "example.net" host, but they should all report either an "example.com"
-  // or an "example.org" first-party domain.
-  let stopObservingChannels = observeChannels(function (channel) {
-    if (channel.originalURI.spec.contains("thirdPartyChild")) {
-      let firstPartyHost = channelFirstPartyHost(channel);
-      ok(firstPartyHost === "example.com" || firstPartyHost === "example.org", "first party is " + firstPartyHost);
-    }
-  });
   // Keep original pref value for restoring after the tests.
   let originalPrefValue = Services.prefs.getIntPref(privacyPref);
   // Test the pref with both values: 2 (isolating by first party) or 0 (not isolating)
-  for (let pref of [2, 0]) {
+  for (let isolate of [true, false]) {
+    let stopObservingChannels;
+    if (isolate) {
+      stopObservingChannels = startObservingChannels();
+    }
     // Clear the cache.
     Services.cache2.clear();
     // Set the pref to desired value
-    Services.prefs.setIntPref(privacyPref, pref);
+    Services.prefs.setIntPref(privacyPref, isolate ? 2 : 0);
     // Open test tabs
     let tabs = [];
     for (let domain of duplicatedDomains) {
@@ -199,13 +215,15 @@ add_task(function* () {
       tabs.push(yield loadURLinNewTab("http://" + domain + ".example.org" + grandParentPage));
     }
     // Run checks to make sure cache has expected number of entries for
-    // the chosen pref state.
+    // the chosen isolation state.
     let firstPartyDomainCount = 2; // example.com and example.org
-    yield checkCachePopulation(pref, firstPartyDomainCount);
+    yield checkCachePopulation(isolate, firstPartyDomainCount);
     // Clean up by removing tabs.
     tabs.forEach(tab => gBrowser.removeTab(tab));
+    if (isolate) {
+      stopObservingChannels();
+    }
   }
-  stopObservingChannels();
   // Restore the pref to its original value.
   Services.prefs.setIntPref(privacyPref, originalPrefValue);
 });

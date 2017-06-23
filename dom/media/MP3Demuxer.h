@@ -232,6 +232,12 @@ public:
     // Returns true iff Xing/Info TOC (table of contents) is present.
     bool IsTOCPresent() const;
 
+    // Returns whether the header is valid (type XING or VBRI).
+    bool IsValid() const;
+
+    // Returns whether the header is valid and contains reasonable non-zero field values.
+    bool IsComplete() const;
+
     // Returns the byte offset for the given duration percentage as a factor
     // (0: begin, 1.0: end).
     int64_t Offset(float aDurationFac) const;

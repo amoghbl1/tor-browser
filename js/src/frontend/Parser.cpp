@@ -524,6 +524,9 @@ ParseContext<ParseHandler>::generateBindings(ExclusiveContext* cx, TokenStream& 
     if (UINT32_MAX - args_.length() <= vars_.length() + bodyLevelLexicals_.length())
         return ts.reportError(JSMSG_TOO_MANY_LOCALS);
 
+    if (blockScopeDepth >= Bindings::BLOCK_SCOPED_LIMIT)
+        return ts.reportError(JSMSG_TOO_MANY_LOCALS);
+
     // Fix up slots in non-global contexts. In global contexts all body-level
     // names are dynamically defined and do not live in either frame or
     // CallObject slots.
@@ -8178,8 +8181,10 @@ Parser<ParseHandler>::generatorComprehensionLambda(GeneratorKind comprehensionKi
      * kid and could be removed from pc->sc.
      */
     genFunbox->anyCxFlags = outerpc->sc->anyCxFlags;
-    if (outerpc->sc->isFunctionBox())
-        genFunbox->funCxFlags = outerpc->sc->asFunctionBox()->funCxFlags;
+    if (outerpc->sc->isFunctionBox()) {
+        genFunbox->funCxFlags =
+            outerpc->sc->asFunctionBox()->flagsForNestedGeneratorComprehensionLambda();
+    }
 
     MOZ_ASSERT(genFunbox->generatorKind() == comprehensionKind);
     handler.setBlockId(genfn, genpc.bodyid);

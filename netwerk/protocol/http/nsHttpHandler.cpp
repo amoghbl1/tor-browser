@@ -2126,13 +2126,15 @@ nsHttpHandler::Observe(nsISupports *subject,
 
 nsresult
 nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
+                                          const nsACString& aIsolationKey,
                                           nsIInterfaceRequestor *aCallbacks,
                                           bool anonymous)
 {
+    nsCString isolationKey(aIsolationKey);
     if (IsNeckoChild()) {
         ipc::URIParams params;
         SerializeURI(aURI, params);
-        gNeckoChild->SendSpeculativeConnect(params, anonymous);
+        gNeckoChild->SendSpeculativeConnect(params, anonymous, isolationKey);
         return NS_OK;
     }
 
@@ -2207,24 +2209,40 @@ nsHttpHandler::SpeculativeConnectInternal(nsIURI *aURI,
 
     // TODO: Fix isolation for speculative connect.
     nsHttpConnectionInfo *ci =
-        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr, EmptyCString(), usingSSL);
+        new nsHttpConnectionInfo(host, port, EmptyCString(), username, nullptr, aIsolationKey, usingSSL);
     ci->SetAnonymous(anonymous);
 
     return SpeculativeConnect(ci, aCallbacks);
 }
 
 NS_IMETHODIMP
+nsHttpHandler::SpeculativeConnectIsolated(nsIURI *aURI,
+                                          const nsACString& aIsolationKey,
+                                          nsIInterfaceRequestor *aCallbacks)
+{
+    return SpeculativeConnectInternal(aURI, aIsolationKey, aCallbacks, false);
+}
+
+NS_IMETHODIMP
 nsHttpHandler::SpeculativeConnect(nsIURI *aURI,
                                   nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, false);
+    return SpeculativeConnectInternal(aURI, EmptyCString(), aCallbacks, false);
+}
+
+NS_IMETHODIMP
+nsHttpHandler::SpeculativeAnonymousConnectIsolated(nsIURI *aURI,
+                                                   const nsACString& aIsolationKey,
+                                                   nsIInterfaceRequestor *aCallbacks)
+{
+    return SpeculativeConnectInternal(aURI, aIsolationKey, aCallbacks, true);
 }
 
 NS_IMETHODIMP
 nsHttpHandler::SpeculativeAnonymousConnect(nsIURI *aURI,
                                            nsIInterfaceRequestor *aCallbacks)
 {
-    return SpeculativeConnectInternal(aURI, aCallbacks, true);
+    return SpeculativeConnectInternal(aURI, EmptyCString(), aCallbacks, true);
 }
 
 void

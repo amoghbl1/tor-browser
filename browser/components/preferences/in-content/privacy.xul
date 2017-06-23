@@ -19,6 +19,12 @@
   <preference id="privacy.trackingprotection.pbmode.enabled"
               name="privacy.trackingprotection.pbmode.enabled"
               type="bool"/>
+  <preference id="privacy.thirdparty.isolate"
+              name="privacy.thirdparty.isolate"
+              type="int"/>
+  <preference id="privacy.resistFingerprinting"
+              name="privacy.resistFingerprinting"
+              type="bool"/>
 
   <!-- XXX button prefs -->
   <preference id="pref.privacy.disable_button.cookie_exceptions"
@@ -125,6 +131,24 @@
       <button id="changeBlockList"
               label="&changeBlockList.label;" accesskey="&changeBlockList.accesskey;"
               preference="pref.privacy.disable_button.change_blocklist"/>
+    </hbox>
+  </vbox>
+  <vbox id="thirdpartyIsolate">
+    <hbox align="center">
+      <checkbox id="thirdpartyIsolateCB"
+                preference="privacy.thirdparty.isolate"
+                accesskey="&thirdpartyIsolate.accesskey;"
+                label="&thirdpartyIsolate.label;"
+                onsyncfrompreference="return gPrivacyPane.readThirdPartyIsolate();"
+                onsynctopreference="return gPrivacyPane.writeThirdPartyIsolate();"/>
+    </hbox>
+  </vbox>
+  <vbox id="resistFingerprinting">
+    <hbox align="center">
+      <checkbox id="resistFingerprintingCB"
+                preference="privacy.resistFingerprinting"
+                accesskey="&resistFingerprinting.accesskey;"
+                label="&resistFingerprinting.label;" />
     </hbox>
   </vbox>
 </groupbox>

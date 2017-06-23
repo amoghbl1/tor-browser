@@ -1547,7 +1547,7 @@ SortComparatorFunction::operator()(const Value& a, const Value& b, bool* lessOrE
         return false;
 
     InvokeArgs& args = fig.args();
-    if (!args.init(2))
+    if (!args.init(cx, 2))
         return false;
 
     args.setCallee(fval);
@@ -2509,7 +2509,7 @@ js::array_splice_impl(JSContext* cx, unsigned argc, Value* vp, bool returnValueI
             Rooted<ArrayObject*> arr(cx, &obj->as<ArrayObject>());
             if (arr->lengthIsWritable()) {
                 DenseElementResult result =
-                    arr->ensureDenseElements(cx, arr->length(), itemCount - actualDeleteCount);
+                    arr->ensureDenseElements(cx, len, itemCount - actualDeleteCount);
                 if (result == DenseElementResult::Failure)
                     return false;
             }
@@ -3086,7 +3086,7 @@ array_of(JSContext* cx, unsigned argc, Value* vp)
     RootedObject obj(cx);
     {
         ConstructArgs cargs(cx);
-        if (!cargs.init(1))
+        if (!cargs.init(cx, 1))
             return false;
         cargs[0].setNumber(args.length());
 

@@ -246,6 +246,8 @@
 
 #include "nsISpeculativeConnect.h"
 
+#include "ThirdPartyUtil.h"
+
 #ifdef MOZ_MEDIA_NAVIGATOR
 #include "mozilla/MediaManager.h"
 #endif // MOZ_MEDIA_NAVIGATOR
@@ -4673,8 +4675,10 @@ nsDocument::SetScriptHandlingObject(nsIScriptGlobalObject* aScriptObject)
   NS_ASSERTION(!mScriptGlobalObject ||
                mScriptGlobalObject == aScriptObject,
                "Wrong script object!");
+#ifdef DEBUG
   nsCOMPtr<nsPIDOMWindow> win = do_QueryInterface(aScriptObject);
   NS_ASSERTION(!win || win->IsInnerWindow(), "Should have inner window here!");
+#endif
   if (aScriptObject) {
     mScopeObject = do_GetWeakReference(aScriptObject);
     mHasHadScriptHandlingObject = true;
@@ -4716,8 +4720,8 @@ nsDocument::GetWindowInternal() const
   if (mRemovedFromDocShell) {
     // The docshell returns the outer window we are done.
     nsCOMPtr<nsIDocShell> kungfuDeathGrip(mDocumentContainer);
-    if (mDocumentContainer) {
-      win = mDocumentContainer->GetWindow();
+    if (kungfuDeathGrip) {
+      win = kungfuDeathGrip->GetWindow();
     }
   } else {
     win = do_QueryInterface(mScriptGlobalObject);
@@ -9737,10 +9741,12 @@ nsDocument::MaybePreconnect(nsIURI* aOrigURI, mozilla::CORSMode aCORSMode)
     return;
   }
 
+  nsCString firstPartyHost;
+  ThirdPartyUtil::GetFirstPartyHost(this, firstPartyHost);
   if (aCORSMode == CORS_ANONYMOUS) {
-    speculator->SpeculativeAnonymousConnect(uri, nullptr);
+    speculator->SpeculativeAnonymousConnectIsolated(uri, firstPartyHost, nullptr);
   } else {
-    speculator->SpeculativeConnect(uri, nullptr);
+    speculator->SpeculativeConnectIsolated(uri, firstPartyHost, nullptr);
   }
 */
 }

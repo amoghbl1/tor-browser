@@ -299,6 +299,39 @@ var gPrivacyPane = {
     }
   },
 
+  // THIRD PARTY ISOLATION
+
+  /**
+   * Converts from privacy.thirdparty.isolate pref to boolean checkbox.
+   * Note that during uplift, Mozilla changed the name to
+   * privacy.firstparty.isolate, and also changed it to a boolean,
+   * so this function is likely not needed after uplifting.
+   */
+  readThirdPartyIsolate: function ()
+  {
+    var pref = document.getElementById("privacy.thirdparty.isolate");
+    switch (pref.value)
+    {
+      case 0: // Off
+        return false;
+      case 1: // PBM only
+        return true;
+      case 2: // Always
+        return true;
+      default:
+        return undefined;
+    }
+  },
+
+  /**
+   * Convert from checkbox to private.thirdparty.isolate pref.
+   */
+  writeThirdPartyIsolate: function ()
+  {
+    var checkbox = document.getElementById("thirdpartyIsolateCB");
+    return checkbox.checked ? 2 : 0;
+  },
+
   // PRIVATE BROWSING
 
   /**

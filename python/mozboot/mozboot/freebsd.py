@@ -14,6 +14,7 @@ class FreeBSDBootstrapper(BaseBootstrapper):
         self.packages = [
             'autoconf213',
             'gmake',
+            'gtar',
             'mercurial',
             'pkgconf',
             'zip',
@@ -21,6 +22,7 @@ class FreeBSDBootstrapper(BaseBootstrapper):
 
         self.browser_packages = [
             'dbus-glib',
+            'gconf2',
             'gstreamer-plugins',
             'gtk2',
             'gtk3',
@@ -30,7 +32,7 @@ class FreeBSDBootstrapper(BaseBootstrapper):
             'yasm',
         ]
 
-        if self.flavor == 'dragonfly':
+        if not self.which('unzip'):
             self.packages.append('unzip')
 
         # gcc in base is too old
@@ -40,6 +42,8 @@ class FreeBSDBootstrapper(BaseBootstrapper):
     def pkg_install(self, *packages):
         if self.which('pkg'):
             command = ['pkg', 'install']
+            if self.no_interactive:
+                command.append('-y')
         else:
             command = ['pkg_add', '-Fr']
 

@@ -1280,6 +1280,7 @@ nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile, bool aLocal)
   nsresult rv = GetTorBrowserUserDataDir(getter_AddRefs(localDir));
   NS_ENSURE_SUCCESS(rv, rv);
 
+#if !defined(ANDROID)
 #ifdef TOR_BROWSER_DATA_OUTSIDE_APP_DIR
   rv = localDir->AppendNative(NS_LITERAL_CSTRING("Browser"));
 #else
@@ -1287,6 +1288,7 @@ nsXREDirProvider::GetUserDataDirectoryHome(nsIFile** aFile, bool aLocal)
                                      XPCOM_FILE_PATH_SEPARATOR "Browser"));
 #endif
   NS_ENSURE_SUCCESS(rv, rv);
+#endif
 
   if (aLocal) {
     rv = localDir->AppendNative(NS_LITERAL_CSTRING("Caches"));
