@@ -2,7 +2,7 @@
 
 1) Move .mozconfig-android to .mozconfig OR run: 
 ```
-export MOZCONFIG="tor-browser/.mozconfig-android"
+export MOZCONFIG=".mozconfig-orfox"
 ```
 2) Checks if the all requirements for the build are fine with:
 ```    
