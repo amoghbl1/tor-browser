@@ -297,6 +297,10 @@ pref("extensions.enabledScopes", 1);
 pref("extensions.pendingOperations", false);
 pref("xpinstall.whitelist.add", "");
 pref("xpinstall.whitelist.add.36", "");
+// We don't know what extensions Mozilla is advertising to our users and we
+// don't want to have some random Google Analytics script running either on the
+// about:addons page, see bug 22073 and 22900.
+pref("extensions.getAddons.showPane", false);
 
 // Toolbar layout
 pref("browser.uiCustomization.state", "{\"placements\":{\"PanelUI-contents\":[\"edit-controls\",\"zoom-controls\",\"new-window-button\",\"save-page-button\",\"print-button\",\"bookmarks-menu-button\",\"history-panelmenu\",\"find-button\",\"preferences-button\",\"add-ons-button\",\"developer-button\",\"https-everywhere-button\",\"downloads-button\"],\"addon-bar\":[\"addonbar-closebutton\",\"status-bar\"],\"PersonalToolbar\":[\"personal-bookmarks\"],\"nav-bar\":[\"noscript-tbb\",\"torbutton-button\",\"urlbar-container\",\"search-container\",\"webrtc-status-button\",\"loop-button\"],\"TabsToolbar\":[\"tabbrowser-tabs\",\"new-tab-button\",\"alltabs-button\"],\"toolbar-menubar\":[\"menubar-items\"]},\"seen\":[],\"dirtyAreaCache\":[\"PersonalToolbar\",\"nav-bar\",\"TabsToolbar\",\"toolbar-menubar\",\"PanelUI-contents\",\"addon-bar\"],\"currentVersion\":4,\"newElementCount\":0}");
