@@ -70,8 +70,8 @@
         <item>@string/history_title</item>
     </string-array>
     <string-array name="pref_import_android_defaults">
-        <item>true</item>
-        <item>true</item>
+        <item>false</item>
+        <item>false</item>
     </string-array>
     <string-array name="pref_import_android_values">
         <item>android_import.data.bookmarks</item>
@@ -126,16 +126,16 @@
         <item>private.data.passwords</item>
     </string-array>
     <string-array name="pref_clear_on_exit_defaults">
-        <item>false</item>
-        <item>false</item>
-        <item>false</item>
-        <item>false</item>
-        <item>false</item>
-        <item>false</item>
-        <item>false</item>
-        <item>false</item>
-        <item>false</item>
-        <item>false</item>
+        <item>true</item>
+        <item>true</item>
+        <item>true</item>
+        <item>true</item>
+        <item>true</item>
+        <item>true</item>
+        <item>true</item>
+        <item>true</item>
+        <item>true</item>
+        <item>true</item>
     </string-array>
     <string-array name="pref_restore_entries">
         <item>@string/pref_restore_always</item>
