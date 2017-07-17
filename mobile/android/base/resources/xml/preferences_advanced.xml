@@ -62,7 +62,9 @@
 
         <SwitchPreference android:key="media.autoplay.enabled"
                           android:title="@string/pref_media_autoplay_enabled"
-                          android:summary="@string/pref_media_autoplay_enabled_summary" />
+                          android:summary="@string/pref_media_autoplay_enabled_summary"
+			  android:defaultValue="false"
+ />
 
     </PreferenceCategory>
 
