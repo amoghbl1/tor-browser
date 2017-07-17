@@ -591,7 +591,7 @@ pref("media.encoder.webm.enabled", true);
 #endif
 
 // Whether to autostart a media element with an |autoplay| attribute
-pref("media.autoplay.enabled", true);
+pref("media.autoplay.enabled", false);
 
 // The default number of decoded video frames that are enqueued in
 // MediaDecoderReader's mVideoQueue.
