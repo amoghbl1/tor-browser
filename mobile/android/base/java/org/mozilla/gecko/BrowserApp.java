@@ -843,6 +843,7 @@ public class BrowserApp extends GeckoApp
         // We want to get an understanding of how our user base is spread (bug 1221646).
         final String installerPackageName = getPackageManager().getInstallerPackageName(getPackageName());
         Telemetry.sendUIEvent(TelemetryContract.Event.LAUNCH, TelemetryContract.Method.SYSTEM, "installer_" + installerPackageName);
+
     }
 
     /**
@@ -1105,7 +1106,14 @@ public class BrowserApp extends GeckoApp
             });
             builder.show();
         } else {
-            registerReceiver(torStatusReceiver, new IntentFilter(OrbotHelper.ACTION_STATUS));
+            /* run in thread so Tor status updates will be received while the
+            * Gecko event sync is blocking the main thread */
+            HandlerThread handlerThread = new HandlerThread("torStatusReceiver");
+            handlerThread.start();
+            Looper looper = handlerThread.getLooper();
+         	Handler handler = new Handler(looper);
+            registerReceiver(torStatusReceiver, new IntentFilter(OrbotHelper.ACTION_STATUS),
+                null, handler);
             OrbotHelper.requestStartTor(this);
         }
     }
@@ -1117,22 +1125,14 @@ public class BrowserApp extends GeckoApp
         if (mIsAbortingAppLaunch) {
             return;
         }
-        /* run in thread so Tor status updates will be received while the
-         * Gecko event sync is blocking the main thread */
-        HandlerThread handlerThread = new HandlerThread("torStatusReceiver");
-        handlerThread.start();
-        Looper looper = handlerThread.getLooper();
-        Handler handler = new Handler(looper);
-        registerReceiver(torStatusReceiver, new IntentFilter(OrbotHelper.ACTION_STATUS),
-                null, handler);
-
-        checkStartOrbot();
 
         processTabQueue();
 
         for (BrowserAppDelegate delegate : delegates) {
             delegate.onResume(this);
         }
+
+	checkStartOrbot();
     }
 
     @Override
@@ -1152,6 +1152,8 @@ public class BrowserApp extends GeckoApp
         for (BrowserAppDelegate delegate : delegates) {
             delegate.onPause(this);
         }
+
+        unregisterReceiver(torStatusReceiver);
     }
 
     @Override
@@ -1163,7 +1165,6 @@ public class BrowserApp extends GeckoApp
         // Register for Prompt:ShowTop so we can foreground this activity even if it's hidden.
         EventDispatcher.getInstance().registerGeckoThreadListener((GeckoEventListener) this,
             "Prompt:ShowTop");
-        unregisterReceiver(torStatusReceiver);
 
         for (final BrowserAppDelegate delegate : delegates) {
             delegate.onRestart(this);
