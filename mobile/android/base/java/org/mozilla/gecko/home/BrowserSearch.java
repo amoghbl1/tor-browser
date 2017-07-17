@@ -275,7 +275,7 @@ public class BrowserSearch extends HomeFragment
         super.onResume();
 
         final SharedPreferences prefs = GeckoSharedPrefs.forApp(getContext());
-        mSavedSearchesEnabled = prefs.getBoolean(GeckoPreferences.PREFS_HISTORY_SAVED_SEARCH, true);
+        mSavedSearchesEnabled = prefs.getBoolean(GeckoPreferences.PREFS_HISTORY_SAVED_SEARCH, false);
 
         // Fetch engines if we need to.
         if (mSearchEngines.isEmpty() || !Locale.getDefault().equals(mLastLocale)) {
