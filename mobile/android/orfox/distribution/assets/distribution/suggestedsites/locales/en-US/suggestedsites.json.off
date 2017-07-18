@@ -1,0 +1,14 @@
+[
+  {
+    "url": "http://example.com/1",
+    "title": "Example Site #1",
+    "imageurl": "gecko.distribution://suggestedsites/res/fennec",
+    "bgcolor": "#F400A1"
+  },
+  {
+    "url": "https://example.com/2",
+    "title": "Example Site #2",
+    "imageurl": "gecko.distribution://suggestedsites/res/fennec",
+    "bgcolor": "#FF7F00"
+  }
+]
