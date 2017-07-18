@@ -9,13 +9,14 @@ ac_add_options --enable-application=mobile/android
 ac_add_options --target=arm-linux-androideabi
 ac_add_options --with-android-ndk="$NDK_BASE" #Enter the android ndk location(ndk r10e)
 ac_add_options --with-android-sdk="$SDK_BASE" #Enter the android sdk location
+ac_add_options --with-branding=mobile/android/branding/orfox
+ac_add_options --with-android-distribution-directory=mobile/android/orfox/distribution
 
 #enable ccache to set amount of cache assigned for build.
 ac_add_options --with-ccache
 
 ac_add_options --enable-optimize
 #ac_add_options --enable-official-branding
-ac_add_options --with-branding=mobile/android/branding/orfox
 ##ac_add_options --enable-tor-browser-update
 ##ac_add_options --enable-update-packaging
 ac_add_options --enable-signmar
