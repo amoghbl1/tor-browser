@@ -1,0 +1,13 @@
+{
+  "Global": {
+    "id": "Orfox",
+    "version": 7.5.1,
+    "about": "Orfox"
+  },
+  "Preferences": {
+    "privacy.donottrackheader.enabled": false
+  },
+  "LocalizablePreferences": {
+    "browser.search.defaultenginename": "DuckDuckGo"
+  }
+}
