@@ -54,7 +54,10 @@
                         android:summary="@string/pref_clear_on_exit_summary2"
 
                         android:dialogTitle="@string/pref_clear_on_exit_dialog_title"
-                        android:positiveButtonText="@string/button_set"/>
+                        android:positiveButtonText="@string/button_set"
+			
+			android:defaultValue="true"
+	/>
 
     <PreferenceCategory android:title="@string/pref_category_logins">
 
