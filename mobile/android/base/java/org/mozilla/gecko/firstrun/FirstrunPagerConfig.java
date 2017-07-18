@@ -25,6 +25,9 @@ public class FirstrunPagerConfig {
     public static final String KEY_SUBTEXT = "subtextRes";
 
    public static List<FirstrunPanelConfig> getDefault(Context context) {
+	return getRestricted();
+	//no panels in Orfox
+	/**
         final List<FirstrunPanelConfig> panels = new LinkedList<>();
 
         if (Experiments.isInExperimentLocal(context, Experiments.ONBOARDING3_B)) {
@@ -46,6 +49,7 @@ public class FirstrunPagerConfig {
             panels.add(SimplePanelConfigs.signInPanelConfig);
         }
         return panels;
+	**/
     }
 
     public static List<FirstrunPanelConfig> getRestricted() {
