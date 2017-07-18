@@ -37,6 +37,8 @@ MOZ_SOCIAL=
 MOZ_ANDROID_HISTORY=0
 MOZ_DISABLE_EXPORT_JS=1
 
+MOZ_ANDROID_PACKAGE_INSTALL_BOUNCER=0
+
 # use custom widget for html:select
 MOZ_USE_NATIVE_POPUP_WINDOWS=1
 
@@ -62,4 +64,4 @@ MOZ_WEBGL_CONFORMANT=1
 export JS_GC_SMALL_CHUNK_SIZE=1
 
 # Enable checking that add-ons are signed by the trusted root
-MOZ_ADDON_SIGNING=1
+MOZ_ADDON_SIGNING=0

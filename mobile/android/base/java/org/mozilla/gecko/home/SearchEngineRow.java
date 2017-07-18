@@ -391,7 +391,7 @@ class SearchEngineRow extends AnimatedHeightLayout {
 
         final int recycledSuggestionCount = mSuggestionView.getChildCount();
         final SharedPreferences prefs = GeckoSharedPrefs.forApp(getContext());
-        final boolean savedSearchesEnabled = prefs.getBoolean(GeckoPreferences.PREFS_HISTORY_SAVED_SEARCH, true);
+        final boolean savedSearchesEnabled = prefs.getBoolean(GeckoPreferences.PREFS_HISTORY_SAVED_SEARCH, false);
 
         // Remove duplicates of search engine suggestions from saved searches.
         List<String> searchHistorySuggestions = (rawSearchHistorySuggestions != null) ? rawSearchHistorySuggestions : new ArrayList<String>();

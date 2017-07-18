@@ -54,7 +54,10 @@
                         android:summary="@string/pref_clear_on_exit_summary2"
 
                         android:dialogTitle="@string/pref_clear_on_exit_dialog_title"
-                        android:positiveButtonText="@string/button_set"/>
+                        android:positiveButtonText="@string/button_set"
+			
+			android:defaultValue="true"
+	/>
 
     <PreferenceCategory android:title="@string/pref_category_logins">
 
@@ -99,7 +102,7 @@
         <CheckBoxPreference android:key="android.not_a_preference.healthreport.uploadEnabled"
                             android:title="@string/datareporting_fhr_title"
                             android:summary="@string/datareporting_fhr_summary2"
-                            android:defaultValue="true" />
+			    android:defaultValue="false" />
 
         <org.mozilla.gecko.preferences.AlignRightLinkPreference android:key="android.not_a_preference.healthreport.link"
                                                                 android:title="@string/datareporting_abouthr_title"
