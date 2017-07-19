@@ -25,8 +25,9 @@ public class FirstrunPagerConfig {
     public static final String KEY_SUBTEXT = "subtextRes";
 
    public static List<FirstrunPanelConfig> getDefault(Context context) {
-	return getRestricted();
-	//no panels in Orfox
+
+	return getRestricted ();
+
 	/**
         final List<FirstrunPanelConfig> panels = new LinkedList<>();
 
