@@ -21,6 +21,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "gContentSecurityManager",
 
 var prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
 prefs.setCharPref("dom.securecontext.whitelist", "example.net,example.org");
+prefs.setBoolPref("dom.securecontext.whitelist_onions", false);
 
 add_task(function* test_isOriginPotentiallyTrustworthy() {
   for (let [uriSpec, expectedResult] of [
@@ -38,10 +39,18 @@ add_task(function* test_isOriginPotentiallyTrustworthy() {
     ["http://example.net/", true],
     ["ws://example.org/", true],
     ["chrome://example.net/content/messenger.xul", false],
+    ["http://1234567890abcdef.onion/", false],
   ]) {
     let uri = NetUtil.newURI(uriSpec);
     let principal = gScriptSecurityManager.getCodebasePrincipal(uri);
     Assert.equal(gContentSecurityManager.isOriginPotentiallyTrustworthy(principal),
                  expectedResult);
   }
+  // And now let's test whether .onion sites are properly treated when
+  // whitelisted, see bug 21321.
+  prefs.setBoolPref("dom.securecontext.whitelist_onions", true);
+  let uri = NetUtil.newURI("http://1234567890abcdef.onion/");
+  let principal = gScriptSecurityManager.getCodebasePrincipal(uri);
+  Assert.equal(gContentSecurityManager.isOriginPotentiallyTrustworthy(principal),
+               true);
 });
