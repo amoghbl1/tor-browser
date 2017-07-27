@@ -922,16 +922,16 @@ nsGIOProtocolHandler::InitSupportedProtocolsPref(nsIPrefBranch *prefs)
   // Get user preferences to determine which protocol is supported.
   // Gvfs/GIO has a set of supported protocols like obex, network, archive,
   // computer, dav, cdda, gphoto2, trash, etc. Some of these seems to be
-  // irrelevant to process by browser. By default accept only smb and sftp
-  // protocols so far.
+  // irrelevant to process by browser. By default accept none.
   nsresult rv = prefs->GetCharPref(MOZ_GIO_SUPPORTED_PROTOCOLS,
                                    getter_Copies(mSupportedProtocols));
   if (NS_SUCCEEDED(rv)) {
     mSupportedProtocols.StripWhitespace();
     ToLowerCase(mSupportedProtocols);
   }
-  else
-    mSupportedProtocols.AssignLiteral("smb:,sftp:"); // use defaults
+  else {
+    mSupportedProtocols.AssignLiteral(""); // use none by default
+  }
 
   LOG(("gio: supported protocols \"%s\"\n", mSupportedProtocols.get()));
 }
