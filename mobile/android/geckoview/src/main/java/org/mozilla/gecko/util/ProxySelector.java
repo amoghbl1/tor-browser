@@ -30,6 +30,9 @@ import java.util.List;
 
 public class ProxySelector {
     public static URLConnection openConnectionWithProxy(URI uri) throws IOException {
+
+	//Orfox: Ignore system and use Orbot/Tor
+	/**
         java.net.ProxySelector ps = java.net.ProxySelector.getDefault();
         Proxy proxy = Proxy.NO_PROXY;
         if (ps != null) {
@@ -38,8 +41,9 @@ public class ProxySelector {
                 proxy = proxies.get(0);
             }
         }
+	**/
 
-        return uri.toURL().openConnection(proxy);
+	return uri.toURL().openConnection(ProxySettings.getProxy());
     }
 
     public ProxySelector() {
