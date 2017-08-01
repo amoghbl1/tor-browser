@@ -610,7 +610,9 @@ public class BrowserApp extends GeckoApp
         }
 
         final SafeIntent intent = new SafeIntent(getIntent());
-        final boolean isInAutomation = IntentUtils.getIsInAutomationFromEnvironment(intent);
+
+	//Orfox: this disables Switchboard testing experiments and Telemtry Uploading
+        final boolean isInAutomation = true; //IntentUtils.getIsInAutomationFromEnvironment(intent);
 
         // This has to be prepared prior to calling GeckoApp.onCreate, because
         // widget code and BrowserToolbar need it, and they're created by the
