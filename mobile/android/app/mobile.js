@@ -1465,3 +1465,5 @@ pref("security.ssl.errorReporting.enabled", false);
 #expand pref("torbrowser.version", __TOR_BROWSER_VERSION__);
 #endif
 
+// Disable Control media casting & mirroring features
+pref("browser.casting.enabled", false);
