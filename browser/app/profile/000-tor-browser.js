@@ -357,6 +357,9 @@ pref("security.ssl.errorReporting.enabled", false);
 // in case the download panel got removed from the toolbar.
 pref("browser.download.panel.shown", true);
 
+// Treat .onions as secure
+pref("dom.securecontext.whitelist_onions", true);
+
 #ifdef TOR_BROWSER_VERSION
 #expand pref("torbrowser.version", __TOR_BROWSER_VERSION__);
 #endif

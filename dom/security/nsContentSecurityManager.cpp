@@ -689,6 +689,14 @@ nsContentSecurityManager::IsOriginPotentiallyTrustworthy(nsIPrincipal* aPrincipa
         }
       }
     }
+    // Maybe we have a .onion URL. Treat it as whitelisted as well when
+    // `dom.securecontext.whitelist_onions` is `true`.
+    bool whitelistOnions =
+      Preferences::GetBool("dom.securecontext.whitelist_onions", false);
+    if (whitelistOnions && StringEndsWith(host, NS_LITERAL_CSTRING(".onion"))) {
+      *aIsTrustWorthy = true;
+      return NS_OK;
+    }
   }
 
   return NS_OK;
