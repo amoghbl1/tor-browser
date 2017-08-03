@@ -1068,14 +1068,14 @@ pref("xpinstall.whitelist.add.36", "");
 
 // Putting the search engine prefs into this file to fix #11236.
 // Default search engine
-pref("browser.search.defaultenginename", "Search");
+//pref("browser.search.defaultenginename", "Search");
 
 // Search engine order (order displayed in the search bar dropdown)
 // Somewhat surprisingly we get some random behavior if we specify more than
 // two search engines as below. See
 // https://bugzilla.mozilla.org/show_bug.cgi?id=1126722 for details.
-pref("browser.search.order.extra.1", "Search");
-pref("browser.search.order.extra.2", "YouTube");
+//pref("browser.search.order.extra.1", "Search");
+//pref("browser.search.order.extra.2", "YouTube");
 
 // Audio_data is deprecated in future releases, but still present
 // in FF24. This is a dangerous combination (spotted by iSec)
@@ -1255,14 +1255,14 @@ pref("webgl.disable-fail-if-major-performance-caveat", true);
 pref("webgl.enable-webgl2", false);
 pref("dom.network.enabled",false); // fingerprinting due to differing OS implementations
 pref("gfx.downloadable_fonts.fallback_delay", -1);
-pref("general.appname.override", "Netscape");
-pref("general.appversion.override", "5.0 (Windows)");
-pref("general.oscpu.override", "Windows NT 6.1");
-pref("general.platform.override", "Win32");
-pref("general.useragent.override", "Mozilla/5.0 (Windows NT 6.1; rv:52.0) Gecko/20100101 Firefox/52.0");
-pref("general.productSub.override", "20100101");
-pref("general.buildID.override", "20100101");
-pref("browser.startup.homepage_override.buildID", "20100101");
+//pref("general.appname.override", "Netscape");
+//pref("general.appversion.override", "5.0 (Windows)");
+//pref("general.oscpu.override", "Windows NT 6.1");
+//pref("general.platform.override", "Win32");
+//pref("general.useragent.override", "Mozilla/5.0 (Windows NT 6.1; rv:52.0) Gecko/20100101 Firefox/52.0");
+//pref("general.productSub.override", "20100101");
+//pref("general.buildID.override", "20100101");
+//pref("browser.startup.homepage_override.buildID", "20100101");
 pref("general.useragent.vendor", "");
 pref("general.useragent.vendorSub", "");
 pref("dom.enable_performance", false);
@@ -1411,16 +1411,16 @@ pref("xpinstall.whitelist.add.36", "");
 
 // Putting the search engine prefs into this file to fix #11236.
 // Default search engine
-//pref("browser.search.defaultenginename", "data:text/plain,browser.search.defaultenginename=DuckDuckGo");
+pref("browser.search.defaultenginename", "data:text/plain,browser.search.defaultenginename=DuckDuckGo");
 // Make sure we use the same search engine regardless of locale
-//pref("browser.search.geoSpecificDefaults", false);
+pref("browser.search.geoSpecificDefaults", false);
 
 // Search engine order (order displayed in the search bar dropdown)
 // Somewhat surprisingly we get some random behavior if we specify more than
 // two search engines as below. See
 // https://bugzilla.mozilla.org/show_bug.cgi?id=1126722 for details.
-//pref("browser.search.order.extra.1", "DuckDuckGo");
-//pref("browser.search.order.extra.2", "YouTube");
+pref("browser.search.order.extra.1", "DuckDuckGo");
+pref("browser.search.order.extra.2", "YouTube");
 
 // Hacks/workarounds: Direct2D seems to crash w/ lots of video cards w/ MinGW?
 // Nvida cards also experience crashes without the second pref set to disabled
@@ -1465,3 +1465,5 @@ pref("security.ssl.errorReporting.enabled", false);
 #expand pref("torbrowser.version", __TOR_BROWSER_VERSION__);
 #endif
 
+// Disable Control media casting & mirroring features
+pref("browser.casting.enabled", false);
