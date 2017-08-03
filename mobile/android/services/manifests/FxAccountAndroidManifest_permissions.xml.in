@@ -1,3 +1,4 @@
+#ifdef MOZILLA_OFFICIAL
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
@@ -16,3 +17,4 @@
     </permission>
 
     <uses-permission android:name="@ANDROID_PACKAGE_NAME@_fxaccount.permission.PER_ACCOUNT_TYPE" />
+#endif
