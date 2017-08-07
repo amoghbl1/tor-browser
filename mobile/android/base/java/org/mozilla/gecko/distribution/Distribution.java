@@ -229,7 +229,8 @@ public class Distribution {
                     String preferencesJSON = "";
                     try {
                         final File descFile = distribution.getDistributionFile("preferences.json");
-                        preferencesJSON = FileUtils.readStringFromFile(descFile);
+			if (descFile != null)
+                        	preferencesJSON = FileUtils.readStringFromFile(descFile);
                     } catch (IOException e) {
                         Log.e(LOGTAG, "Error getting distribution descriptor file.", e);
                     }
