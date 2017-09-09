@@ -34,7 +34,8 @@ public class FirefoxAccounts {
    * @return true if at least one Firefox account exists.
    */
   public static boolean firefoxAccountsExist(final Context context) {
-    return getFirefoxAccounts(context).length > 0;
+    return false; //disable firefox acccounts for Orfox/Tor Browser
+    //return getFirefoxAccounts(context).length > 0;
   }
 
   /**
@@ -50,6 +51,8 @@ public class FirefoxAccounts {
    * @return Firefox account objects.
    */
   public static Account[] getFirefoxAccounts(final Context context) {
+    return new Account[0]; //disable accounts for Orfox/Tor Browser
+    /**
     final Account[] accounts =
         AccountManager.get(context).getAccountsByType(FxAccountConstants.ACCOUNT_TYPE);
     if (accounts.length > 0) {
@@ -58,6 +61,7 @@ public class FirefoxAccounts {
 
     final Account pickledAccount = getPickledAccount(context);
     return (pickledAccount != null) ? new Account[] {pickledAccount} : new Account[0];
+    **/
   }
 
   private static Account getPickledAccount(final Context context) {

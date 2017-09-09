@@ -4,7 +4,10 @@
      on top of a pre-installed bouncer APK.  Add such elements here, so that
      they can be easily shared between the two APKs. -->
 
+#ifdef TOR_IS_NOT_ORFOX
 #include ../services/manifests/FxAccountAndroidManifest_permissions.xml.in
+#endif
+
 
 #ifdef MOZ_ANDROID_SEARCH_ACTIVITY
 #include ../search/manifests/SearchAndroidManifest_permissions.xml.in
@@ -15,7 +18,9 @@
      them during the same release, which should be Fennec 48.  Therefore we
      decouple the push permission from MOZ_ANDROID_GCM to let it ride ahead
      (potentially) of the push feature. -->
+#ifdef TOR_IS_NOT_ORFOX
 #include GcmAndroidManifest_permissions.xml.in
+#endif
 
 #ifdef MOZ_WIFI_STATE
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>

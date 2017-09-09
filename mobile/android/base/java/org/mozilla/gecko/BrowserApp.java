@@ -1155,7 +1155,17 @@ public class BrowserApp extends GeckoApp
             delegate.onPause(this);
         }
 
-        unregisterReceiver(torStatusReceiver);
+	if (torStatusReceiver != null)
+	{
+        	try
+        	{	 
+         		unregisterReceiver(torStatusReceiver);
+		}
+		catch (IllegalArgumentException iae)
+        	{
+			Log.w("BrowserApp","Tor status receiver couldn't be unregistered",iae);
+        	} 
+	}
     }
 
     @Override
